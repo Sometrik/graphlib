@@ -6,7 +6,6 @@
 #include "../system/IConv.h"
 #endif
 
-#include <cstdio>
 #include <cstring>
 #include <cassert>
 #include <shapefil.h>
