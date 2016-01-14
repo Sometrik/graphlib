@@ -68,9 +68,10 @@ FileTypeHandler::createNode(Graph & graph, map<string, int> & nodes, double x, d
 }
 
 pair<int, int>
-FileTypeHandler::createNodesForArc(const ArcData & arc, Graph & graph, map<string, int> & nodes, bool rev) {
+FileTypeHandler::createNodesForArc(const ArcData2D & arc, Graph & graph, map<string, int> & nodes, bool rev) {
   assert(arc.data.size() >= 2);
-  const glm::dvec3 & v1 = arc.data.front(), v2 = arc.data.back();
+  auto & v1 = arc.data.front();
+  auto & v2 = arc.data.back();
   ostringstream key1, key2;
   key1 << v1.x << "/" << v1.y;
   key2 << v2.x << "/" << v2.y;
@@ -80,14 +81,14 @@ FileTypeHandler::createNodesForArc(const ArcData & arc, Graph & graph, map<strin
     node1 = it->second;
   } else {
     nodes[key1.str()] = node1 = graph.addNode();
-    graph.setPosition(node1, glm::vec3(v1.x, v1.y, v1.z));
+    graph.setPosition(node1, glm::vec3(v1.x, v1.y, 0.0f));
   }
   it = nodes.find(key2.str());
   if (it != nodes.end()) {
     node2 = it->second;
   } else {
     nodes[key2.str()] = node2 = graph.addNode();
-    graph.setPosition(node2, glm::vec3(v2.x, v2.y, v2.z));
+    graph.setPosition(node2, glm::vec3(v2.x, v2.y, 0.0f));
   }
   assert(node1 >= 0 && node2 >= 0);
   if (rev) {
