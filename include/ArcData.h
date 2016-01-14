@@ -11,7 +11,7 @@ class ArcData {
   size_t size() const { return data.size(); }
   bool empty() const { return data.empty(); }
   
-  std::vector<glm::dvec3> data;
+  std::vector<glm::dvec2> data;
 };
 
 #endif
