@@ -1,12 +1,12 @@
-#ifndef _ARCDATA_H_
-#define _ARCDATA_H_
+#ifndef _ARCDATA2D_H_
+#define _ARCDATA2D_H_
 
 #include <vector>
 #include <glm/glm.hpp>
 
-class ArcData {
+class ArcData2D {
  public:
-  ArcData() { }
+  ArcData2D() { }
 
   size_t size() const { return data.size(); }
   bool empty() const { return data.empty(); }
