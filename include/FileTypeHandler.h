@@ -26,7 +26,7 @@ class FileTypeHandler {
 
  protected:
   static int createNode(Graph & graph, std::map<std::string, int> & nodes, double x, double y, double z = 0, float nx = 0, float ny = 0, float nz = 0);
-  static std::pair<int, int> createNodesForArc(const ArcData2d & arc, Graph & graph, std::map<std::string, int> & nodes, bool rev = false);
+  static std::pair<int, int> createNodesForArc(const ArcData2D & arc, Graph & graph, std::map<std::string, int> & nodes, bool rev = false);
 
   void addExtension(const std::string & str) { extensions.push_back(str); }
   
