@@ -3,7 +3,7 @@
 #include "PointCloud.h"
 #include "MultiArcGraph.h"
 #include "PlanarGraph.h"
-#include "ArcData.h"
+#include "ArcData2D.h"
 
 #include <Table.h>
 #include <DBase3File.h>
@@ -36,7 +36,7 @@ ShapefileLoader::openGraph(const char * filename) {
   std::shared_ptr<Graph> graph;
 
   map<string, int> nodes;
-  map<string, pair<glm::dvec3, set<string> > > node_edges;
+  map<string, pair<glm::dvec2, set<string> > > node_edges;
   map<string, int> waiting_faces;
 
   cerr << "loading shapefile (" << shape_count << ")\n";
@@ -83,10 +83,10 @@ ShapefileLoader::openGraph(const char * filename) {
 	for (int j = 0; j < o->nParts; j++) {
 	  int start = o->nParts > 1 ? o->panPartStart[j] : 0;
 	  int end = o->nParts > 1 && j + 1 < o->nParts ? o->panPartStart[j + 1] : o->nVertices;
-	  ArcData arc;
+	  ArcData2D arc;
 	  for (int k0 = start; k0 < end; k0++) {
 	    double x = o->padfX[k0], y = o->padfY[k0], z = o->padfZ[k0];
-	    arc.data.push_back(glm::dvec3(x, y, z));
+	    arc.data.push_back(glm::dvec2(x, y));
 	  }
 
 	  int arc_id = graph->addArcGeometry(arc);
@@ -117,13 +117,13 @@ ShapefileLoader::openGraph(const char * filename) {
 	int n = end - start;
 	for (int k0 = 0; k0 + 1 < n; k0++) {
 	  int k1 = start + (k0 % n), k2 = start + ((k0 + 1) % n);
-	  glm::dvec3 v1(o->padfX[k1], o->padfY[k1], 0); //, o->padfZ[k]);
-	  glm::dvec3 v2(o->padfX[k2], o->padfY[k2], 0); // o->padfZ[k + 1]);
+	  glm::dvec2 v1(o->padfX[k1], o->padfY[k1]); //, o->padfZ[k]);
+	  glm::dvec2 v2(o->padfX[k2], o->padfY[k2]); // o->padfZ[k + 1]);
 	  ostringstream key1, key2;
 	  key1 << v1.x << "/" << v1.y;
 	  key2 << v2.x << "/" << v2.y;
-	  pair<glm::dvec3, set<string> > & ne1 = node_edges[key1.str()];
-	  pair<glm::dvec3, set<string> > & ne2 = node_edges[key2.str()];
+	  pair<glm::dvec2, set<string> > & ne1 = node_edges[key1.str()];
+	  pair<glm::dvec2, set<string> > & ne2 = node_edges[key2.str()];
 	  ne1.first = v1;
 	  ne2.first = v2;
 	  ne1.second.insert(key2.str());
@@ -144,7 +144,7 @@ ShapefileLoader::openGraph(const char * filename) {
 
   if (has_polygons) {
     cerr << "creating nodes (" << node_edges.size() << ")\n";
-    for (map<string, pair<glm::dvec3, set<string> > >::iterator it = node_edges.begin(); it != node_edges.end(); it++) {
+    for (map<string, pair<glm::dvec2, set<string> > >::iterator it = node_edges.begin(); it != node_edges.end(); it++) {
       if (it->second.second.size() >= 3) {
 	createNode(*graph, nodes, it->second.first.x, it->second.first.y);
       }
@@ -165,11 +165,11 @@ ShapefileLoader::openGraph(const char * filename) {
 	  start = 0;
 	}
 	int end = j + 1 < o->nParts ? o->panPartStart[j + 1] : o->nVertices;
-	list<glm::dvec3> input;
+	list<glm::dvec2> input;
       	double area = 0, centroid_x = 0, centroid_y = 0;	
 	for (int k = start; k < end; k++) {
 	  double x = o->padfX[k], y = o->padfY[k], z = o->padfZ[k];
-	  input.push_back(glm::dvec3(x, y, 0)); // z));
+	  input.push_back(glm::dvec2(x, y));
 	  if (k + 1 < end) {
 	    double a = o->padfX[k] * o->padfY[k + 1] - o->padfY[k] * o->padfX[k + 1];
 	    area -= a;
@@ -183,15 +183,14 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph->setFaceCentroid(face_id, glm::vec2(centroid_x, centroid_y));
 	if (input.size() > 1 &&
 	    input.front().x == input.back().x &&
-	    input.front().y == input.back().y &&
-	    input.front().z == input.back().z) {
+	    input.front().y == input.back().y) {
 	  input.pop_back();
 	}
 	// cerr << "rolling vertices (" << input.size() << ")\n";
 	bool node_found = false;
 	for (int step = 0; step < input.size(); step++) {
 	  ostringstream key1;
-	  key1 << input.front().x << "/" << input.front().y << "/" << input.front().z;
+	  key1 << input.front().x << "/" << input.front().y;
 	  if (nodes.find(key1.str()) != nodes.end()) {
 	    node_found = true;
 	    break;
@@ -205,7 +204,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	if (!node_found) { // island
 	  createNode(*graph, nodes, input.front().x, input.front().y);
 	}
-	// ArcData arc;
+	// ArcData2D arc;
 	// for (list<glm::dvec3>::iterator it = input.begin(); it != input.end(); it++) {
 	//   arc.data.push_back(*it);
 	// }
@@ -213,21 +212,21 @@ ShapefileLoader::openGraph(const char * filename) {
 	// assert(n.first == n.second);
 	// int edge_id = graph->addEdge(n.first, n.second, face_id);
 	// geometries.setArc(edge_id, arc);
-	vector<ArcData> arcs;
+	vector<ArcData2D> arcs;
 	vector<int> face_nodes;
-	for (list<glm::dvec3>::iterator it = input.begin(); it != input.end(); it++) {
+	for (auto & v : input) {
 	  ostringstream key1;
-	  key1 << it->x << "/" << it->y << "/" << it->z;
+	  key1 << v.x << "/" << v.y;
 	  map<string, int>::iterator it2 = nodes.find(key1.str());
 	  if (it2 != nodes.end()) {
 	    if (!arcs.empty()) {
-	      arcs.back().data.push_back(*it);
+	      arcs.back().data.push_back(v);
 	    }
 	    face_nodes.push_back(it2->second);
-	    arcs.push_back(ArcData());
+	    arcs.push_back(ArcData2D());
 	  }
 	  assert(!arcs.empty());
-	  arcs.back().data.push_back(*it);		
+	  arcs.back().data.push_back(v);		
 	}
 	assert(face_nodes.front() == face_nodes.back());
 	for (int l = 0; l + 1 < face_nodes.size(); l++) {
