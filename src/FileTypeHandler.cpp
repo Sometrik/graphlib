@@ -53,9 +53,23 @@ FileTypeHandler:compute2DPolygonCentroid(const Point2D* vertices, int vertexCoun
 #endif
 
 int
-FileTypeHandler::createNode(Graph & graph, map<string, int> & nodes, double x, double y, double z, float nx, float ny, float nz) {
+FileTypeHandler::createNode2D(Graph & graph, map<string, int> & nodes, double x, double y) {
   ostringstream key;
-  key << x << "/" << y << '/' << z;
+  key << x << "/" << y;
+  map<string, int>::iterator it = nodes.find(key.str());
+  if (it != nodes.end()) {
+    return it->second;
+  } else {
+    int node_id = nodes[key.str()] = graph.addNode();
+    graph.setPosition(node_id, glm::vec3(x, y, 0.0f));
+    return node_id;  
+  }
+}
+
+int
+FileTypeHandler::createNode3D(Graph & graph, map<string, int> & nodes, double x, double y, double z, float nx, float ny, float nz) {
+  ostringstream key;
+  key << x << "/" << y << "/" << z;
   map<string, int>::iterator it = nodes.find(key.str());
   if (it != nodes.end()) {
     return it->second;
