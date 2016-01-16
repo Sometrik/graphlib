@@ -10,12 +10,27 @@
 
 using namespace std;
 
+#define GC_ENTITY_TYPE	0
+#define GC_HANDLE		5
+#define GC_LINETYPE_NAME	6
+#define GC_LINETYPE_SCALE	48
+
+#define GC_SUBCLASS_MARKER	100
+
 class DXFEntity {
 public:
   DXFEntity() { }
   virtual ~DXFEntity() { }
   
   int color = 7;
+};
+
+class DXFInsert : public DXFInsert {
+public:
+  DXFInsert(const std::string & _block_name) : block_name(_block_name) { }
+
+private:
+  string block_name;
 };
 
 class DXFLine : public DXFEntity {
@@ -396,12 +411,15 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
   int activeEntity = 0;
   string line1, line2;
   int color = -1;
-  string layer;
+  string layer, block_name;
   std::vector<glm::vec3> v;
+  std::vector<DXFInsert> inserts;
   
   while (!stream.eof() && !stream.fail()) {
     getLines(stream, line1, line2);
-    if (line1 == "0" && activeEntity > 0) { // finish entity
+    int group_code = stoi(line1);
+    if (group_code == GC_ENTITY_TYPE && activeEntity > 0) {
+      // new entity starts, finish current
       if (activeEntity == 1) { // 3DFACE
 	DXFFace p;
 	p.v = v;
@@ -432,6 +450,8 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
 	v.clear();
 	activeEntity = 0;
       } else if (activeEntity == 3) { // INSERT
+	DXFInsert insert(block_name);
+	
 	activeEntity = 0;	
 	v.clear();
       } else if (activeEntity == 4) { // POINT
@@ -439,64 +459,88 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
 	v.clear();
       }
     }
-    if (line1 == "0" && line2 == "ENDSEC") {
-      return true;
-    } else if (line1 == "0" && line2 == "3DFACE") {
-      activeEntity = 1;
-    } else if (line1 == "0" && line2 == "LINE") {
-      activeEntity = 2;
-    } else if (line1 == "0" && line2 == "INSERT") {
-      activeEntity = 3;
-    } else if (line1 == "0" && line2 == "POINT") {
-      activeEntity = 4;
-    } else if (activeEntity > 0) {
-      const double d = stod(line2);
-      
-      if (line1 == "10") {
-	if (v.size() < 1) v.resize(1);
-	v[0].x = d;
-      } else if (line1 == "20") {
-	if (v.size() < 1) v.resize(1);
-	v[0].y = d;
-      } else if (line1 == "30") {
-	if (v.size() < 1) v.resize(1);
-	v[0].z = d;
-      } else if (line1 == "11") {
-	if (v.size() < 2) v.resize(2);
-	v[1].x = d;       
-      } else if (line1 == "21") {
-	if (v.size() < 2) v.resize(2);
-	v[1].y = d;
-      } else if (line1 == "31") {
-	if (v.size() < 2) v.resize(2);
-	v[1].z = d;
-      } else if (line1 == "12") {
-	if (v.size() < 3) v.resize(3);
-	v[2].x = d;
-      } else if (line1 == "22") {
-	if (v.size() < 3) v.resize(3);
-	v[2].y = d;
-      } else if (line1 == "32") {
-	if (v.size() < 3) v.resize(3);
-	v[2].z = d;
-      } else if (line1 == "13") {
-	if (v.size() < 4) v.resize(4);
-	v[3].x = d;
-      } else if (line1 == "23") {
-	if (v.size() < 4) v.resize(4);
-	v[3].y = d;
-      } else if (line1 == "33") {
-	if (v.size() < 4) v.resize(4);
-	v[3].z = d;
-      } else if (line1 == "8") {  // layer
-	layer = line2;
-      } else if (line1 == "62") { // color
-	color = stoi(line2);
-      } else if (line1 == "0") {
-	cerr << "unhandled type (A) " << line2 << endl;
+    if (group_code == GC_ENTITY_TYPE) {
+      if (line2 == "ENDSEC") {
+	return true;
+      } else if (line2 == "3DFACE") {
+	activeEntity = 1;
+      } else if (line2 == "LINE") {
+	activeEntity = 2;
+      } else if (line2 == "INSERT") {
+	activeEntity = 3;
+      } else if (line2 == "POINT") {
+	activeEntity = 4;
+      } else {
+	cerr << "unhandled entity type " << line2 << endl;
       }
-    } else if (line1 == "0") {
-      cerr << "unhandled type (B) " << line2 << endl;
+    } else if (activeEntity > 0) {
+      switch (group_code) {
+      case GC_BLOCK_NAME:
+	block_name = line2;
+	break;
+      case GC_HANDLE:
+	cerr << "got handle: " << line2 << endl;
+	break;
+      case GC_LAYER:
+	cerr << "got entity layer: " << line2 << endl;
+	layer = line2;
+	break;
+      case 10:
+	if (v.size() < 1) v.resize(1);
+	v[0].x = stod(line2);
+	break;
+      case 20:
+	if (v.size() < 1) v.resize(1);
+	v[0].y = stod(line2);
+	break;
+      case 30:
+	if (v.size() < 1) v.resize(1);
+	v[0].z = stod(line2);
+	break;
+      case 11:
+	if (v.size() < 2) v.resize(2);
+	v[1].x = stod(line2);
+	break;
+      case 21:
+	if (v.size() < 2) v.resize(2);
+	v[1].y = stod(line2);
+	break;
+      case 31:
+	if (v.size() < 2) v.resize(2);
+	v[1].z = stod(line2);
+	break;
+      case 12:
+	if (v.size() < 3) v.resize(3);
+	v[2].x = stod(line2);
+	break;
+      case 22:
+	if (v.size() < 3) v.resize(3);
+	v[2].y = stod(line2);
+	break;
+      case 32:
+	if (v.size() < 3) v.resize(3);
+	v[2].z = stod(line2);
+	break;
+      case 13:
+	if (v.size() < 4) v.resize(4);
+	v[3].x = stod(line2);
+	break;
+      case 23:} else if (line1 == "23") {
+	if (v.size() < 4) v.resize(4);
+	v[3].y = stod(line2);
+	break;
+      case 33:
+	if (v.size() < 4) v.resize(4);
+	v[3].z = stod(line2);
+	break;
+      case GC_COLOR: // color
+	color = stoi(line2);
+	break;
+      default:
+	cerr << "unhandled group code: " << group_code << " " << line2 << endl;
+      }
+    } else {
+      cerr << "unused group entity: " << group_code << " " << line2 << endl;
     }
   }
   return false;
@@ -564,7 +608,7 @@ DXFLoader::process3DFace(Graph & graph, map<string, int> & nodes, map<string, in
   for (int i = 0; i < face_nodes.size(); i++) {
     int node1 = face_nodes[i], node2 = face_nodes[(i + 1) % face_nodes.size()];
     if (node1 == node2) {
-      cerr << "skipping doubled vertex\n";
+      // cerr << "skipping doubled vertex\n";
     } else {
       ostringstream key1, key2;
       key1 << node1 << "/" << node2;
