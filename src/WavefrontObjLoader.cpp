@@ -74,8 +74,8 @@ WavefrontObjLoader::openGraph(const char * filename) {
 #endif
 	assert(ni >= 0 && ni < normals.size());
 	const glm::vec3 & normal = normals[ni];
-	face_nodes.push_back(createNode(*graph, nodes, v.x, v.y, v.z,
-					normal.x, normal.y, normal.z));
+	face_nodes.push_back(createNode3D(*graph, nodes, v.x, v.y, v.z,
+					  normal.x, normal.y, normal.z));
       }
       assert(face_nodes.size() >= 3);
       for (int i = 0; i < (int)face_nodes.size(); i++) {
