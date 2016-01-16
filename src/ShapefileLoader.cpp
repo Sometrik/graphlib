@@ -59,12 +59,12 @@ ShapefileLoader::openGraph(const char * filename) {
       if (!graph.get()) {
 	cerr << "creating pointcloud for shapefile\n";
 	graph = std::make_shared<PointCloud>();
-	graph->setHasSpatialData(true);	
+	graph->setHasSpatialData(true);
       }
       assert(shape_dimensions == graph->getDimensions());
       for (int j = 0; j < o->nVertices; j++) {
 	double x = o->padfX[j], y = o->padfY[j], z = o->padfZ[j];
-	createNode(*graph, nodes, x, y); // z);
+	createNode2D(*graph, nodes, x, y);
       }
       break;
     case SHPT_ARC: // = polyline
@@ -76,6 +76,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph = std::make_shared<MultiArcGraph>();
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
+	graph->setNodeVisibility(false);
       }
       assert(shape_dimensions == graph->getDimensions());
       {
@@ -107,6 +108,8 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph = std::make_shared<PlanarGraph>();
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
+	graph->setNodeVisibility(false);
+	graph->setEdgeVisibility(false);
 	// graph->addUniversalRegion();
       }
       assert(shape_dimensions == graph->getDimensions());
@@ -146,7 +149,7 @@ ShapefileLoader::openGraph(const char * filename) {
     cerr << "creating nodes (" << node_edges.size() << ")\n";
     for (map<string, pair<glm::dvec2, set<string> > >::iterator it = node_edges.begin(); it != node_edges.end(); it++) {
       if (it->second.second.size() >= 3) {
-	createNode(*graph, nodes, it->second.first.x, it->second.first.y);
+	createNode2D(*graph, nodes, it->second.first.x, it->second.first.y);
       }
     }
     cerr << "creating faces\n";    
@@ -202,7 +205,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	input.push_back(input.front());
 	assert(input.size() >= 4);
 	if (!node_found) { // island
-	  createNode(*graph, nodes, input.front().x, input.front().y);
+	  createNode2D(*graph, nodes, input.front().x, input.front().y);
 	}
 	// ArcData2D arc;
 	// for (list<glm::dvec3>::iterator it = input.begin(); it != input.end(); it++) {
