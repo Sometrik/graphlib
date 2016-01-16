@@ -10,7 +10,8 @@ namespace table {
     NUMBER,
     FLOAT,
     BOOL,
-    TIME_SERIES
+    TIME_SERIES,
+    IMAGE_SRC
   };
 
   class Column {
