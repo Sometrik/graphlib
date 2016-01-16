@@ -10,12 +10,34 @@
 
 using namespace std;
 
-#define GC_ENTITY_TYPE	0
+#define GC_ENTITY_TYPE 		0
+#define GC_BLOCK_NAME		2
 #define GC_HANDLE		5
 #define GC_LINETYPE_NAME	6
+#define GC_LAYER		8
 #define GC_LINETYPE_SCALE	48
-
+#define GC_COLOR		62
 #define GC_SUBCLASS_MARKER	100
+
+class DXFBlock {
+public:
+  DXFBlock() { }
+    DXFBlock(const string & _name, glm::dvec3 & _base_point) : name(_name), base_point(_base_point) { }
+
+#if 0
+  void addObject(GraphicsObject & o);
+  std::vector<GraphicsObject> * getObjects() { return &objectlist; }
+  void copyObjects(GraphicsLayer & layer, Matrix & matrix);
+  void copyObjects(DXFBlock & block, Matrix & matrix); 
+#endif
+  void setDefaultColor(int c) { color = c; }
+  
+ private:
+  std::string name;
+  // std::vector<GraphicsObject> objectlist;
+  int color;
+  glm::dvec3 base_point;
+};
 
 class DXFEntity {
 public:
@@ -25,7 +47,7 @@ public:
   int color = 7;
 };
 
-class DXFInsert : public DXFInsert {
+class DXFInsert : public DXFEntity {
 public:
   DXFInsert(const std::string & _block_name) : block_name(_block_name) { }
 
@@ -36,6 +58,12 @@ private:
 class DXFLine : public DXFEntity {
  public:
   DXFLine() { }
+  std::vector<glm::vec3> v;
+};
+
+class DXFPoint : public DXFEntity {
+ public:
+  DXFPoint() { }
   std::vector<glm::vec3> v;
 };
 
@@ -525,7 +553,7 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
 	if (v.size() < 4) v.resize(4);
 	v[3].x = stod(line2);
 	break;
-      case 23:} else if (line1 == "23") {
+      case 23:
 	if (v.size() < 4) v.resize(4);
 	v[3].y = stod(line2);
 	break;
