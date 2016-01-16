@@ -194,7 +194,7 @@ MapInfoLoader::handlePoint(ifstream & in, Graph & graph, map<string, int> & node
   double x, y;
   in >> x;
   in >> y;  
-  createNode(graph, nodes, x, y);
+  createNode2D(graph, nodes, x, y);
   return true;
 }
 
@@ -206,8 +206,8 @@ MapInfoLoader::handleLine(ifstream & in, Graph & graph, map<string, int> & nodes
   in >> x2;
   in >> y2;
   
-  int n1 = createNode(graph, nodes, x1, y1);
-  int n2 = createNode(graph, nodes, x2, y2);
+  int n1 = createNode2D(graph, nodes, x1, y1);
+  int n2 = createNode2D(graph, nodes, x2, y2);
   graph.addEdge(n1, n2);
   
   return true;
