@@ -53,7 +53,8 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
   auto & node_table = graph->getNodeData();
   auto & edge_table = directed ? graph->getEdgeData() : graph->getFaceData();
   
-  node_table.addTextColumn("id");
+  auto & node_id_column = node_table.addTextColumn("id");
+  auto & edge_id_column = edge_table.addTextColumn("id");
     
   XMLElement * key_element = graphml_element.FirstChildElement("key");
   for ( ; key_element ; key_element = key_element->NextSiblingElement("key") ) {
@@ -91,7 +92,8 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     const char * node_id_text = node_element->Attribute("id");
     assert(node_id_text);
 
-    int node_id = graph->addNodeWithId(node_id_text);
+    int node_id = graph->addNode();
+    node_id_column.setValue(node_id, node_id_text);
     nodes_by_id[node_id_text] = node_id + 1;
     
     XMLElement * data_element = node_element->FirstChildElement("data");
@@ -139,7 +141,7 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
       if (directed) {
 	edge_id = graph->addEdge(source_node - 1, target_node - 1);
 	if (edge_id_text && strlen(edge_id_text) != 0) {
-	  graph->setEdgeId(edge_id, edge_id_text);
+	  edge_id_column.setValue(edge_id, edge_id_text);
 	}
       } else {
 	edge_id = graph->addFace(-1);
