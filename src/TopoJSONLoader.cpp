@@ -41,9 +41,10 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
       key << v.x << "/" << v.y;
       map<string, int>::iterator it = nodes.find(key.str());
       if (it != nodes.end()) {
-	graph.setNodeId(it->second, id_text);
+	graph.getNodeData()["id"].setValue(it->second, id_text);
       } else {
-	int node_id = nodes[key.str()] = graph.addNodeWithId(id_text);
+	int node_id = nodes[key.str()] = graph.addNode();
+	graph.getNodeData()["id"].setValue(it->second, id_text);
 	graph.setPosition(node_id, v);
       }
     } else if (type == "MultiPoint") {
@@ -80,7 +81,9 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 #endif
       } else if (type == "Polygon")  {
 	int region_id = graph.addRegion();
-	if (!id_text.empty()) graph.setRegionId(region_id, id_text);
+	if (!id_text.empty()) {
+	  graph.getRegionData()["id"].setValue(region_id, id_text);
+	}
 	for (unsigned int i = 0; i < arcs.size(); i++) {
 	  int face_id = graph.addFace(region_id);
 	  Json::Value ring = arcs[i];
@@ -108,7 +111,9 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 	}
       } else if (type == "MultiPolygon") {
 	int region_id = graph.addRegion();
-	if (!id_text.empty()) graph.setRegionId(region_id, id_text);
+	if (!id_text.empty()) {
+	  graph.getRegionData()["id"].setValue(region_id, id_text);
+	}
  	for (unsigned int h = 0; h < arcs.size(); h++) {
 	  Json::Value polygon = arcs[h];
 	  int face_id = graph.addFace(region_id);
@@ -180,7 +185,8 @@ TopoJSONLoader::openGraph(const char * filename) {
   auto graph = std::make_shared<PlanarGraph>();
   graph->setHasSpatialData(true);
   graph->setHasArcData(true);
-
+  graph->getNodeData().addTextColumn("id");
+  
   assert(root_type == "Topology");
 
   double scale_x = 1, scale_y = 1, translate_x = 0, translate_y = 0;
@@ -193,6 +199,7 @@ TopoJSONLoader::openGraph(const char * filename) {
 
   // graph->getEdgeData().addArcColumn("_geometry");
   graph->getFaceData().addTextColumn("id");  
+  graph->getRegionData().addTextColumn("id");
   
   map<string, int> nodes;
   map<int, vector<int> > connections;
