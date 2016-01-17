@@ -1462,3 +1462,16 @@ Graph::setNormal(int i, const glm::vec4 & v) {
   node_geometry[i].normal = glm::packSnorm3x10_1x2(v);
   version++;
 }
+
+void
+DataSet::invalidateVisibleNodes() {
+  if (final_graph.get()) {
+    final_graph->reset();
+  }
+  for (int i = 0; i < getNodeCount(); i++) {
+    auto & graph = node_geometry2[i].nested_graph;
+    if (graph.get()) {
+      graph->invalidateVisibleNodes();      
+    }
+  }
+}

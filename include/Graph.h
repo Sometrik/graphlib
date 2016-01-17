@@ -837,6 +837,8 @@ class Graph : public MBRObject {
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
   skey getNodeKey(int node_id) const;
+      
+  void invalidateVisibleNodes();
 
   GraphRefR getGraphForReading(int graph_id) const;
   GraphRefW getGraphForWriting(int graph_id);
