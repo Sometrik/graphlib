@@ -228,7 +228,7 @@ class Graph : public MBRObject {
   Personality getPersonality() const { return personality; }
 
   std::vector<int> getLocationGraphs() const;
-  std::vector<int> getFinalGraphs() const;
+  std::vector<int> getNestedGraphIds() const;
 
   table::Table & getClusterData() { return clusters; }
   
@@ -721,11 +721,21 @@ class Graph : public MBRObject {
   void setLabelMethod(const LabelMethod & m) { label_method = m; }
   const LabelMethod & getLabelMethod() const { return label_method; }
 
-  Graph & getActualGraph() { return final_graph.get() ? *final_graph : *this; }
-  const Graph & getActualGraph() const { return final_graph.get() ? *final_graph : *this; }
+  Graph & getActualGraph(float scale) {
+    auto g = getFinal(scale);
+    return g.get() ? *g : *this;
+  }
+  const Graph & getActualGraph(float scale) const {
+    auto g = getFinal(scale);
+    return g.get() ? *g : *this;
+  }
   
-  std::shared_ptr<Graph> getFinal() { return final_graph; }
-  const std::shared_ptr<const Graph> getFinal() const { return final_graph; }
+  std::shared_ptr<Graph> getFinal(float scale) {
+    return final_graph;
+  }
+  const std::shared_ptr<const Graph> getFinal(float scale) const {
+    return final_graph;
+  }
   
   std::shared_ptr<Graph> & getLocation() { return location_graph; }
   const std::shared_ptr<const Graph> getLocation() const { return location_graph; }

@@ -480,25 +480,6 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
     }
     vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_data_s));
   }
-
-#if 0
-  if (getEdgeCount()) { // WHAT THE FUCK!?
-    vector<int> indices;
-    indices.reserve(2 * getEdgeCount());
-
-    auto end = end_edges();
-    for (auto it = begin_edges(); it != end; ++it) {
-      if (it->head >= 0) { // skip edgeless nodes
-	indices.push_back(it->tail);
-	indices.push_back(it->head);
-      }
-    }
-
-    if (!indices.empty()) {
-      vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
-    }
-  }
-#endif
 }
 
 void
@@ -988,7 +969,7 @@ Graph::selectNodes(int input_node, int depth) {
 }
 
 std::vector<int>
-Graph::getFinalGraphs() const {
+Graph::getNestedGraphIds() const {
   std::vector<int> v;
   for (int i = 0; i < getNodeCount(); i++) {
     auto & graph = node_geometry2[i].nested_graph;
