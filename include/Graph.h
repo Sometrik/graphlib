@@ -632,7 +632,9 @@ class Graph : public MBRObject {
   void setNodeTexture(const skey & key, int texture);
   
   void clearTextures(int clear_flags = CLEAR_ALL) {
-    if (final_graph.get()) final_graph->clearTextures(clear_flags);
+    for (auto & g : final_graphs) {
+      g->clearTextures(clear_flags);
+    }
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
     for (int i = 0; i < getNodeCount(); i++) {
       if (clear_flags & CLEAR_LABELS) {
@@ -735,17 +737,28 @@ class Graph : public MBRObject {
   }
   
   std::shared_ptr<Graph> getFinal(float scale) {
-    return final_graph;
+    if (!final_graphs.empty()) {
+      return final_graphs.front();
+    } else {
+      return std::shared_ptr<Graph>(0);
+    }
   }
   const std::shared_ptr<const Graph> getFinal(float scale) const {
-    return final_graph;
+    if (!final_graphs.empty()) {
+      return final_graphs.front();
+    } else {
+      return std::shared_ptr<Graph>(0);
+    }
   }
   
   std::shared_ptr<Graph> & getLocation() { return location_graph; }
   const std::shared_ptr<const Graph> getLocation() const { return location_graph; }
   std::shared_ptr<Graph> & getSimplified() { return simplified_graph; }
 
-  void setFinal(std::shared_ptr<Graph> g) { final_graph = g; }
+  void addFinalGraph(std::shared_ptr<Graph> g) {
+    final_graphs.clear();
+    final_graph.push_back(g);
+  }
   void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
   void setSimplified(std::shared_ptr<Graph> g) { simplified_graph = g; } 
 
@@ -892,7 +905,8 @@ class Graph : public MBRObject {
   float alpha = 0.0f;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
-  std::shared_ptr<Graph> final_graph, location_graph, simplified_graph;
+  std::shared_ptr<Graph> location_graph, simplified_graph;
+  std::vector<std::shared_ptr<Graph> > final_graphs;
   std::map<skey, int> node_cache, face_cache;
   bool has_node_selection = false; 
   Personality personality = NONE;

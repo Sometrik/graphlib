@@ -236,7 +236,9 @@ Graph::randomizeGeometry(bool use_2d) {
       graph->randomizeGeometry(use_2d);       
     }
   }
-  if (final_graph.get()) final_graph->randomizeGeometry(use_2d);
+  for (auto & g : final_graphs) {
+    g->randomizeGeometry(use_2d);
+  }
 }
 
 void
@@ -992,7 +994,9 @@ void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
   resume2();
-  if (final_graph.get()) final_graph->resume2();
+  for (auto & g : final_graphs) {
+    g->resume2();
+  }
   for (int i = 0; i < getNodeCount(); i++) {
     auto & graph = node_geometry2[i].nested_graph;
     if (graph.get()) graph->refreshLayouts();
@@ -1125,11 +1129,11 @@ Graph::createClusters() {
 
 void
 Graph::storeChangesFromFinal() {
-  if (final_graph.get()) {
-    for (int j = 0; j < final_graph->getNodeCount(); j++) {
-      auto & sd = final_graph->getNodeSecondaryData(j);
+  for (auto & g : final_graphs) {
+    for (int j = 0; j < g->getNodeCount(); j++) {
+      auto & sd = g->getNodeSecondaryData(j);
       if (sd.orig_node_id >= 0) {
-	auto & pd = final_graph->getNodeData(j);
+	auto & pd = g->getNodeData(j);
 	assert(sd.orig_node_id < getNodeCount());
 	auto & pd2 = getNodeData(sd.orig_node_id);
 	auto & sd2 = getNodeSecondaryData(sd.orig_node_id);
@@ -1145,16 +1149,16 @@ Graph::storeChangesFromFinal() {
       }
     }
   
-    setClusterVisibility(final_graph->getClusterVisibility());
-    setNodeVisibility(final_graph->getNodeVisibility());
-    setEdgeVisibility(final_graph->getEdgeVisibility());
-    setRegionVisibility(final_graph->getRegionVisibility());
-    setLabelVisibility(final_graph->getLabelVisibility());
-    setDefaultNodeColor(final_graph->getDefaultNodeColor());
-    setDefaultEdgeColor(final_graph->getDefaultEdgeColor());
-    setDefaultRegionColor(final_graph->getDefaultRegionColor());
-    setAlpha3(final_graph->getAlpha2());
-    // setAlphaVelocity2(final_graph->getAlphaVelocity2());
+    setClusterVisibility(g->getClusterVisibility());
+    setNodeVisibility(g->getNodeVisibility());
+    setEdgeVisibility(g->getEdgeVisibility());
+    setRegionVisibility(g->getRegionVisibility());
+    setLabelVisibility(g->getLabelVisibility());
+    setDefaultNodeColor(g->getDefaultNodeColor());
+    setDefaultEdgeColor(g->getDefaultEdgeColor());
+    setDefaultRegionColor(g->getDefaultRegionColor());
+    setAlpha3(g->getAlpha2());
+    // setAlphaVelocity2(g->getAlphaVelocity2());
   }
 }
 
@@ -1164,13 +1168,13 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     return false;
   }
     
-  if (!final_graph.get()) {
+  if (final_graphs.empty()) {
     cerr << "CREATING FINAL!\n";
-    setFinal(createSimilar());
+    addFinal(createSimilar());
     statistics.clear();
-  } else if (!final_graph->hasPosition()) {
+  } else if (!final_graph.front()->hasPosition()) {
     cerr << "RESETTING EVERYTHING!\n";
-    if (final_graph->hasNodeSelection()) {
+    if (final_graph.front()->hasNodeSelection()) {
       selectNodes(-2);
     } else {
       selectNodes();
@@ -1190,19 +1194,20 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   }
     
   statistics.setSentimentRange(start_sentiment, end_sentiment);
-  
-  if (final_graph->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
-    final_graph->updateAppearance();
-    final_graph->incVersion();
-    setLocationGraphValid(false);
-    incVersion();
-    resume2();
-    final_graph->resume2();
 
-    return true;
-  } else {
-    return false;
-  }      
+  bool changed = false;
+  for (auto & g : final_graphs) {
+    if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
+      g->updateAppearance();
+      g->incVersion();
+      setLocationGraphValid(false);
+      incVersion();
+      resume2();
+      final_graph->resume2();
+      changed = true;
+    }
+  }
+  return changed;         
 }
 
 void
