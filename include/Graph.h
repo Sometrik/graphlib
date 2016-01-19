@@ -327,7 +327,7 @@ class Graph : public MBRObject {
     }
     return d;
   }
-
+ 
   void simplifyWithClusters(const std::vector<int> & clusters, Graph & target_graph);
 
   // return the weighted degree of the node
@@ -624,10 +624,13 @@ class Graph : public MBRObject {
     version++;
   }
   void setClusterColor(int i, const canvas::Color & c);
+
   void setNodeTexture(int i, int texture) {
     node_geometry[i].texture = texture;
     version++;
   }
+  void setNodeTexture(const skey & key, int texture);
+  
   void clearTextures(int clear_flags = CLEAR_ALL) {
     if (final_graph.get()) final_graph->clearTextures(clear_flags);
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
@@ -650,6 +653,7 @@ class Graph : public MBRObject {
     node_geometry2[i].label_texture = texture;
     version++;
   }
+  void setLabelTexture(const skey & key, int texture);  
   void setNodeLabelVisibilityValue(int i, float f) {
     int f2 = int(f * 65535);
     if (f2 < 0) f2 = 0;

@@ -236,7 +236,7 @@ Graph::randomizeGeometry(bool use_2d) {
       graph->randomizeGeometry(use_2d);       
     }
   }
-  if (getFinal().get()) getFinal()->randomizeGeometry(use_2d);
+  if (final_graph.get()) final_graph->randomizeGeometry(use_2d);
 }
 
 void
@@ -992,10 +992,10 @@ void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
   resume2();
-  if (getFinal().get()) getFinal()->resume2();
+  if (final_graph.get()) final_graph->resume2();
   for (int i = 0; i < getNodeCount(); i++) {
     auto & graph = node_geometry2[i].nested_graph;
-    if (graph.get()) graph->resume2();
+    if (graph.get()) graph->refreshLayouts();
   }
 }
 
@@ -1464,7 +1464,7 @@ Graph::setNormal(int i, const glm::vec4 & v) {
 }
 
 void
-DataSet::invalidateVisibleNodes() {
+Graph::invalidateVisibleNodes() {
   if (final_graph.get()) {
     final_graph->reset();
   }
@@ -1474,4 +1474,22 @@ DataSet::invalidateVisibleNodes() {
       graph->invalidateVisibleNodes();      
     }
   }
+}
+
+void
+Graph::setNodeTexture(const skey & key, int texture) { 
+  auto it2 = getNodeCache().find(key);
+  if (it2 != getNodeCache().end()) {
+    setNodeTexture(it2->second, texture);
+  }
+  if (final_graph.get()) final_graph->setNodeTexture(key, texture);    
+}
+
+void
+Graph::setLabelTexture(const skey & key, int texture) {
+  auto it2 = getNodeCache().find(key);
+  if (it2 != getNodeCache().end()) {
+    setLabelTexture(it2->second, texture);
+  }
+  if (final_graph.get()) final_graph->setLabelTexture(key, texture);
 }
