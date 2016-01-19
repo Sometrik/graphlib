@@ -757,7 +757,7 @@ class Graph : public MBRObject {
 
   void addFinalGraph(std::shared_ptr<Graph> g) {
     final_graphs.clear();
-    final_graph.push_back(g);
+    final_graphs.push_back(g);
   }
   void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
   void setSimplified(std::shared_ptr<Graph> g) { simplified_graph = g; } 
