@@ -1164,7 +1164,7 @@ Graph::storeChangesFromFinal() {
 
 unsigned int
 Graph::getSuitableFinalGraphCount() const {
-  if (getNodeCount() >= 500) {
+  if (getNodeCount() >= 100 || 1) {
     return 2;
   } else {
     return 1;
@@ -1185,8 +1185,8 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     if (count == 2) {
       auto g1 = createSimilar();
       auto g2 = createSimilar();
-      g1->setMinSignificance(10);
-      g1->setMinScale(10);
+      g1->setMinSignificance(10.0f);
+      g1->setMinScale(1.0f);
       addFinalGraph(g1);
       addFinalGraph(g2);
     } else {
@@ -1217,8 +1217,10 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   statistics.setSentimentRange(start_sentiment, end_sentiment);
 
   bool changed = false;
-  for (auto & g : final_graphs) {
-    if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
+  for (unsigned int i = 0; i < final_graphs.size(); i++) {
+    auto & g = final_graphs[i];
+    Graph * base_graph = i > 0 ? final_graphs[i].get() : 0;
+    if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, base_graph)) {
       g->updateAppearance();
       g->incVersion();
       setLocationGraphValid(false);
@@ -1525,8 +1527,10 @@ Graph::setLabelTexture(const skey & key, int texture) {
 
 std::shared_ptr<Graph>
 Graph::getFinal(float scale) {
+  cerr << "getting final for scale " << scale << endl;
   for (auto & g : final_graphs) {
     if (scale >= g->getMinScale()) {
+      cerr << "  min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << endl;
       return g;
     }
   }
@@ -1535,8 +1539,10 @@ Graph::getFinal(float scale) {
 
 const std::shared_ptr<const Graph>
 Graph::getFinal(float scale) const {
+  cerr << "getting final for scale " << scale << ", levels = " << final_graphs.size() << ", nodes = " << getNodeCount() << endl;
   for (auto & g : final_graphs) {
-    if (scale >= g->getMinScale()) {
+    if (!g->getMinScale() || scale < g->getMinScale()) {
+      cerr << "  min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << endl;
       return g;
     }
   }
