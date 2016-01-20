@@ -848,6 +848,9 @@ class Graph : public MBRObject {
   GraphRefR getGraphForReading(int graph_id) const;
   GraphRefW getGraphForWriting(int graph_id);
 
+  float getMinSignificance() const { return min_significance; }
+  float getMinScale() const { return min_scale; }
+  
   void setMinSignificance(float s) { min_significance = s; }
   void setMinScale(float s) { min_scale = s; }
   
