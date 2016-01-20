@@ -1179,7 +1179,9 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
 
   unsigned int count = getSuitableFinalGraphCount();
   if (final_graphs.size() != count) {
-    cerr << "CREATING FINAL!\n";
+    storeChangesFromFinal();
+    final_graphs.clear();
+    cerr << "CREATING FINALs!\n";
     if (count == 2) {
       auto g1 = createSimilar();
       auto g2 = createSimilar();
@@ -1520,3 +1522,24 @@ Graph::setLabelTexture(const skey & key, int texture) {
     g->setLabelTexture(key, texture);
   }
 }
+
+std::shared_ptr<Graph>
+Graph::getFinal(float scale) {
+  for (auto & g : final_graphs) {
+    if (scale >= g->getMinScale()) {
+      return g;
+    }
+  }
+  return std::shared_ptr<Graph>(0);
+}
+
+const std::shared_ptr<const Graph>
+Graph::getFinal(float scale) const {
+  for (auto & g : final_graphs) {
+    if (scale >= g->getMinScale()) {
+      return g;
+    }
+  }
+  return std::shared_ptr<Graph>(0);
+}
+

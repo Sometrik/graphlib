@@ -736,20 +736,8 @@ class Graph : public MBRObject {
     return g.get() ? *g : *this;
   }
   
-  std::shared_ptr<Graph> getFinal(float scale) {
-    if (!final_graphs.empty()) {
-      return final_graphs.front();
-    } else {
-      return std::shared_ptr<Graph>(0);
-    }
-  }
-  const std::shared_ptr<const Graph> getFinal(float scale) const {
-    if (!final_graphs.empty()) {
-      return final_graphs.front();
-    } else {
-      return std::shared_ptr<Graph>(0);
-    }
-  }
+  std::shared_ptr<Graph> getFinal(float scale);
+  const std::shared_ptr<const Graph> getFinal(float scale) const;
   
   std::shared_ptr<Graph> & getLocation() { return location_graph; }
   const std::shared_ptr<const Graph> getLocation() const { return location_graph; }
