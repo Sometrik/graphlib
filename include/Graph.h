@@ -265,7 +265,7 @@ class Graph : public MBRObject {
   virtual Graph * copy() const = 0;
   virtual bool hasPosition() const { return false; }
   virtual bool isDirected() const { return false; }
-  virtual bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) { return false; }
+  virtual bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, Graph * base_graph = 0) { return false; }
   virtual void reset() { }
   void extractLocationGraph(Graph & target_graph);
 
@@ -744,7 +744,6 @@ class Graph : public MBRObject {
   std::shared_ptr<Graph> & getSimplified() { return simplified_graph; }
 
   void addFinalGraph(std::shared_ptr<Graph> g) {
-    final_graphs.clear();
     final_graphs.push_back(g);
   }
   void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
