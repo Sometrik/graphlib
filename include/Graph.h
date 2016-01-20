@@ -861,6 +861,7 @@ class Graph : public MBRObject {
   GraphRefW getGraphForWriting(int graph_id);
 
  protected:
+  unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
   void updateNodeSize(int n) { node_geometry[n].size = node_size_method.calculateSize(node_geometry2[n], total_indegree, total_outdegree, getNodeCount() ); }
@@ -937,9 +938,7 @@ public:
   GraphRefR(const GraphRefR & other) : graph(other.graph) {
     if (graph) graph->lockReader();
   }
-  ~GraphRefR() {
-    if (graph) graph->unlockReader();
-  }
+  ~GraphRefR() { if (graph) graph->unlockReader(); }
   GraphRefR & operator=(const GraphRefR & other) {
     if (&other != this) {
       if (graph) graph->unlockReader();
@@ -948,12 +947,8 @@ public:
     }
     return *this;
   }
-  const Graph * operator->() const {
-    return graph;
-  }
-  const Graph & operator*() const {
-    return *graph;
-  }
+  const Graph * operator->() const { return graph; }
+  const Graph & operator*() const { return *graph; }
   const Graph * get() const { return graph; }
 
   void reset(Graph * ptr) {
@@ -976,17 +971,10 @@ public:
     graph = other.graph;
     other.graph = nullptr;
   }
-  ~GraphRefW() {
-    if (graph) graph->unlockWriter();
-  }
+  ~GraphRefW() { if (graph) graph->unlockWriter(); }
   GraphRefW & operator=(const GraphRefW & other) = delete;
-  
-  Graph * operator->() {
-    return graph;
-  }
-  Graph & operator*() {
-    return *graph;
-  }
+  Graph * operator->() { return graph; }
+  Graph & operator*() { return *graph; }
   const Graph * get() const { return graph; }
   Graph * get() { return graph; }
 
