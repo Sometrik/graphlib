@@ -1162,19 +1162,38 @@ Graph::storeChangesFromFinal() {
   }
 }
 
+unsigned int
+Graph::getSuitableFinalGraphCount() const {
+  if (getNodeCount() >= 500) {
+    return 2;
+  } else {
+    return 1;
+  }
+}
+
 bool
 Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
   if (getPersonality() != Graph::SOCIAL_MEDIA || !isTemporal()) {
     return false;
   }
-    
-  if (final_graphs.empty()) {
+
+  unsigned int count = getSuitableFinalGraphCount();
+  if (final_graphs.size() != count) {
     cerr << "CREATING FINAL!\n";
-    addFinal(createSimilar());
+    if (count == 2) {
+      auto g1 = createSimilar();
+      auto g2 = createSimilar();
+      g1->setMinSignificance(10);
+      g1->setMinScale(10);
+      addFinalGraph(g1);
+      addFinalGraph(g2);
+    } else {
+      addFinalGraph(createSimilar());
+    }
     statistics.clear();
-  } else if (!final_graph.front()->hasPosition()) {
+  } else if (!final_graphs.front()->hasPosition()) {
     cerr << "RESETTING EVERYTHING!\n";
-    if (final_graph.front()->hasNodeSelection()) {
+    if (final_graphs.front()->hasNodeSelection()) {
       selectNodes(-2);
     } else {
       selectNodes();
@@ -1203,7 +1222,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
       setLocationGraphValid(false);
       incVersion();
       resume2();
-      final_graph->resume2();
+      g->resume2();
       changed = true;
     }
   }
@@ -1470,9 +1489,8 @@ Graph::setNormal(int i, const glm::vec4 & v) {
 
 void
 Graph::invalidateVisibleNodes() {
-  if (final_graph.get()) {
-    final_graph->reset();
-  }
+  storeChangesFromFinal();
+  final_graphs.clear();
   for (int i = 0; i < getNodeCount(); i++) {
     auto & graph = node_geometry2[i].nested_graph;
     if (graph.get()) {
@@ -1487,7 +1505,9 @@ Graph::setNodeTexture(const skey & key, int texture) {
   if (it2 != getNodeCache().end()) {
     setNodeTexture(it2->second, texture);
   }
-  if (final_graph.get()) final_graph->setNodeTexture(key, texture);    
+  for (auto & g : final_graphs) {
+    g->setNodeTexture(key, texture);
+  }
 }
 
 void
@@ -1496,5 +1516,7 @@ Graph::setLabelTexture(const skey & key, int texture) {
   if (it2 != getNodeCache().end()) {
     setLabelTexture(it2->second, texture);
   }
-  if (final_graph.get()) final_graph->setLabelTexture(key, texture);
+  for (auto & g : final_graphs) {
+    g->setLabelTexture(key, texture);
+  }
 }
