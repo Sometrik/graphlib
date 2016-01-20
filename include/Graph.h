@@ -860,6 +860,9 @@ class Graph : public MBRObject {
   GraphRefR getGraphForReading(int graph_id) const;
   GraphRefW getGraphForWriting(int graph_id);
 
+  void setMinSignificance(float s) { min_significance = s; }
+  void setMinScale(float s) { min_scale = s; }
+  
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -923,6 +926,7 @@ class Graph : public MBRObject {
   int default_symbol_id = 0;
   float radius = 0.0f;
   std::vector<ArcData2D> arc_geometry;
+  float min_significance = 0.0f, min_scale = 0.0f;
 
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
