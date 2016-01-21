@@ -725,15 +725,6 @@ Graph::applyDragAndAge(RenderMode mode, float friction) {
 }
 
 int
-Graph::getNodeId(short source_id, long long source_object_id) const {
-  auto it = getNodeCache().find(skey(source_id, source_object_id));
-  if (it != getNodeCache().end()) {
-    return it->second;
-  }
-  return -1;
-}
-
-int
 Graph::getFaceId(short source_id, long long source_object_id) const {
   auto it = getFaceCache().find(skey(source_id, source_object_id));
   if (it != getFaceCache().end()) {

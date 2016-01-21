@@ -10,29 +10,19 @@
 #include "NodeArray.h"
 
 #include <ArcData2D.h>
-#include <Table.h>
 
 #include <vector>
 #include <set>
 
 #define INITIAL_ALPHA		0.075f
 
-#define DEFAULT_PROFILE	0
-#define PENDING_PROFILE	1
-#define BOT_PROFILE	2
-
-#define NODE_SELECTED		1
-#define NODE_LABEL_VISIBLE	2
-#define NODE_FIXED_POSITION	4
-
-#define CLEAR_LABELS	1
-#define CLEAR_NODES	2
-#define CLEAR_ALL	(CLEAR_LABELS | CLEAR_NODES)
-
 class Graph;
 class DisplayInfo;
 
-#include "graph_color.h"
+struct node_tertiary_data_s {
+  int first_edge;
+  float indegree, outdegree;
+};
 
 struct cluster_data_s {
   graph_color_s color;
@@ -135,30 +125,6 @@ class ConstEdgeIterator {
 
 class VBO;
 class TextureAtlas;
-
-namespace canvas {
-  class ContextFactory;
-  class Color;
-};
-
-#if 0
-class Cursor {
- public:
-  
-  int node_idx;
-};
-#endif
-
-#if 0
-class Community {
- public:
-  Community() { }
-  
- private:
-  std::vector<int> nodes;
-};
-#endif
-
 class GraphRefR;
 class GraphRefW;
 
@@ -211,21 +177,9 @@ class Graph : public MBRObject {
   table::Table & getRegionData() { return regions; }
   table::Table & getShellData() { return shells; }
 
-  bool empty() const { return getNodeCount() == 0; }
-  
+  bool empty() const { return nodes->empty(); }
   // double calculateTotalEnergy() const;
 
-  std::string getGraphName(int graph_id) const {
-    for (int i = 0; i < getNodeCount(); i++) {
-      auto & graph = node_geometry2[i].nested_graph;
-      if (graph.get() && graph->getId() == graph_id) {
-	return getNodeData()["name"].getText(i);
-      }
-    }   
-    return "";
-  }
-
-  int getNodeFirstEdge(int i) const { return node_geometry2[i].first_edge; }
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
   int getFaceRegion(int i) const { return face_attributes[i].region; }
 
@@ -287,6 +241,23 @@ class Graph : public MBRObject {
   }
 #endif
 
+  void setNodeFirstEdge(int n, int edge) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    node_geometry3[n].first_edge = edge + 1;
+  }
+
+  void updateOutdegree(int n, int d) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    node_geometry3[n].outdegree += d; // weight;
+    total_outdegree += d; // weight;
+  }
+
+  void updateIndegree(int n, int d) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    node_geometry3[n].indegree += d; // weight;
+    total_indegree += d; // weight;
+  }
+  
   // return the weighted degree of the node
   int out_degree(int node) const {
     int d = 0;
@@ -299,6 +270,14 @@ class Graph : public MBRObject {
   }
  
   void simplifyWithClusters(const std::vector<int> & clusters, Graph & target_graph);
+
+  int getNodeFirstEdge(int i) const {
+    if (i >= 0 && i < node_geometry3.size()) {
+      return node_geometry3[i].first_edge - 1;
+    } else {
+      return -1;
+    }
+  }
 
   // return the weighted degree of the node
   double weighted_degree(int node) const {
@@ -357,7 +336,6 @@ class Graph : public MBRObject {
   
   void updateNodeAppearanceSlow(int node_id);
   void updateAppearance();
-  const std::string & getNodeLabel(int i) const { return node_geometry2[i].label; }
   const std::string & getRegionLabel(int i) const { return region_attributes[i].label; }
   glm::dvec3 getRegionPosition(int i) {
     return region_attributes[i].mbr.getCenter();
@@ -365,20 +343,7 @@ class Graph : public MBRObject {
   Rect2d & getRegionMBR(int i) { return region_attributes[i].mbr; }
   Rect2d & getFaceMBR(int i) { return face_attributes[i].mbr; }
   const glm::vec2 & getFaceCentroid(int i) const { return face_attributes[i].centroid; }
-
-  void setNodeLabel(int i, const std::string & text) {
-    if (node_geometry2[i].label != text) {
-      node_geometry2[i].label = text;
-      node_geometry2[i].label_texture = 0;
-    }
-  }
-
-  void setNestedGraph(int i, std::shared_ptr<Graph> graph) {
-    node_geometry2[i].nested_graph = graph;
-  }
-  
-  void clearLabelTexture(int i) { node_geometry2[i].label_texture = 0; }
-      
+        
   bool hasNodeSelection() const { return has_node_selection; }
   void selectNodes(int node_id = -1, int depth = 0);
 
@@ -499,18 +464,6 @@ class Graph : public MBRObject {
     return cluster_id;
   }
   
-  virtual int addNode(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
-    int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, size, 0, NODE_SELECTED });
-    node_geometry2.push_back({ type, -1, -1, -1, 0, 0, 0, 0, "", std::shared_ptr<Graph>() });
-    version++;
-    while (nodes.size() < node_geometry.size()) {
-      nodes.addRow();
-    }
-    updateNodeSize(node_id);
-    return node_id;
-  }
-
   virtual int addFace(int region_id = -1, time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1, int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
     int next_face_in_region = -1;
@@ -524,81 +477,7 @@ class Graph : public MBRObject {
   }
   
   virtual bool checkConsistency() const { return true; }
-  
-  std::vector<int> createSortedNodeIndices(const glm::vec3 & camera_pos) const;
-
-  std::vector<int> addNodes(size_t n) {
-    std::vector<int> v;
-    while (n--) {
-      v.push_back(addNode());
-    }
-    return v;
-  }
-  
-  const glm::vec3 & getPosition(int i) const {
-    return node_geometry[i].position;
-  }
-  const glm::vec3 & getPrevPosition(int i) const {
-    return node_geometry[i].prev_position;
-  }
-  const std::pair<glm::vec3, glm::vec3> getPositions(int i) const {
-    return std::pair<glm::vec3, glm::vec3>(node_geometry[i].position, node_geometry[i].prev_position);
-  }
-
-  node_data_s * getGeometryPtr() {
-    node_data_s & a = node_geometry.front();
-    return &a;
-  }
-  std::vector<node_data_s> & getGeometry() { return node_geometry; }
-  std::vector<node_secondary_data_s> & getGeometry2() { return node_geometry2; }
-    
-#if 0
-  int addNodeWithId(const std::string & id_text) {
-    int node_id = addNode();
-    getNodeData().addTextColumn("id").setValue(node_id, id_text);
-    return node_id;
-  }
-  void setNodeId(int node, const std::string & id) {
-    getNodeData().addTextColumn("id").setValue(node, id);
-  }
-#endif
-    
-  void updatePosition(int i, const glm::vec3 & v) {
-    node_geometry[i].position = v;    
-  }
-  void updatePrevPosition(int i, const glm::vec3 & v) {
-    node_geometry[i].prev_position = v;    
-  }
-  void setPosition(int i, const glm::vec3 & v) { 
-    node_geometry[i].position = node_geometry[i].prev_position = v;
-    mbr.growToContain(v.x, v.y);
-    version++;
-  }
-  void setPosition(int i, const glm::vec2 & v) {
-    setPosition(i, glm::vec3(v, 0.0f));
-  }
-  void setPositions(int i, const std::pair<glm::vec3, glm::vec3> & p) {
-    node_geometry[i].position = p.first;
-    node_geometry[i].prev_position = p.second;
-    mbr.growToContain(p.first.x, p.first.y);
-    version++;
-  }
-  void setNormal(int i, const glm::vec4 & v);  
-  void setNodeColor2(int i, const graph_color_s & c) {
-    node_geometry[i].color = c;
-    version++;
-  }
-  void setNodeColor2(int i, const canvas::Color & c);
-  void setClusterColor(int i, const graph_color_s & c) {
-    cluster_attributes[i].color = c;
-    version++;
-  }
-  void setClusterColor(int i, const canvas::Color & c);
-
-  void setNodeTexture(int i, int texture) {
-    node_geometry[i].texture = texture;
-    version++;
-  }
+          
   void setNodeTexture(const skey & key, int texture);
   
   void clearTextures(int clear_flags = CLEAR_ALL) {
@@ -606,81 +485,23 @@ class Graph : public MBRObject {
       g->clearTextures(clear_flags);
     }
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
+    nodes->clearTextures(clear_flags);
     for (int i = 0; i < getNodeCount(); i++) {
-      if (clear_flags & CLEAR_LABELS) {
-	node_geometry2[i].label_texture = 0;
-	node_geometry2[i].label_visibility_val = 0;
-	node_geometry[i].flags &= ~NODE_LABEL_VISIBLE;
-      }
-      if (clear_flags & CLEAR_NODES) {
-	node_geometry[i].texture = DEFAULT_PROFILE;
-      }
-      if (node_geometry2[i].nested_graph.get()) {
-	node_geometry2[i].nested_graph->clearTextures(clear_flags);
+      if (getNodeArray().node_geometry2[i].nested_graph.get()) {
+	getNodeArray().node_geometry2[i].nested_graph->clearTextures(clear_flags);
       }
     }
-    version++;
-  }
-  void setLabelTexture(int i, int texture) {
-    node_geometry2[i].label_texture = texture;
     version++;
   }
   void setLabelTexture(const skey & key, int texture);  
-  void setNodeLabelVisibilityValue(int i, float f) {
-    int f2 = int(f * 65535);
-    if (f2 < 0) f2 = 0;
-    else if (f2 > 65535) f2 = 65535;
-    node_geometry2[i].label_visibility_val = (unsigned short)f2;
-  }
-  bool setNodeLabelVisibility(int i, bool t) {
-    bool orig_t = node_geometry[i].flags | NODE_LABEL_VISIBLE ? true : false;
-    if (t != orig_t || 1) {
-      if (t) {
-	node_geometry[i].flags |= NODE_LABEL_VISIBLE;
-      } else {
-	node_geometry[i].flags &= ~NODE_LABEL_VISIBLE;
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
-  bool updateNodeLabelValues(int i, float visibility) {
-    float vv = getNodeLabelVisibilityValue(i) + visibility;
-    if (vv < 0) vv = 0;
-    else if (vv > 1) vv = 1;
-    setNodeLabelVisibilityValue(i, vv);
-    if (vv >= 0.75) return setNodeLabelVisibility(i, true);
-    else if (vv <= 0.25) return setNodeLabelVisibility(i, false);
-    else return false;
-  }
-  void setNodeFixedPosition(int i, bool t) {
-    if (t) {
-      node_geometry[i].flags |= NODE_FIXED_POSITION;
-    } else {
-      node_geometry[i].flags &= ~NODE_FIXED_POSITION;
-    }
-    // doesn't affect anything directly, so no need to update version
-  }
 
-  const node_data_s & getNodeData(int i) const { return node_geometry[i]; }
-  node_data_s & getNodeData(int i) { return node_geometry[i]; }
+  int getNodeCount() const { return nodes->size(); }
 
-  const node_secondary_data_s & getNodeSecondaryData(int i) const { return node_geometry2[i]; }
-  node_secondary_data_s & getNodeSecondaryData(int i) { return node_geometry2[i]; }
+  NodeArray & getNodeArray() { return *nodes; }
+  const NodeArray & getNodeArray() const { return *nodes; }
   
-  const graph_color_s & getNodeColor(int i) const { return node_geometry[i].color; }
-  bool getNodeLabelVisibility(int i) const { return node_geometry[i].flags & NODE_LABEL_VISIBLE ? true : false; }
-  float getNodeLabelVisibilityValue(int i) const { return node_geometry2[i].label_visibility_val / 65535.0f; }
-
-  int getNodeCount() const { return node_geometry.size(); }
-
-  // std::string getNodeId(int i) const { return nodes["id"].getText(i); }
-  std::string getNodeName(int i) const { return nodes["name"].getText(i); }
-  std::string getNodeUsername(int i) const { return nodes["uname"].getText(i); }
-  
-  table::Table & getNodeData() { return nodes; }
-  const table::Table & getNodeData() const { return nodes; }
+  table::Table & getNodeData() { return nodes->getTable(); }
+  const table::Table & getNodeData() const { return nodes->getTable(); }
     
   int getDimensions() const { return dimensions; }
   int getVersion() const { return version; }
@@ -691,12 +512,6 @@ class Graph : public MBRObject {
   void incVersion() { version++; }
   void setVersion(int _version) { version = _version; }
     
-  void setNodeSizeMethod(SizeMethod m) { node_size_method = m; }
-  const SizeMethod & getNodeSizeMethod() const { return node_size_method; }
-
-  void setLabelMethod(const LabelMethod & m) { label_method = m; }
-  const LabelMethod & getLabelMethod() const { return label_method; }
-
   Graph & getActualGraph(float scale) {
     auto g = getFinal(scale);
     return g.get() ? *g : *this;
@@ -711,13 +526,11 @@ class Graph : public MBRObject {
   
   std::shared_ptr<Graph> & getLocation() { return location_graph; }
   const std::shared_ptr<const Graph> getLocation() const { return location_graph; }
-  std::shared_ptr<Graph> & getSimplified() { return simplified_graph; }
 
   void addFinalGraph(std::shared_ptr<Graph> g) {
     final_graphs.push_back(g);
   }
   void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
-  void setSimplified(std::shared_ptr<Graph> g) { simplified_graph = g; } 
 
   virtual void clear() {
     clusters.clear();
@@ -728,32 +541,28 @@ class Graph : public MBRObject {
     cluster_attributes.clear();
     face_attributes.clear();
     region_attributes.clear();
-    node_geometry.clear();
-    node_geometry2.clear();
+    // node_geometry.clear();
+    // node_geometry2.clear();
+    // node_cache.clear();
     // nodes.clear();
 
     highlighted_node = -1;
     highlighted_region = -1;
-    node_cache.clear();
     has_node_selection = false;
     // total_indegree = total_outdegree = 0.0;
     total_edge_weight = 0.0;
   }
       
-  std::map<skey, int> & getNodeCache() { return node_cache; } 
-  const std::map<skey, int> & getNodeCache() const { return node_cache; } 
-
   std::map<skey, int> & getFaceCache() { return face_cache; } 
   const std::map<skey, int> & getFaceCache() const { return face_cache; } 
 
-  int getNodeId(short source_id, long long source_object_id) const;
   int getFaceId(short source_id, long long source_object_id) const;
   
   int pickNode(const DisplayInfo & display, int x, int y, float node_scale) const;
 
   void setNodeCluster(int node_id, int cluster_id) {
     assert(node_id >= 0 && node_id < getNodeCount());
-    auto & nd = getNodeSecondaryData(node_id);
+    auto & nd = getNodeArray().getNodeSecondaryData(node_id);
     if (nd.cluster_id != -1) {
       assert(nd.cluster_id >= 0 && nd.cluster_id <= (int)getClusterCount());
       getClusterAttributes(nd.cluster_id).num_nodes--;
@@ -776,11 +585,6 @@ class Graph : public MBRObject {
   virtual EdgeIterator end_edges() = 0;
   virtual ConstEdgeIterator begin_edges() const = 0;
   virtual ConstEdgeIterator end_edges() const = 0;
-
-#if 0
-  NodeIterator begin_nodes() { return NodeIterator(&(node_geometry.front())); }
-  NodeIterator end_nodes() { return NodeIterator(&(node_geometry.back())) + 1; }
-#endif
 
   int getGraphNodeId(int graph_id) const;
   void storeChangesFromFinal();
@@ -814,8 +618,28 @@ class Graph : public MBRObject {
       
   void invalidateVisibleNodes();
 
+  void setClusterColor(int i, const graph_color_s & c) {
+    cluster_attributes[i].color = c;
+    version++;
+  }
+  void setClusterColor(int i, const canvas::Color & c);
+
+  void updateNodeSize(int n) {
+    nodes->updateNodeSize(n, total_outdegree, total_indegree);
+  }
+
   GraphRefR getGraphForReading(int graph_id) const;
   GraphRefW getGraphForWriting(int graph_id);
+
+  std::string getGraphName(int graph_id) const {
+    for (int i = 0; i < getNodeCount(); i++) {
+      auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+      if (graph.get() && graph->getId() == graph_id) {
+	return nodes->getTable()["name"].getText(i);
+      }
+    }   
+    return "";
+  }
 
   float getMinSignificance() const { return min_significance; }
   float getMinScale() const { return min_scale; }
@@ -843,6 +667,7 @@ class Graph : public MBRObject {
   int srid = 0, version = 1;
   short source_id = 0;
 
+  int id;
   std::shared_ptr<NodeArray> nodes;
   int dimensions;
   int highlighted_node = -1, highlighted_region = -1;
@@ -852,14 +677,13 @@ class Graph : public MBRObject {
   float alpha = 0.0f;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
-  std::shared_ptr<Graph> location_graph, simplified_graph;
+  std::shared_ptr<Graph> location_graph;
   std::vector<std::shared_ptr<Graph> > final_graphs;
   std::map<skey, int> face_cache;
   bool has_node_selection = false; 
   Personality personality = NONE;
   RawStatistics statistics;
   std::string node_color_column;
-  LabelMethod label_method;
   std::string keywords;
   int server_search_id = 0;
   bool is_loaded = false;
@@ -869,6 +693,8 @@ class Graph : public MBRObject {
   float radius = 0.0f;
   std::vector<ArcData2D> arc_geometry;
   float min_significance = 0.0f, min_scale = 0.0f;
+  std::vector<node_tertiary_data_s> node_geometry3;
+  double total_outdegree = 0, total_indegree = 0;
   
   static int next_id;
 };
