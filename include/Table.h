@@ -366,6 +366,7 @@ namespace table {
     void loadCSV(const char * filename, char delimiter = ';');
     
     size_t size() const { return num_rows; }
+    bool empty() const { return num_rows == 0; }
     size_t getColumnCount() const { return columns.size(); }
 
     std::map<std::string, std::shared_ptr<Column> > & getColumns() { return columns; }
