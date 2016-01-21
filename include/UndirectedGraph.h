@@ -30,12 +30,11 @@ class UndirectedGraph : public Graph {
     if (n1 != -1) {
       int prev_first_edge = getNodeFirstEdge(n1);
       assert(edge != prev_first_edge);
-      node_geometry2[n1].first_edge = edge;
-      node_geometry2[n1].outdegree += 1; // weight;
-      total_outdegree += 1; // weight;
+      setNodeFirstEdge(n1, edge);
+      updateOutdegree(n1, 1);
       next_node_edge = prev_first_edge;
 
-      if (getNodeSizeMethod().definedForSource()) {
+      if (getNodeArray().getNodeSizeMethod().definedForSource()) {
 	updateNodeSize(n1);
       }
     }
@@ -43,11 +42,10 @@ class UndirectedGraph : public Graph {
       // int prev_first_edge = getNodeFirstEdge(n2);
       // assert(edge != prev_first_edge);
       // node_geometry2[n2].first_edge = edge;
-      node_geometry2[n2].indegree += 1; // weight;
-      total_indegree += 1; // weight;
+      updateIndegree(n2, 1);
       // next_head_edge = prev_first_edge;
 
-      if (getNodeSizeMethod().definedForTarget()) {
+      if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
 	updateNodeSize(n2);
       }      
     }
