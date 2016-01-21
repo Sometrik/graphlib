@@ -2,23 +2,18 @@
 #define _GRAPH_H_
 
 #include "MBRObject.h"
-#include "NodeType.h"
 #include "FeedMode.h"
 #include "RenderMode.h"
 #include "RawStatistics.h"
 #include "LabelStyle.h"
-#include "SizeMethod.h"
 #include "LabelMethod.h"
-
-#include "../system/Mutex.h"
+#include "NodeArray.h"
 
 #include <ArcData2D.h>
 #include <Table.h>
 
 #include <vector>
 #include <set>
-
-#include <glm/glm.hpp>
 
 #define INITIAL_ALPHA		0.075f
 
@@ -44,26 +39,6 @@ struct cluster_data_s {
   glm::vec3 position;
   glm::vec3 prev_position;
   unsigned int num_nodes;
-};
-
-struct node_data_s {
-  graph_color_s color; // 0
-  glm::uint32 normal; // 4
-  glm::vec3 position; // 8
-  glm::vec3 prev_position; // 20
-  float age, size; // 32
-  short texture, flags; // 40
-};
-
-struct node_secondary_data_s {
-  NodeType type;
-  int first_edge, orig_node_id;
-  int cluster_id;
-  short label_texture;
-  unsigned short label_visibility_val;
-  float indegree, outdegree;
-  std::string label;
-  std::shared_ptr<Graph> nested_graph;
 };
 
 struct edge_data_s {
@@ -144,15 +119,10 @@ class ConstEdgeIterator {
   size_t stride;
 };
 
-#include "StatusInterface.h"
-#include "GraphElement.h"
-
 #include <string>
 #include <vector>
 #include <list>
 #include <set>
-
-#include "skey.h"
 
 #define GF_TEMPORAL_GRAPH	1
 #define GF_HAS_SPATIAL_DATA	4
@@ -760,13 +730,13 @@ class Graph : public MBRObject {
     region_attributes.clear();
     node_geometry.clear();
     node_geometry2.clear();
-    nodes.clear();
+    // nodes.clear();
 
     highlighted_node = -1;
     highlighted_region = -1;
     node_cache.clear();
     has_node_selection = false;
-    total_indegree = total_outdegree = 0.0;
+    // total_indegree = total_outdegree = 0.0;
     total_edge_weight = 0.0;
   }
       
@@ -857,55 +827,37 @@ class Graph : public MBRObject {
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
-  void updateNodeSize(int n) { node_geometry[n].size = node_size_method.calculateSize(node_geometry2[n], total_indegree, total_outdegree, getNodeCount() ); }
 
-  table::Table clusters, nodes, edges, faces, regions, shells;
+  table::Table clusters, edges, faces, regions, shells;
   std::vector<cluster_data_s> cluster_attributes;
   std::vector<face_data_s> face_attributes;
   std::vector<region_data_s> region_attributes;
-  std::vector<node_data_s> node_geometry;
-  std::vector<node_secondary_data_s> node_geometry2;
   double total_edge_weight = 0;
-  double total_outdegree = 0, total_indegree = 0;
  
  private:
-  void lockReader() const {
-    MutexLocker locker(mutex);
-    num_readers++;
-    if (num_readers == 1) writer_mutex.lock();
-  }
-  void unlockReader() const {
-    MutexLocker locker(mutex);
-    num_readers--;
-    if (num_readers == 0) {
-      writer_mutex.unlock();
-    }
-  }
-  void lockWriter() {
-    writer_mutex.lock();
-  }
-  void unlockWriter() {
-    writer_mutex.unlock();
-  }
-
+  void lockReader() const { nodes->lockReader(); }
+  void unlockReader() const { nodes->unlockReader(); }
+  void lockWriter() { nodes->lockWriter(); }
+  void unlockWriter() { nodes->unlockWriter(); }
+  
   int srid = 0, version = 1;
+  short source_id = 0;
+
+  std::shared_ptr<NodeArray> nodes;
   int dimensions;
   int highlighted_node = -1, highlighted_region = -1;
-  int id;
   bool show_clusters = true, show_nodes = true, show_edges = true, show_regions = true, show_labels = true;
   glm::vec4 node_color, edge_color, region_color;
   unsigned int flags = 0;
-  short source_id = 0;
   float alpha = 0.0f;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
   std::shared_ptr<Graph> location_graph, simplified_graph;
   std::vector<std::shared_ptr<Graph> > final_graphs;
-  std::map<skey, int> node_cache, face_cache;
+  std::map<skey, int> face_cache;
   bool has_node_selection = false; 
   Personality personality = NONE;
   RawStatistics statistics;
-  SizeMethod node_size_method;
   std::string node_color_column;
   LabelMethod label_method;
   std::string keywords;
@@ -917,9 +869,6 @@ class Graph : public MBRObject {
   float radius = 0.0f;
   std::vector<ArcData2D> arc_geometry;
   float min_significance = 0.0f, min_scale = 0.0f;
-
-  mutable int num_readers = 0;
-  mutable Mutex mutex, writer_mutex;
   
   static int next_id;
 };
