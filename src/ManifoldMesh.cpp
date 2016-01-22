@@ -1,7 +1,6 @@
 #include "ManifoldMesh.h"
 
 using namespace std;
-using namespace table;
 
 ManifoldMesh::ManifoldMesh(int _id) : Graph(3, _id) {
 #if 0
@@ -23,7 +22,6 @@ std::shared_ptr<Graph>
 ManifoldMesh::createSimilar() const {
   std::shared_ptr<Graph> graph(new ManifoldMesh(getId()));
   graph->setLocationGraphValid(false);
-  graph->setAlpha3(getAlpha2());
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
@@ -34,13 +32,8 @@ ManifoldMesh::createSimilar() const {
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setRegionVisibility(getRegionVisibility());
   graph->setLabelVisibility(getLabelVisibility());
-
-  for (auto it = getNodeData().getColumns().begin(); it != getNodeData().getColumns().end(); it++) {
-    if (it->first != "posts") {
-      graph->getNodeData().addColumn(it->second->create());
-    }
-  }
-
+  graph->setNodeArray(nodes);
+  
   return graph;
 }
 
