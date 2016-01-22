@@ -1,7 +1,6 @@
 #include "PointCloud.h"
 
 using namespace std;
-using namespace table;
 
 PointCloud::PointCloud(int _id) : Graph(0, _id) {  
 
@@ -27,10 +26,8 @@ PointCloud::createSimilar() const {
   graph->getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
   graph->getNodeArray().setAlpha3(getNodeArray().getAlpha2());
 
-  for (auto it = getNodeData().getColumns().begin(); it != getNodeData().getColumns().end(); it++) {
-    if (it->first != "posts") {
-      graph->getNodeData().addColumn(it->second->create());
-    }
+  for (auto it = getNodeArray().getTable().getColumns().begin(); it != getNodeArray().getTable().getColumns().end(); it++) {
+    graph->getNodeArray().getTable().addColumn(it->second->create());
   }
 
   return graph;
