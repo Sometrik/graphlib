@@ -60,7 +60,7 @@ FileTypeHandler::createNode2D(Graph & graph, map<string, int> & nodes, double x,
   if (it != nodes.end()) {
     return it->second;
   } else {
-    int node_id = nodes[key.str()] = graph.getNodeArray().addNode();
+    int node_id = nodes[key.str()] = graph.addNode();
     graph.getNodeArray().setPosition(node_id, glm::vec3(x, y, 0.0f));
     return node_id;  
   }
@@ -74,7 +74,7 @@ FileTypeHandler::createNode3D(Graph & graph, map<string, int> & nodes, double x,
   if (it != nodes.end()) {
     return it->second;
   } else {
-    int node_id = nodes[key.str()] = graph.getNodeArray().addNode();
+    int node_id = nodes[key.str()] = graph.addNode();
     graph.getNodeArray().setPosition(node_id, glm::vec3(x, y, z));
     graph.getNodeArray().setNormal(node_id, glm::vec4(nx, ny, nz, 1.0f));
     return node_id;  
@@ -94,14 +94,14 @@ FileTypeHandler::createNodesForArc(const ArcData2D & arc, Graph & graph, map<str
   if (it != nodes.end()) {
     node1 = it->second;
   } else {
-    nodes[key1.str()] = node1 = graph.getNodeArray().addNode();
+    nodes[key1.str()] = node1 = graph.addNode();
     graph.getNodeArray().setPosition(node1, glm::vec3(v1.x, v1.y, 0.0f));
   }
   it = nodes.find(key2.str());
   if (it != nodes.end()) {
     node2 = it->second;
   } else {
-    nodes[key2.str()] = node2 = graph.getNodeArray().addNode();
+    nodes[key2.str()] = node2 = graph.addNode();
     graph.getNodeArray().setPosition(node2, glm::vec3(v2.x, v2.y, 0.0f));
   }
   assert(node1 >= 0 && node2 >= 0);
