@@ -18,26 +18,16 @@ class MultiArcGraph : public Graph {
     
     int next_node_edge = -1;
     if (n1 != -1) {
-      int prev_first_edge = getNodeFirstEdge(n1);
-      assert(edge != prev_first_edge);
-      node_geometry2[n1].first_edge = edge;
-      node_geometry2[n1].outdegree += 1; // weight;
-      total_outdegree += 1; // weight;
-      next_node_edge = prev_first_edge;
-
-      if (getNodeSizeMethod().definedForSource()) {
+      next_node_edge = getNodeFirstEdge(n1);
+      setNodeFirstEdge(n1, edge);
+      updateOutdegree(n1, 1.0f); // weight
+      if (getNodeArray().getNodeSizeMethod().definedForSource()) {
 	updateNodeSize(n1);
       }
     }
     if (n2 != -1) {
-      // int prev_first_edge = getNodeFirstEdge(n2);
-      // assert(edge != prev_first_edge);
-      // node_geometry2[n2].first_edge = edge;
-      node_geometry2[n2].indegree += 1; // weight;
-      total_indegree += 1; // weight;
-      // next_head_edge = prev_first_edge;
-
-      if (getNodeSizeMethod().definedForTarget()) {
+      updateIndegree(n2, 1.0f); // weight
+      if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
 	updateNodeSize(n2);
       }    
     }
