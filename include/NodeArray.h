@@ -76,14 +76,13 @@ class NodeArray {
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
-  int addNode(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
+  int add(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
     int node_id = node_geometry.size();
     node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, size, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
     }
-    // updateNodeSize(node_id);
     return node_id;
   }
 
@@ -210,7 +209,7 @@ class NodeArray {
   std::vector<int> addNodes(size_t n) {
     std::vector<int> v;
     while (n--) {
-      v.push_back(addNode());
+      v.push_back(add());
     }
     return v;
   }
