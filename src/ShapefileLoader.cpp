@@ -15,7 +15,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace table;
 
 ShapefileLoader::ShapefileLoader() : FileTypeHandler("ESRI Shapefile", false) {
   addExtension("shp");
@@ -278,24 +277,24 @@ ShapefileLoader::openGraph(const char * filename) {
 
   assert(graph.get());
   
-  auto dbf = std::make_shared<DBase3File>(filename);
+  auto dbf = std::make_shared<table::DBase3File>(filename);
   
   if (dbf->getRecordCount() != shape_count) {
     cerr << "bad number of records\n";
   }
   
   if (graph->getDimensions() == 0) {
-    Table & nodes_table = graph->getNodeData();
+    table::Table & nodes_table = graph->getNodeArray().getTable();
     for (auto & col : dbf->getColumns()) {
       nodes_table.addColumn(col);
     }
   } else if (graph->getDimensions() == 1) {
-    Table & hyperedges_table = graph->getFaceData();
+    table::Table & hyperedges_table = graph->getFaceData();
     for (auto & col : dbf->getColumns()) {
       hyperedges_table.addColumn(col);
     }
   } else if (graph->getDimensions() == 2) {
-    Table & regions_table = graph->getRegionData();
+    table::Table & regions_table = graph->getRegionData();
     for (auto & col : dbf->getColumns()) {
       regions_table.addColumn(col);
     }
