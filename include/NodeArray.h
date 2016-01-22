@@ -35,12 +35,12 @@ namespace canvas {
 };
 
 struct node_data_s {
-  graph_color_s color; // 0
-  glm::uint32 normal; // 4
-  glm::vec3 position; // 8
-  glm::vec3 prev_position; // 20
-  float age, size; // 32
-  short texture, flags; // 40
+  graph_color_s color;
+  glm::uint32 normal;
+  glm::vec3 position;
+  glm::vec3 prev_position;
+  float age;
+  short texture, flags;
   NodeType type;
   int cluster_id;
   short label_texture;
@@ -52,7 +52,7 @@ struct node_data_s {
 class NodeArray {
  public:
   friend class Graph;
-  NodeArray() { }
+ NodeArray() : size_method(SizeMethod::CONSTANT, 1.0f) { }
 
   size_t size() const { return nodes.size(); }
   bool empty() const { return nodes.empty(); }
@@ -60,13 +60,12 @@ class NodeArray {
   table::Table & getTable() { return nodes; }
   const table::Table & getTable() const { return nodes; }
 
-  void setNodeSizeMethod(SizeMethod m) { node_size_method = m; }
-  const SizeMethod & getNodeSizeMethod() const { return node_size_method; }
+  void setNodeSizeMethod(SizeMethod m) { size_method = m; }
+  const SizeMethod & getNodeSizeMethod() const { return size_method; }
 
   void setLabelMethod(const LabelMethod & m) { label_method = m; }
   const LabelMethod & getLabelMethod() const { return label_method; }
 
-  void updateAppearance();
   void updateNodeAppearanceAll();
   void updateNodeAppearanceSlow(int node_id);
 
@@ -76,9 +75,9 @@ class NodeArray {
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
-  int add(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
+  int add(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, size, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>() });
+    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -283,7 +282,7 @@ class NodeArray {
 
   std::map<skey, int> node_cache;
   table::Table nodes;
-  SizeMethod node_size_method;
+  SizeMethod size_method;
   LabelMethod label_method;
   LabelStyle label_style = LABEL_PLAIN;
   int default_symbol_id = 0;
