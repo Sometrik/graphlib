@@ -41,11 +41,7 @@ struct node_data_s {
   glm::vec3 prev_position; // 20
   float age, size; // 32
   short texture, flags; // 40
-};
-
-struct node_secondary_data_s {
   NodeType type;
-  int orig_node_id;
   int cluster_id;
   short label_texture;
   unsigned short label_visibility_val;
@@ -82,9 +78,8 @@ class NodeArray {
 
   int addNode(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, size, 0, NODE_SELECTED });
-    node_geometry2.push_back({ type, -1, -1, 0, 0, "", std::shared_ptr<Graph>() });
-    // version++;
+    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, size, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>() });
+    version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
     }
@@ -109,7 +104,7 @@ class NodeArray {
   void setPosition(int i, const glm::vec3 & v) { 
     node_geometry[i].position = node_geometry[i].prev_position = v;
     // mbr.growToContain(v.x, v.y);
-    // version++;
+    version++;
   }
   void setPosition(int i, const glm::vec2 & v) {
     setPosition(i, glm::vec3(v, 0.0f));
@@ -118,30 +113,30 @@ class NodeArray {
     node_geometry[i].position = p.first;
     node_geometry[i].prev_position = p.second;
     // mbr.growToContain(p.first.x, p.first.y);
-    // version++;
+    version++;
   }
   void setNormal(int i, const glm::vec4 & v);  
   void setNodeColor2(int i, const graph_color_s & c) {
     node_geometry[i].color = c;
-    // version++;
+    version++;
   }
   void setNodeColor2(int i, const canvas::Color & c);
 
   void setNodeTexture(int i, int texture) {
     node_geometry[i].texture = texture;
-    // version++;
+    version++;
   }
 
   void setLabelTexture(int i, int texture) {
-    node_geometry2[i].label_texture = texture;
-    // version++;
+    node_geometry[i].label_texture = texture;
+    version++;
   }
 
   void setNodeLabelVisibilityValue(int i, float f) {
     int f2 = int(f * 65535);
     if (f2 < 0) f2 = 0;
     else if (f2 > 65535) f2 = 65535;
-    node_geometry2[i].label_visibility_val = (unsigned short)f2;
+    node_geometry[i].label_visibility_val = (unsigned short)f2;
   }
   bool setNodeLabelVisibility(int i, bool t) {
     bool orig_t = node_geometry[i].flags | NODE_LABEL_VISIBLE ? true : false;
@@ -160,14 +155,20 @@ class NodeArray {
   void clearTextures(int clear_flags = CLEAR_ALL) {
     for (int i = 0; i < size(); i++) {
       if (clear_flags & CLEAR_LABELS) {
-	node_geometry2[i].label_texture = 0;
-	node_geometry2[i].label_visibility_val = 0;
+	node_geometry[i].label_texture = 0;
+	node_geometry[i].label_visibility_val = 0;
 	node_geometry[i].flags &= ~NODE_LABEL_VISIBLE;
       }
       if (clear_flags & CLEAR_NODES) {
 	node_geometry[i].texture = DEFAULT_PROFILE;
       }
     }
+  }
+
+  void clear() {
+    node_geometry.clear();
+    node_cache.clear();
+    nodes.clear();
   }
 
   bool updateNodeLabelValues(int i, float visibility) {
@@ -190,22 +191,20 @@ class NodeArray {
 
   const node_data_s & getNodeData(int i) const { return node_geometry[i]; }
   node_data_s & getNodeData(int i) { return node_geometry[i]; }
-  const node_secondary_data_s & getNodeSecondaryData(int i) const { return node_geometry2[i]; }
-  node_secondary_data_s & getNodeSecondaryData(int i) { return node_geometry2[i]; }
   
   const graph_color_s & getNodeColor(int i) const { return node_geometry[i].color; }
   bool getNodeLabelVisibility(int i) const { return node_geometry[i].flags & NODE_LABEL_VISIBLE ? true : false; }
-  float getNodeLabelVisibilityValue(int i) const { return node_geometry2[i].label_visibility_val / 65535.0f; }
+  float getNodeLabelVisibilityValue(int i) const { return node_geometry[i].label_visibility_val / 65535.0f; }
   
   void setNodeLabel(int i, const std::string & text) {
-    if (node_geometry2[i].label != text) {
-      node_geometry2[i].label = text;
-      node_geometry2[i].label_texture = 0;
+    if (node_geometry[i].label != text) {
+      node_geometry[i].label = text;
+      node_geometry[i].label_texture = 0;
     }
   }
   
   void setNestedGraph(int i, std::shared_ptr<Graph> graph) {
-    node_geometry2[i].nested_graph = graph;
+    node_geometry[i].nested_graph = graph;
   }
 
   std::vector<int> addNodes(size_t n) {
@@ -233,7 +232,6 @@ class NodeArray {
     return &a;
   }
   std::vector<node_data_s> & getGeometry() { return node_geometry; }
-  std::vector<node_secondary_data_s> & getGeometry2() { return node_geometry2; }
 
 #if 0
   NodeIterator begin_nodes() { return NodeIterator(&(node_geometry.front())); }
@@ -244,10 +242,9 @@ class NodeArray {
   int getDefaultSymbolId() const { return default_symbol_id; }
 
   std::vector<node_data_s> node_geometry;
-  std::vector<node_secondary_data_s> node_geometry2;
 
-  const std::string & getNodeLabel(int i) const { return node_geometry2[i].label; }
-  // void clearLabelTexture(int i) { node_geometry2[i].label_texture = 0; }
+  const std::string & getNodeLabel(int i) const { return node_geometry[i].label; }
+  // void clearLabelTexture(int i) { node_geometry[i].label_texture = 0; }
 
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
@@ -261,6 +258,8 @@ class NodeArray {
   void resume2() { alpha = INITIAL_ALPHA; }
   void stop() { alpha = 0.0f; }
 
+  int getVersion() const { return version; }
+  
  protected:
 
  private:
@@ -290,6 +289,7 @@ class NodeArray {
   LabelStyle label_style = LABEL_PLAIN;
   int default_symbol_id = 0;
   float alpha = 0.0f;
+  int version = 1;
 
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
