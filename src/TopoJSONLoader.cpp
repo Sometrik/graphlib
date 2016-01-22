@@ -42,7 +42,7 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
       if (it != nodes.end()) {
 	graph.getNodeArray().getTable()["id"].setValue(it->second, id_text);
       } else {
-	int node_id = nodes[key.str()] = graph.getNodeArray().addNode();
+	int node_id = nodes[key.str()] = graph.addNode();
 	graph.getNodeArray().getTable()["id"].setValue(it->second, id_text);
 	graph.getNodeArray().setPosition(node_id, v);
       }

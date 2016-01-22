@@ -33,7 +33,7 @@ TextFileLoader::openGraph(const char * filename) {
     StringUtils::trim(s);
     if (s.empty()) continue;
 
-    int node_id = graph->getNodeArray().addNode();
+    int node_id = graph->addNode();
     text_data.setValue(node_id, s);
 
     cerr << "added node " << node_id << ": " << s << endl;
