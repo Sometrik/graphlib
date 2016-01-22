@@ -16,7 +16,7 @@ class DisplayInfo;
 
 struct node_tertiary_data_s {
   int first_edge;
-  float indegree, outdegree;
+  float indegree, outdegree, size;
 };
 
 struct cluster_data_s {
@@ -222,8 +222,9 @@ class Graph : public MBRObject {
 
   bool hasEdge(int n1, int n2) const;
 
-  int addNode(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
-    int node_id = nodes->add(type, size, age);
+  int addNode(NodeType type = NODE_ANY, float age = 0.0f) {
+    int node_id = nodes->add(type, age);
+    if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
     updateNodeSize(node_id);
     return node_id;
   }
@@ -586,7 +587,7 @@ class Graph : public MBRObject {
   }
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
-  const node_tertiary_data_s & getNodeTertiaryData(int n) {
+  const node_tertiary_data_s & getNodeTertiaryData(int n) const {
     if (n >= 0 && n < node_geometry3.size()) {
       return node_geometry3[n];
     } else {
@@ -605,8 +606,8 @@ class Graph : public MBRObject {
   void setClusterColor(int i, const canvas::Color & c);
 
   void updateNodeSize(int n) {
-    // nodes->updateNodeSize(n, total_outdegree, total_indegree);    
-    getNodeArray().node_geometry[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, getNodeCount());
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, getNodeCount());
   }
 
   GraphRefR getGraphForReading(int graph_id) const;
@@ -622,6 +623,8 @@ class Graph : public MBRObject {
     return "";
   }
 
+  void updateAppearance();
+    
   float getMinSignificance() const { return min_significance; }
   float getMinScale() const { return min_scale; }
   
