@@ -22,7 +22,7 @@ UndirectedGraph::createSimilar() const {
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setRegionVisibility(getRegionVisibility());
   graph->setLabelVisibility(getLabelVisibility());
-  graph->setNodeArray(getNodeArray());  
+  graph->setNodeArray(nodes);  
 
   return graph;
 }
