@@ -6,6 +6,11 @@
 #include "../system/Mutex.h"
 #include "skey.h"
 #include "graph_color.h"
+#include "LabelStyle.h"
+#include "RenderMode.h"
+#include "LabelMethod.h"
+
+#define INITIAL_ALPHA		0.075f
 
 #include <Table.h>
 #include <glm/glm.hpp>
@@ -64,6 +69,10 @@ class NodeArray {
 
   void setLabelMethod(const LabelMethod & m) { label_method = m; }
   const LabelMethod & getLabelMethod() const { return label_method; }
+
+  void updateAppearance();
+  void updateNodeAppearanceAll();
+  void updateNodeAppearanceSlow(int node_id);
 
   // std::string getNodeName(int i) const { return nodes["name"].getText(i); }
   // std::string getNodeUsername(int i) const { return nodes["uname"].getText(i); }
@@ -187,8 +196,6 @@ class NodeArray {
   const graph_color_s & getNodeColor(int i) const { return node_geometry[i].color; }
   bool getNodeLabelVisibility(int i) const { return node_geometry[i].flags & NODE_LABEL_VISIBLE ? true : false; }
   float getNodeLabelVisibilityValue(int i) const { return node_geometry2[i].label_visibility_val / 65535.0f; }
-
-  std::vector<int> createSortedNodeIndices(const glm::vec3 & camera_pos) const;
   
   void setNodeLabel(int i, const std::string & text) {
     if (node_geometry2[i].label != text) {
@@ -208,7 +215,9 @@ class NodeArray {
     }
     return v;
   }
-  
+
+  void setNodeColorByColumn(int column);
+
   const glm::vec3 & getPosition(int i) const {
     return node_geometry[i].position;
   }
@@ -230,14 +239,27 @@ class NodeArray {
   NodeIterator begin_nodes() { return NodeIterator(&(node_geometry.front())); }
   NodeIterator end_nodes() { return NodeIterator(&(node_geometry.back())) + 1; }
 #endif
-
-  void updateNodeSize(int n, double total_outdegree, double total_indegree) { node_geometry[n].size = node_size_method.calculateSize(node_geometry2[n], total_indegree, total_outdegree, size() ); }
+  
+  void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
+  int getDefaultSymbolId() const { return default_symbol_id; }
 
   std::vector<node_data_s> node_geometry;
   std::vector<node_secondary_data_s> node_geometry2;
 
   const std::string & getNodeLabel(int i) const { return node_geometry2[i].label; }
   // void clearLabelTexture(int i) { node_geometry2[i].label_texture = 0; }
+
+  void setLabelStyle(LabelStyle style) { label_style = style; }
+  LabelStyle getLabelStyle() const { return label_style; }
+
+  void applyGravity(float gravity);
+  void applyDragAndAge(RenderMode mode, float friction);
+  
+  void setAlpha3(float f) { alpha = f; }
+  void updateAlpha() { alpha *= 0.99f; }
+  float getAlpha2() const { return alpha; }
+  void resume2() { alpha = INITIAL_ALPHA; }
+  void stop() { alpha = 0.0f; }
 
  protected:
 
@@ -265,6 +287,9 @@ class NodeArray {
   table::Table nodes;
   SizeMethod node_size_method;
   LabelMethod label_method;
+  LabelStyle label_style = LABEL_PLAIN;
+  int default_symbol_id = 0;
+  float alpha = 0.0f;
 
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;

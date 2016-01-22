@@ -3,18 +3,13 @@
 
 #include "MBRObject.h"
 #include "FeedMode.h"
-#include "RenderMode.h"
 #include "RawStatistics.h"
-#include "LabelStyle.h"
-#include "LabelMethod.h"
 #include "NodeArray.h"
 
 #include <ArcData2D.h>
 
 #include <vector>
 #include <set>
-
-#define INITIAL_ALPHA		0.075f
 
 class Graph;
 class DisplayInfo;
@@ -246,13 +241,13 @@ class Graph : public MBRObject {
     node_geometry3[n].first_edge = edge + 1;
   }
 
-  void updateOutdegree(int n, int d) {
+  void updateOutdegree(int n, float d) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
     node_geometry3[n].outdegree += d; // weight;
     total_outdegree += d; // weight;
   }
 
-  void updateIndegree(int n, int d) {
+  void updateIndegree(int n, float d) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
     node_geometry3[n].indegree += d; // weight;
     total_indegree += d; // weight;
@@ -334,8 +329,6 @@ class Graph : public MBRObject {
   size_t getRegionCount() const { return regions.size(); }
   size_t getShellCount() const { return shells.size(); }
   
-  void updateNodeAppearanceSlow(int node_id);
-  void updateAppearance();
   const std::string & getRegionLabel(int i) const { return region_attributes[i].label; }
   glm::dvec3 getRegionPosition(int i) {
     return region_attributes[i].mbr.getCenter();
@@ -347,7 +340,6 @@ class Graph : public MBRObject {
   bool hasNodeSelection() const { return has_node_selection; }
   void selectNodes(int node_id = -1, int depth = 0);
 
-  void setNodeColorByColumn(int column);
   void setRegionColorByColumn(int column);
 
   void setClusterVisibility(bool t) { show_clusters = t; }
@@ -426,17 +418,6 @@ class Graph : public MBRObject {
   bool isLoaded() const { return is_loaded; }
   void setIsLoaded(bool t) { is_loaded = t; }
   
-  void setAlpha3(float f) { alpha = f; }
-
-  void updateAlpha() {
-    alpha *= 0.99f;
-  }
-  float getAlpha2() const { return alpha; }
-  void resume2() {
-    alpha = INITIAL_ALPHA;
-  }
-  void stop() { alpha = 0.0f; }
-
   unsigned int getNewPrimaryObjects() const { return new_primary_objects_counter; }
   unsigned int getNewSecondaryObjects() const { return new_secondary_objects_counter; }
   unsigned int getNewImages() const { return new_images_counter; }
@@ -449,8 +430,6 @@ class Graph : public MBRObject {
   bool isLocationGraphValid() const { return location_graph_valid; }
 
   void relaxLinks();
-  void applyGravity(float gravity);
-  void applyDragAndAge(RenderMode mode, float friction);
 
   int getSRID() const { return srid; }
   void setSRID(int _srid) { srid = _srid; }
@@ -497,6 +476,7 @@ class Graph : public MBRObject {
 
   int getNodeCount() const { return nodes->size(); }
 
+  void setNodeArray(const std::shared_ptr<NodeArray> & _nodes) { nodes = _nodes; }
   NodeArray & getNodeArray() { return *nodes; }
   const NodeArray & getNodeArray() const { return *nodes; }
   
@@ -598,12 +578,6 @@ class Graph : public MBRObject {
 
   bool updateLabelVisibility(const DisplayInfo & display, bool reset = false);
 
-  void setLabelStyle(LabelStyle style) { label_style = style; }
-  LabelStyle getLabelStyle() const { return label_style; }
-
-  void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
-  int getDefaultSymbolId() const { return default_symbol_id; }
-
   void setRadius(float r) { radius = r; }
   float getRadius() const { return radius; }
 
@@ -614,6 +588,14 @@ class Graph : public MBRObject {
   }
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
+  const node_tertiary_data_s & getNodeTertiaryData(int n) {
+    if (n >= 0 && n < node_geometry3.size()) {
+      return node_geometry3[n];
+    } else {
+      return null_geometry3;
+    }
+  }
+  
   skey getNodeKey(int node_id) const;
       
   void invalidateVisibleNodes();
@@ -625,7 +607,8 @@ class Graph : public MBRObject {
   void setClusterColor(int i, const canvas::Color & c);
 
   void updateNodeSize(int n) {
-    nodes->updateNodeSize(n, total_outdegree, total_indegree);
+    // nodes->updateNodeSize(n, total_outdegree, total_indegree);    
+    getNodeArray().node_geometry[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, getNodeCount());
   }
 
   GraphRefR getGraphForReading(int graph_id) const;
@@ -646,7 +629,9 @@ class Graph : public MBRObject {
   
   void setMinSignificance(float s) { min_significance = s; }
   void setMinScale(float s) { min_scale = s; }
-  
+
+  std::vector<int> createSortedNodeIndices(const glm::vec3 & camera_pos) const;
+
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -674,7 +659,6 @@ class Graph : public MBRObject {
   bool show_clusters = true, show_nodes = true, show_edges = true, show_regions = true, show_labels = true;
   glm::vec4 node_color, edge_color, region_color;
   unsigned int flags = 0;
-  float alpha = 0.0f;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
   std::shared_ptr<Graph> location_graph;
@@ -688,13 +672,12 @@ class Graph : public MBRObject {
   int server_search_id = 0;
   bool is_loaded = false;
   float line_width = 1.0f;
-  LabelStyle label_style = LABEL_PLAIN;
-  int default_symbol_id = 0;
   float radius = 0.0f;
   std::vector<ArcData2D> arc_geometry;
   float min_significance = 0.0f, min_scale = 0.0f;
   std::vector<node_tertiary_data_s> node_geometry3;
   double total_outdegree = 0, total_indegree = 0;
+  node_tertiary_data_s null_geometry3;
   
   static int next_id;
 };

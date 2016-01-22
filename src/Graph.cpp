@@ -19,12 +19,9 @@
 #include "community/Community.h"
 #endif
 
-#include <glm/gtc/packing.hpp>
-
 #define EPSILON 0.0000000001
 
 using namespace std;
-using namespace table;
 
 int Graph::next_id = 1;
 
@@ -43,7 +40,7 @@ Graph::~Graph() {
 }
 
 Graph::Graph(const Graph & other)
-  : nodes(other.nodes),
+  : nodes(other.nodes), // copy node array by reference
     edges(other.edges),
     faces(other.faces),
     regions(other.regions),
@@ -51,8 +48,6 @@ Graph::Graph(const Graph & other)
     face_attributes(other.face_attributes),
     region_attributes(other.region_attributes),
     node_color_column(other.node_color_column),
-    node_geometry(other.node_geometry),
-    node_geometry2(other.node_geometry2),
     srid(other.srid),
     version(other.version),
     dimensions(other.dimensions),
@@ -65,17 +60,16 @@ Graph::Graph(const Graph & other)
     region_color(other.region_color),
     flags(other.flags),
     source_id(other.source_id),
-    node_cache(other.node_cache),
-    personality(other.personality),
-    node_size_method(other.node_size_method),
-    label_method(other.label_method)
+    personality(other.personality)
 {
   id = next_id++;
+#if 0
   for (auto & d : node_geometry2) {
     if (d.nested_graph.get()) {
       d.nested_graph = std::shared_ptr<Graph>(d.nested_graph->copy());
     }
   }
+#endif
 }
  
 bool
@@ -90,104 +84,10 @@ Graph::hasEdge(int n1, int n2) const {
   return false;
 }
 
-static Column * sort_col = 0;
+static table::Column * sort_col = 0;
 
 static bool compareRows(const int & a, const int & b) {
   return sort_col->compare(a, b);
-}
-
-void
-Graph::updateNodeAppearanceSlow(int node_id) {
-  string label, id, uname, name;
-  int r = -1, g = -1, b = -1;
-
-  for (map<string, std::shared_ptr<Column> >::const_iterator it = getNodeData().getColumns().begin(); it != getNodeData().getColumns().end(); it++) {
-    string n = StringUtils::toLower(it->first);
-    if (n == "r") {
-      r = it->second->getInt(node_id);
-    } else if (n == "g") {
-      g = it->second->getInt(node_id);
-    } else if (n == "b") {
-      b = it->second->getInt(node_id);
-    } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
-      if (n == "label") {
-	label = it->second->getText(node_id);
-      } else if (n == "uname") {
-	uname = it->second->getText(node_id);
-      } else if (n == "name") {
-	name = it->second->getText(node_id);
-      } else if (n == "id") {
-	id = it->second->getText(node_id);
-      }
-    }
-  }
-  if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
-    if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
-      label = getNodeData()[label_method.getColumn()].getText(node_id);
-    } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && !label.empty()) {
-      if (!uname.empty()) {
-	label = uname;
-      } else if (!name.empty()) {
-	label = name;
-      } else if (!id.empty()) {
-	label = id;
-      }    
-    }
-    setNodeLabel(node_id, label);
-  }
-  if (r >= 0 && g >= 0 && b >= 0) {
-    canvas::Color c(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
-    setNodeColor2(node_id, c);
-  }
-}
-
-void
-Graph::updateAppearance() {
-  if (node_size_method.getValue() == SizeMethod::SIZE_FROM_COLUMN) {
-    Column & sc = nodes[node_size_method.getColumn()];
-    for (unsigned int i = 0; i < getNodeCount(); i++) {
-      node_geometry[i].size = 2 * (1 + log(1 + sc.getDouble(i)) / log(1.5));
-    }
-    version++;
-  } else if (node_size_method.getValue() == SizeMethod::SIZE_FROM_NODE_COUNT) {
-    for (unsigned int i = 0; i < getNodeCount(); i++) {
-      auto & nested_graph = node_geometry2[i].nested_graph;
-      float a = nested_graph.get() ? nested_graph->getNodeCount() : 0;
-      node_geometry[i].size = 2 * (1 + log(1 + a) / log(2));
-    }
-    version++;
-  }
-}
-
-void
-Graph::setNodeColorByColumn(int column) {
-  sort_col = &(nodes[column]);
-  if (getNodeCount() <= 1) return;
-  cerr << "setting colors by column " << sort_col->name() << endl;
-  vector<int> v;
-  for (int i = 0; i < getNodeCount(); i++) {
-      v.push_back(i);
-  }
-  sort(v.begin(), v.end(), compareRows);
-  glm::vec3 c1(1.0, 0.0, 0.0), c2(1.0, 1.0, 0.0);
-  for (int i = 0; i < v.size(); i++) {
-    cerr << "node " << i << ": " << sort_col->getDouble(v[i]) << endl;
-#if 1
-    glm::vec3 c = glm::normalize(glm::mix(c1, c2, (float)(v.size() - 1 - i) / (v.size() - 1)));
-#else
-    Colorf c;
-    c.setHSL(2.0f * (v.size() - 1 - i) / (v.size() - 1) / 3.0f, 0.75, 0.5);
-#endif
-    graph_color_s tmp = {
-	(unsigned char)glm::clamp(int(c.r * 255.0f), 0, 255),
-	  (unsigned char)glm::clamp(int(c.g * 255.0f), 0, 255),
-	  (unsigned char)glm::clamp(int(c.b * 255.0f), 0, 255),
-	  255
-    };
-    setNodeColor2(v[i], tmp);
-  }
-  version++;
-  updateFlags(GF_PER_NODE_COLORS, true);
 }
 
 void
@@ -228,10 +128,10 @@ Graph::randomizeGeometry(bool use_2d) {
 		 100.0 * ((float)rand() / RAND_MAX) - 50,
 		 (use_2d ? 0 : 100.0 * ((float)rand() / RAND_MAX) - 50)
 		 );
-    node_geometry[i].position = node_geometry[i].prev_position = v;
+    getNodeArray().node_geometry[i].position = getNodeArray().node_geometry[i].prev_position = v;
     mbr.growToContain(v.x, v.y);
 
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get() && !graph->hasSpatialData()) {
       graph->randomizeGeometry(use_2d);       
     }
@@ -408,10 +308,10 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     unsigned int vn = 0;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {    
-      auto & g1 = node_geometry[it->tail], & g2 = node_geometry[it->head];
+      auto & g1 = getNodeArray().node_geometry[it->tail], & g2 = getNodeArray().node_geometry[it->head];
       
-      if (node_geometry2[it->tail].type == NODE_HASHTAG ||
-	  node_geometry2[it->head].type == NODE_HASHTAG) continue;
+      if (getNodeArray().node_geometry2[it->tail].type == NODE_HASHTAG ||
+	  getNodeArray().node_geometry2[it->head].type == NODE_HASHTAG) continue;
       
       glm::vec3 pos1, pos2;
       if (is_spherical) {
@@ -465,11 +365,11 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
   if (!is_spherical) {
     assert(sizeof(node_data_s) == 11 * 4);
 
-    vbo.upload(VBO::NODES, &(node_geometry.front()), getNodeCount() * sizeof(node_data_s));
+    vbo.upload(VBO::NODES, &(getNodeArray().node_geometry.front()), getNodeCount() * sizeof(node_data_s));
   } else {
     vector<node_data_s> new_geometry;
     new_geometry.reserve(getNodeCount());
-    for (auto & g : node_geometry) {
+    for (auto & g : getNodeArray().node_geometry) {
       double lat = g.position.y / 180.0 * M_PI, lon = g.position.x / 180.0 * M_PI;
       glm::vec3 pos(-earth_radius * cos(lat) * cos(lon),
 		    earth_radius * sin(lat),
@@ -500,8 +400,8 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
   int idx = 0;
 
   for (int i = 0; i < getNodeCount(); i++) { 
-    auto & pd = getNodeData(i);
-    auto & sd = getNodeSecondaryData(i);
+    auto & pd = getNodeArray().getNodeData(i);
+    auto & sd = getNodeArray().getNodeSecondaryData(i);
 
     int texture = pd.texture;
     float size = pd.size / node_scale;
@@ -543,8 +443,8 @@ void
 Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {
   unsigned int label_count = 0;
   for (unsigned int i = 0; i < getNodeCount(); i++) {
-    auto & data = getNodeData(i);
-    auto & sd = getNodeSecondaryData(i);
+    auto & data = getNodeArray().getNodeData(i);
+    auto & sd = getNodeArray().getNodeSecondaryData(i);
     if (data.flags & NODE_LABEL_VISIBLE && sd.label_texture) label_count++;
   }
 
@@ -559,21 +459,21 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
   unsigned int * current_index = indices.get();
 
   int idx = 0;
-  const table::Column & user_type = getNodeData()["type"];
+  const table::Column & user_type = getNodeArray().getTable()["type"];
   unsigned int actual_label_count = 0;
   
   for (unsigned int i = 0; i < getNodeCount(); i++) {
-    auto & pd = getNodeData(i);
-    auto & sd = getNodeSecondaryData(i);
+    auto & pd = getNodeArray().getNodeData(i);
+    auto & sd = getNodeArray().getNodeSecondaryData(i);
     if (!(pd.flags & NODE_LABEL_VISIBLE && sd.label_texture)) continue;
     
-    auto & pos = getPosition(i);
+    auto & pos = getNodeArray().getPosition(i);
     // unsigned int flags = 0;
     int offset_x = 0, offset_y = 0;
     bool text_center = false;
     bool text_middle = true;
 
-    if (label_style == LABEL_DARK_BOX) {
+    if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float node_size = 0.0f;
       offset_y -= 0.8 * (3.0 + 2.0 * node_size);
       text_center = true;
@@ -626,7 +526,7 @@ Graph::relaxLinks() {
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int s = it->tail, t = it->head;
-    auto & pd1 = getNodeData(s), & pd2 = getNodeData(t);
+    auto & pd1 = getNodeArray().getNodeData(s), & pd2 = getNodeArray().getNodeData(t);
     bool fixed1 = pd1.flags & NODE_FIXED_POSITION;
     bool fixed2 = pd2.flags & NODE_FIXED_POSITION;
     if (fixed1 && fixed2) continue;      
@@ -634,10 +534,10 @@ Graph::relaxLinks() {
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
-    auto & sd1 = getNodeSecondaryData(s), & sd2 = getNodeSecondaryData(t);
+    auto & sd1 = getNodeArray().getNodeSecondaryData(s), & sd2 = getNodeArray().getNodeSecondaryData(t);
     if (sd1.cluster_id != sd2.cluster_id) continue;
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
-    d *= getAlpha2(); // * fabsf(it->weight) / avg_edge_weight;
+    d *= getNodeArray().getAlpha2(); // * fabsf(it->weight) / avg_edge_weight;
     float w1 = sd1.type == NODE_HASHTAG ? 0 : pd1.size;
     float w2 = sd2.type == NODE_HASHTAG ? 0 : pd2.size;
     float k;
@@ -657,73 +557,6 @@ Graph::relaxLinks() {
   }
 }
 
-void
-Graph::applyGravity(float gravity) {
-  float k = getAlpha2() * gravity;
-  if (k > EPSILON) {
-    int n1 = getNodeCount();
-    for (int i = 0; i < n1; i++) {
-      auto & pd = getNodeData(i);
-      if (pd.size > 0 && !(pd.flags & NODE_FIXED_POSITION)) {
-	auto & sd = getNodeSecondaryData(i);
-	
-	glm::vec3 pos = pd.position;
-	glm::vec3 origin;
-	if (sd.cluster_id >= 0) origin = getClusterAttributes(sd.cluster_id).position;
-	pos -= origin;
-	float d = glm::length(pos);
-	if (d > 0.001) {
-	  pos -= pos * (k * sqrtf(d) / d);
-	  pos += origin;
-	  pd.position = pos;
-	}
-      }
-    }
-
-    int n2 = getClusterCount();
-    for (int i = 0; i < n2; i++) {
-      auto & pd = getClusterAttributes(i);
-      glm::vec3 pos = pd.position;
-      float d = glm::length(pos);
-      if (d > 0.0001) {
-	pos -= pos * (k * sqrtf(d) / d);
-	pd.position = pos;
-      }
-    }
-  }
-}
-
-void
-Graph::applyDragAndAge(RenderMode mode, float friction) {
-  int n = getNodeCount();
-  for (int i = 0; i < n; i++) {
-    auto & pd = getNodeData(i);
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
-    glm::vec3 new_pos = pos - (ppos - pos) * friction;
-    if (mode == RENDERMODE_2D) {
-      new_pos.z = 0;
-    }
-    pd.prev_position = pos;
-    pd.position = new_pos;
-    pd.age += 1.0f / 50.0f;
-  }
-
-  n = getClusterCount();
-  for (int i = 0; i < n; i++) {
-    auto & pd = getClusterAttributes(i);
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
-    glm::vec3 new_pos = pos - (ppos - pos) * friction;
-    if (mode == RENDERMODE_2D) {
-      new_pos.z = 0;
-    }
-    pd.prev_position = pos;
-    pd.position = new_pos;    
-  }
-  version++;
-}
-
 int
 Graph::getFaceId(short source_id, long long source_object_id) const {
   auto it = getFaceCache().find(skey(source_id, source_object_id));
@@ -739,7 +572,7 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
   float best_d = 0;
   glm::vec2 ppos(x, y);
   for (int i = 0; i < getNodeCount(); i++) { 
-    auto & pd = getNodeData(i);
+    auto & pd = getNodeArray().getNodeData(i);
     glm::vec3 tmp1 = display.project(pd.position);
     glm::vec3 tmp2 = display.project(pd.position + glm::vec3(pd.size / 2.0f / node_scale, 0.0f, 0.0f));
     glm::vec2 pos1(tmp1.x, tmp1.y);
@@ -759,11 +592,11 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
 void
 Graph::extractLocationGraph(Graph & target_graph) {
   map<string, int> node_mapping;
-  target_graph.getNodeData().addTextColumn("name");
+  target_graph.getNodeArray().getTable().addTextColumn("name");
 
-  // Column & sentiment = target_graph.getNodeData().addDoubleColumn("sentiment");
+  // Column & sentiment = target_graph.getNodeArray().getNodeData().addDoubleColumn("sentiment");
 
-  const Column & lat_column = getNodeData()["latitude"], & lon_column = getNodeData()["longitude"];  
+  const table::Column & lat_column = getNodeArray().getTable()["latitude"], & lon_column = getNodeArray().getTable()["longitude"];  
  
   map<int, map<int, int> > seen_edges;
   // map<int, pair<float, unsigned int> > node_sentiments;
@@ -785,10 +618,10 @@ Graph::extractLocationGraph(Graph & target_graph) {
       if (it != node_mapping.end()) {
 	np.first = it->second;
       } else {
-	int new_node_id = target_graph.addNode();
+	int new_node_id = target_graph.getNodeArray().addNode();
 	node_mapping[key1] = new_node_id;
 	glm::vec3 tmp((float)lon1, (float)lat1, 0);
-	target_graph.setPositions(new_node_id, pair<glm::vec3, glm::vec3>(tmp, tmp));
+	target_graph.getNodeArray().setPositions(new_node_id, pair<glm::vec3, glm::vec3>(tmp, tmp));
 	np.first = new_node_id;
       }
 
@@ -796,7 +629,7 @@ Graph::extractLocationGraph(Graph & target_graph) {
       // sn.first += edge_sentiment;
       // sn.second++;
       
-      NodeType type = getNodeSecondaryData(np.second).type;
+      NodeType type = getNodeArray().getNodeSecondaryData(np.second).type;
       assert(type != NODE_URL && type != NODE_HASHTAG);
     }
     
@@ -808,10 +641,10 @@ Graph::extractLocationGraph(Graph & target_graph) {
       if (it != node_mapping.end()) {
 	np.second = it->second;
       } else {
-	int new_node_id = target_graph.addNode();
+	int new_node_id = target_graph.getNodeArray().addNode();
 	node_mapping[key2] = new_node_id;
 	glm::vec3 tmp((float)lon2, (float)lat2, 0);
-	target_graph.setPositions(new_node_id, pair<glm::vec3, glm::vec3>(tmp, tmp));
+	target_graph.getNodeArray().setPositions(new_node_id, pair<glm::vec3, glm::vec3>(tmp, tmp));
 	np.second = new_node_id;
       }
     }
@@ -832,8 +665,8 @@ Graph::extractLocationGraph(Graph & target_graph) {
   }
   
   target_graph.setSRID(4326);
-  target_graph.setNodeSizeMethod(getNodeSizeMethod());
-  target_graph.updateAppearance();
+  target_graph.getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
+  target_graph.getNodeArray().updateAppearance();
   target_graph.setNodeVisibility(true);
   target_graph.setEdgeVisibility(true);
   target_graph.setRegionVisibility(false);
@@ -846,9 +679,11 @@ static bool compareCameraDistance(const pair<int, float> & a, const pair<int, fl
 
 vector<int>
 Graph::createSortedNodeIndices(const glm::vec3 & camera_pos) const {
+  // need to iterate over edges
+  assert(0);
   vector<pair<int, float> > v;
   for (unsigned int i = 0; i < getNodeCount(); i++) {
-    glm::vec3 d = node_geometry[i].position - camera_pos;
+    glm::vec3 d = getNodeArray().node_geometry[i].position - camera_pos;
     float camera_distance = glm::dot(d, d);
     v.push_back(pair<int, float>(i, camera_distance));
   }
@@ -873,9 +708,9 @@ Graph::simplifyWithClusters(const std::vector<int> & clusters, Graph & target_gr
     if (it1 != created_clusters.end()) {
       cluster1 = it1->second;
     } else {
-      created_clusters[partition1] = cluster1 = target_graph.addNode();
+      created_clusters[partition1] = cluster1 = target_graph.getNodeArray().addNode();
     }
-
+    
     int edge = getNodeFirstEdge(n1);
     while (edge != -1) {
       auto & ed = getEdgeAttributes(edge);
@@ -887,7 +722,7 @@ Graph::simplifyWithClusters(const std::vector<int> & clusters, Graph & target_gr
       if (it2 != created_clusters.end()) {
 	cluster2 = it2->second;
       } else {
-	created_clusters[partition2] = cluster2 = target_graph.addNode();
+	created_clusters[partition2] = cluster2 = target_graph.getNodeArray().addNode();
       }
 
       assert(n1 != n2);
@@ -914,12 +749,12 @@ Graph::selectNodes(int input_node, int depth) {
   if (input_node == -1) {
     has_node_selection = false;
     for (int n = 0; n < getNodeCount(); n++) {
-      node_geometry[n].flags |= NODE_SELECTED;
+      getNodeArray().node_geometry[n].flags |= NODE_SELECTED;
     }
   } else {
     has_node_selection = true;
     for (int n = 0; n < getNodeCount(); n++) {
-      node_geometry[n].flags &= ~NODE_SELECTED;
+      getNodeArray().node_geometry[n].flags &= ~NODE_SELECTED;
     }
     
     if (input_node >= 0) { // can be -2 to select none
@@ -943,7 +778,7 @@ Graph::selectNodes(int input_node, int depth) {
 	if (!seen_nodes.count(node_id)) {
 	  seen_nodes.insert(node_id);
 	  
-	  node_geometry[node_id].flags |= NODE_SELECTED;
+	  getNodeArray().node_geometry[node_id].flags |= NODE_SELECTED;
 	  
 	  if (node_depth < depth) {
 	    map<int, set<int> >::iterator node_edges = all_edges.find(node_id);
@@ -965,7 +800,7 @@ std::vector<int>
 Graph::getNestedGraphIds() const {
   std::vector<int> v;
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get()) v.push_back(graph->getId());
   }
   return v;
@@ -975,7 +810,7 @@ std::vector<int>
 Graph::getLocationGraphs() const {
   std::vector<int> v;
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get() && graph->getLocation().get()) v.push_back(graph->getId());
   }
   return v;
@@ -984,12 +819,12 @@ Graph::getLocationGraphs() const {
 void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
-  resume2();
+  getNodeArray().resume2();
   for (auto & g : final_graphs) {
-    g->resume2();
+    g->getNodeArray().resume2();
   }
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get()) graph->refreshLayouts();
   }
 }
@@ -998,7 +833,7 @@ std::vector<std::shared_ptr<Graph> >
 Graph::getNestedGraphs() {
   std::vector<std::shared_ptr<Graph> > v;
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get()) {
       v.push_back(graph);
     }
@@ -1009,7 +844,7 @@ Graph::getNestedGraphs() {
 int
 Graph::getGraphNodeId(int graph_id) const {
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get() && graph->getId() == graph_id) return i;
   }
   return -1;
@@ -1096,7 +931,7 @@ Graph::createClusters() {
 	// glm::vec3 c = glm::normalize(glm::mix(c1, c2, f));
 	// cerr << "assigning colors (" << i << "/" << n << ", p = " << p << ", f = " << f << ")\n";
 	auto color = colors.getColorByIndex(p);
-	setNodeColor2(i, color);
+	getNodeArray().setNodeColor2(i, color);
 	while (p >= getClusterCount()) {
 	  cerr << "adding cluster\n";
 	  int cluster_id = addCluster();
@@ -1122,12 +957,12 @@ void
 Graph::storeChangesFromFinal() {
   for (auto & g : final_graphs) {
     for (int j = 0; j < g->getNodeCount(); j++) {
-      auto & sd = g->getNodeSecondaryData(j);
+      auto & sd = g->getNodeArray().getNodeSecondaryData(j);
       if (sd.orig_node_id >= 0) {
-	auto & pd = g->getNodeData(j);
+	auto & pd = g->getNodeArray().getNodeData(j);
 	assert(sd.orig_node_id < getNodeCount());
-	auto & pd2 = getNodeData(sd.orig_node_id);
-	auto & sd2 = getNodeSecondaryData(sd.orig_node_id);
+	auto & pd2 = getNodeArray().getNodeData(sd.orig_node_id);
+	auto & sd2 = getNodeArray().getNodeSecondaryData(sd.orig_node_id);
 	pd2.position = pd.position;
 	pd2.prev_position = pd.prev_position;
 	pd2.color = pd.color;
@@ -1148,7 +983,7 @@ Graph::storeChangesFromFinal() {
     setDefaultNodeColor(g->getDefaultNodeColor());
     setDefaultEdgeColor(g->getDefaultEdgeColor());
     setDefaultRegionColor(g->getDefaultRegionColor());
-    setAlpha3(g->getAlpha2());
+    getNodeArray().setAlpha3(g->getNodeArray().getAlpha2());
     // setAlphaVelocity2(g->getAlphaVelocity2());
   }
 }
@@ -1195,8 +1030,8 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     statistics.clear();
     
     for (int j = 0; j < getNodeCount(); j++) {
-      auto & pd = getNodeData(j);
-      auto & sd = getNodeSecondaryData(j);
+      auto & pd = getNodeArray().getNodeData(j);
+      auto & sd = getNodeArray().getNodeSecondaryData(j);
       pd.age = -2.0f;
       pd.flags = NODE_SELECTED;
       sd.label_visibility_val = 0;
@@ -1212,31 +1047,16 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     auto & g = final_graphs[i];
     Graph * base_graph = i > 0 ? final_graphs[i].get() : 0;
     if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, base_graph)) {
-      g->updateAppearance();
+      g->getNodeArray().updateAppearance();
       g->incVersion();
       setLocationGraphValid(false);
       incVersion();
-      resume2();
-      g->resume2();
+      getNodeArray().resume2();
+      g->getNodeArray().resume2();
       changed = true;
     }
   }
   return changed;         
-}
-
-void
-Graph::setNodeColor2(int i, const canvas::Color & c) {
-  int r = int(c.red * 0xff), g = int(c.green * 0xff), b = int(c.blue * 0xff), a = int(c.alpha * 0xff);
-  if (r > 255) r = 255;
-  else if (r < 0) r = 0;
-  if (g > 255) g = 255;
-  else if (g < 0) g = 0;
-  if (b > 255) b = 255;
-  else if (b < 0) b = 0;
-  if (a > 255) a = 255;
-  else if (a < 0) a = 0;
-  graph_color_s tmp = { (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a };
-  setNodeColor2(i, tmp);
 }
 
 void
@@ -1326,8 +1146,8 @@ Graph::calculateEdgeCentrality() {
 
   incVersion();
   randomizeGeometry();
-  updateAppearance();
-  resume2();
+  getNodeArray().updateAppearance();
+  getNodeArray().resume2();
 }
 
 struct label_data_s {
@@ -1346,11 +1166,11 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   
   for (int i = 0; i < (int)getNodeCount(); i++) {
-    auto & sd = getNodeSecondaryData(i);
-    if (!sd.label.empty() || getDefaultSymbolId()) {
-      auto & pd = getNodeData(i);
+    auto & sd = getNodeArray().getNodeSecondaryData(i);
+    if (!sd.label.empty() || getNodeArray().getDefaultSymbolId()) {
+      auto & pd = getNodeArray().getNodeData(i);
       if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
-			  getNodeLabelVisibility(i))) {
+			  getNodeArray().getNodeLabelVisibility(i))) {
 	glm::vec3 win = display.project(pd.position);
 	bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
 	all_labels.push_back({ glm::vec2(win.x, win.y), pd.size, i, is_selected });
@@ -1362,8 +1182,8 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   
   if (all_labels.size() <= 10) {
     for (vector<label_data_s>::iterator it = all_labels.begin(); it != all_labels.end(); it++) {
-      setNodeLabelVisibilityValue(it->index, 1);
-      changed |= setNodeLabelVisibility(it->index, true);
+      getNodeArray().setNodeLabelVisibilityValue(it->index, 1);
+      changed |= getNodeArray().setNodeLabelVisibility(it->index, true);
     }
   } else {
     sort(all_labels.begin(), all_labels.end(), compareSize);
@@ -1397,10 +1217,10 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
 	drawn_labels.push_back(*it);
       }
       if (reset_this) {
-	setNodeLabelVisibilityValue(it->index, fits ? 1 : 0);
-	changed |= setNodeLabelVisibility(it->index, fits);
+	getNodeArray().setNodeLabelVisibilityValue(it->index, fits ? 1 : 0);
+	changed |= getNodeArray().setNodeLabelVisibility(it->index, fits);
       } else {
-	changed |= updateNodeLabelValues(it->index, fits ? 1.00f : -1.00f);
+	changed |= getNodeArray().updateNodeLabelValues(it->index, fits ? 1.00f : -1.00f);
       }
     }
   }
@@ -1420,7 +1240,7 @@ Graph::getGraphById2(int graph_id) {
     return this;
   } else if (hasSubGraphs()) {
     for (int i = 0; i < getNodeCount(); i++) {
-      auto & graph = node_geometry2[i].nested_graph;
+      auto & graph = getNodeArray().node_geometry2[i].nested_graph;
       if (graph.get()) {
 	Graph * r = graph->getGraphById2(graph_id);
 	if (r) return r;
@@ -1436,7 +1256,7 @@ Graph::getGraphById2(int graph_id) const {
     return this;
   } else if (hasSubGraphs()) {
     for (int i = 0; i < getNodeCount(); i++) {
-      auto & graph = node_geometry2[i].nested_graph;
+      auto & graph = getNodeArray().node_geometry2[i].nested_graph;
       if (graph.get()) {
 	const Graph * r = graph->getGraphById2(graph_id);
 	if (r) return r;
@@ -1460,8 +1280,8 @@ Graph::getGraphForWriting(int graph_id) {
 
 skey
 Graph::getNodeKey(int node_id) const {
-  const table::Column & source_id_column = getNodeData()["source"];
-  const table::Column & id_column = getNodeData()["id"];
+  const table::Column & source_id_column = getNodeArray().getTable()["source"];
+  const table::Column & id_column = getNodeArray().getTable()["id"];
   
   short source_id = source_id_column.getInt(node_id);
   long long source_object_id = 0;
@@ -1477,17 +1297,11 @@ Graph::getNodeKey(int node_id) const {
 }
 
 void
-Graph::setNormal(int i, const glm::vec4 & v) {
-  node_geometry[i].normal = glm::packSnorm3x10_1x2(v);
-  version++;
-}
-
-void
 Graph::invalidateVisibleNodes() {
   storeChangesFromFinal();
   final_graphs.clear();
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
     if (graph.get()) {
       graph->invalidateVisibleNodes();      
     }
@@ -1496,9 +1310,9 @@ Graph::invalidateVisibleNodes() {
 
 void
 Graph::setNodeTexture(const skey & key, int texture) { 
-  auto it2 = getNodeCache().find(key);
-  if (it2 != getNodeCache().end()) {
-    setNodeTexture(it2->second, texture);
+  auto it2 = getNodeArray().getNodeCache().find(key);
+  if (it2 != getNodeArray().getNodeCache().end()) {
+    getNodeArray().setNodeTexture(it2->second, texture);
   }
   for (auto & g : final_graphs) {
     g->setNodeTexture(key, texture);
@@ -1507,9 +1321,9 @@ Graph::setNodeTexture(const skey & key, int texture) {
 
 void
 Graph::setLabelTexture(const skey & key, int texture) {
-  auto it2 = getNodeCache().find(key);
-  if (it2 != getNodeCache().end()) {
-    setLabelTexture(it2->second, texture);
+  auto it2 = getNodeArray().getNodeCache().find(key);
+  if (it2 != getNodeArray().getNodeCache().end()) {
+    getNodeArray().setLabelTexture(it2->second, texture);
   }
   for (auto & g : final_graphs) {
     g->setLabelTexture(key, texture);
