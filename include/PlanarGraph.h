@@ -37,19 +37,15 @@ class PlanarGraph : public Graph {
     int next_node_edge = -1;
     if (n1 != -1) {
       next_node_edge = getNodeFirstEdge(n1);
-      node_geometry2[n1].first_edge = edge;
-      node_geometry2[n1].outdegree++;
-      total_outdegree++;
-      if (getNodeSizeMethod().definedForSource()) {
+      setNodeFirstEdge(n1, edge);
+      updateOutdegree(n1, 1);
+      if (getNodeArray().getNodeSizeMethod().definedForSource()) {
 	updateNodeSize(n1);
       }
     }
     if (n2 != -1 && n1 != n2) {
-      // next_head_edge = getNodeFirstEdge(n2);
-      // node_geometry2[n2].first_edge = edge;
-      node_geometry2[n2].indegree++;
-      total_indegree++;
-      if (getNodeSizeMethod().definedForTarget()) {
+      updateIndegree(n2, 1);
+      if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
 	updateNodeSize(n2);
       }  
     }
