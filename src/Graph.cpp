@@ -64,7 +64,7 @@ Graph::Graph(const Graph & other)
 {
   id = next_id++;
 #if 0
-  for (auto & d : node_geometry2) {
+  for (auto & d : node_geometry) {
     if (d.nested_graph.get()) {
       d.nested_graph = std::shared_ptr<Graph>(d.nested_graph->copy());
     }
@@ -131,7 +131,7 @@ Graph::randomizeGeometry(bool use_2d) {
     getNodeArray().node_geometry[i].position = getNodeArray().node_geometry[i].prev_position = v;
     mbr.growToContain(v.x, v.y);
 
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get() && !graph->hasSpatialData()) {
       graph->randomizeGeometry(use_2d);       
     }
@@ -310,8 +310,9 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     for (auto it = begin_edges(); it != end; ++it) {    
       auto & g1 = getNodeArray().node_geometry[it->tail], & g2 = getNodeArray().node_geometry[it->head];
       
-      if (getNodeArray().node_geometry2[it->tail].type == NODE_HASHTAG ||
-	  getNodeArray().node_geometry2[it->head].type == NODE_HASHTAG) continue;
+      if (getNodeArray().node_geometry[it->tail].type == NODE_HASHTAG ||
+	  getNodeArray().node_geometry[it->head].type == NODE_HASHTAG) continue;
+      if (it->tail == it->head) continue;
       
       glm::vec3 pos1, pos2;
       if (is_spherical) {
@@ -358,6 +359,32 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 
 void
 Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius) const {
+#if 1
+  if (!getEdgeCount()) {
+    return;
+  }
+
+  vector<bool> stored_nodes;
+  stored_nodes.resize(getNodeCount());
+  vector<node_vbo_s> new_geometry;
+
+  auto end = end_edges();
+  for (auto it = begin_edges(); it != end; ++it) {    
+    if (!stored_nodes[it->tail]) {
+      stored_nodes[it->tail] = true;
+      auto & nd = nodes->getNodeData(it->tail);
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.prev_position, nd.age, nd.size, nd.texture, nd.flags });
+    }
+    if (!stored_nodes[it->head]) {
+      stored_nodes[it->head] = true;
+      auto & nd = nodes->getNodeData(it->head);
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.prev_position, nd.age, nd.size, nd.texture, nd.flags });
+    }    
+  }
+
+  cerr << "uploading nodes: " << new_geometry.size() << endl;
+  vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
+#else
   if (!getNodeCount()) {
     return;
   }
@@ -382,6 +409,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
     }
     vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_data_s));
   }
+#endif
 }
 
 void
@@ -401,7 +429,7 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
 
   for (int i = 0; i < getNodeCount(); i++) { 
     auto & pd = getNodeArray().getNodeData(i);
-    auto & sd = getNodeArray().getNodeSecondaryData(i);
+    // auto & sd = getNodeArray().getNodeSecondaryData(i);
 
     int texture = pd.texture;
     float size = pd.size / node_scale;
@@ -444,8 +472,8 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
   unsigned int label_count = 0;
   for (unsigned int i = 0; i < getNodeCount(); i++) {
     auto & data = getNodeArray().getNodeData(i);
-    auto & sd = getNodeArray().getNodeSecondaryData(i);
-    if (data.flags & NODE_LABEL_VISIBLE && sd.label_texture) label_count++;
+    auto & pd = getNodeArray().getNodeData(i);
+    if (data.flags & NODE_LABEL_VISIBLE && pd.label_texture) label_count++;
   }
 
   // cerr << "creating label vbo (n = " << label_count << ")\n";
@@ -464,8 +492,8 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
   
   for (unsigned int i = 0; i < getNodeCount(); i++) {
     auto & pd = getNodeArray().getNodeData(i);
-    auto & sd = getNodeArray().getNodeSecondaryData(i);
-    if (!(pd.flags & NODE_LABEL_VISIBLE && sd.label_texture)) continue;
+    // auto & sd = getNodeArray().getNodeSecondaryData(i);
+    if (!(pd.flags & NODE_LABEL_VISIBLE && pd.label_texture)) continue;
     
     auto & pos = getNodeArray().getPosition(i);
     // unsigned int flags = 0;
@@ -479,7 +507,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       text_center = true;
     }
         
-    auto & tp = atlas.getTexturePos(sd.label_texture);
+    auto & tp = atlas.getTexturePos(pd.label_texture);
 
     double x = 0, y = 0;
         
@@ -534,12 +562,12 @@ Graph::relaxLinks() {
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
-    auto & sd1 = getNodeArray().getNodeSecondaryData(s), & sd2 = getNodeArray().getNodeSecondaryData(t);
-    if (sd1.cluster_id != sd2.cluster_id) continue;
+    // auto & sd1 = getNodeArray().getNodeSecondaryData(s), & sd2 = getNodeArray().getNodeSecondaryData(t);
+    if (pd1.cluster_id != pd2.cluster_id) continue;
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= getNodeArray().getAlpha2(); // * fabsf(it->weight) / avg_edge_weight;
-    float w1 = sd1.type == NODE_HASHTAG ? 0 : pd1.size;
-    float w2 = sd2.type == NODE_HASHTAG ? 0 : pd2.size;
+    float w1 = pd1.type == NODE_HASHTAG ? 0 : pd1.size;
+    float w2 = pd2.type == NODE_HASHTAG ? 0 : pd2.size;
     float k;
     if (fixed1) {
       k = 1.0f;
@@ -629,7 +657,7 @@ Graph::extractLocationGraph(Graph & target_graph) {
       // sn.first += edge_sentiment;
       // sn.second++;
       
-      NodeType type = getNodeArray().getNodeSecondaryData(np.second).type;
+      NodeType type = getNodeArray().getNodeData(np.second).type;
       assert(type != NODE_URL && type != NODE_HASHTAG);
     }
     
@@ -800,7 +828,7 @@ std::vector<int>
 Graph::getNestedGraphIds() const {
   std::vector<int> v;
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get()) v.push_back(graph->getId());
   }
   return v;
@@ -810,7 +838,7 @@ std::vector<int>
 Graph::getLocationGraphs() const {
   std::vector<int> v;
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get() && graph->getLocation().get()) v.push_back(graph->getId());
   }
   return v;
@@ -824,7 +852,7 @@ Graph::refreshLayouts() {
     g->getNodeArray().resume2();
   }
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get()) graph->refreshLayouts();
   }
 }
@@ -833,7 +861,7 @@ std::vector<std::shared_ptr<Graph> >
 Graph::getNestedGraphs() {
   std::vector<std::shared_ptr<Graph> > v;
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get()) {
       v.push_back(graph);
     }
@@ -844,7 +872,7 @@ Graph::getNestedGraphs() {
 int
 Graph::getGraphNodeId(int graph_id) const {
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get() && graph->getId() == graph_id) return i;
   }
   return -1;
@@ -958,12 +986,12 @@ Graph::storeChangesFromFinal() {
 #if 0
   for (auto & g : final_graphs) {
     for (int j = 0; j < g->getNodeCount(); j++) {
-      auto & sd = g->getNodeArray().getNodeSecondaryData(j);
-      if (sd.orig_node_id >= 0) {
-	auto & pd = g->getNodeArray().getNodeData(j);
-	assert(sd.orig_node_id < getNodeCount());
-	auto & pd2 = getNodeArray().getNodeData(sd.orig_node_id);
-	auto & sd2 = getNodeArray().getNodeSecondaryData(sd.orig_node_id);
+      auto & pd = g->getNodeArray().getNodeData(j);
+      // auto & sd = g->getNodeArray().getNodeData(j);
+      if (pd.orig_node_id >= 0) {
+	assert(pd.orig_node_id < getNodeCount());
+	auto & pd2 = getNodeArray().getNodeData(pd.orig_node_id);
+	// auto & sd2 = getNodeArray().getNodeSecondaryData(sd.orig_node_id);
 	pd2.position = pd.position;
 	pd2.prev_position = pd.prev_position;
 	pd2.color = pd.color;
@@ -1033,10 +1061,10 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     
     for (int j = 0; j < getNodeCount(); j++) {
       auto & pd = getNodeArray().getNodeData(j);
-      auto & sd = getNodeArray().getNodeSecondaryData(j);
+      // auto & sd = getNodeArray().getNodeSecondaryData(j);
       pd.age = -2.0f;
       pd.flags = NODE_SELECTED;
-      sd.label_visibility_val = 0;
+      pd.label_visibility_val = 0;
     }
 
     storeChangesFromFinal();
@@ -1168,9 +1196,9 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   
   for (int i = 0; i < (int)getNodeCount(); i++) {
-    auto & sd = getNodeArray().getNodeSecondaryData(i);
-    if (!sd.label.empty() || getNodeArray().getDefaultSymbolId()) {
-      auto & pd = getNodeArray().getNodeData(i);
+    auto & pd = getNodeArray().getNodeData(i);
+    // auto & sd = getNodeArray().getNodeSecondaryData(i);
+    if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
       if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
 			  getNodeArray().getNodeLabelVisibility(i))) {
 	glm::vec3 win = display.project(pd.position);
@@ -1242,7 +1270,7 @@ Graph::getGraphById2(int graph_id) {
     return this;
   } else if (hasSubGraphs()) {
     for (int i = 0; i < getNodeCount(); i++) {
-      auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+      auto & graph = getNodeArray().node_geometry[i].nested_graph;
       if (graph.get()) {
 	Graph * r = graph->getGraphById2(graph_id);
 	if (r) return r;
@@ -1258,7 +1286,7 @@ Graph::getGraphById2(int graph_id) const {
     return this;
   } else if (hasSubGraphs()) {
     for (int i = 0; i < getNodeCount(); i++) {
-      auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+      auto & graph = getNodeArray().node_geometry[i].nested_graph;
       if (graph.get()) {
 	const Graph * r = graph->getGraphById2(graph_id);
 	if (r) return r;
@@ -1303,7 +1331,7 @@ Graph::invalidateVisibleNodes() {
   storeChangesFromFinal();
   final_graphs.clear();
   for (int i = 0; i < getNodeCount(); i++) {
-    auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+    auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get()) {
       graph->invalidateVisibleNodes();      
     }
