@@ -479,10 +479,7 @@ class Graph : public MBRObject {
   void setNodeArray(const std::shared_ptr<NodeArray> & _nodes) { nodes = _nodes; }
   NodeArray & getNodeArray() { return *nodes; }
   const NodeArray & getNodeArray() const { return *nodes; }
-  
-  table::Table & getNodeData() { return nodes->getTable(); }
-  const table::Table & getNodeData() const { return nodes->getTable(); }
-    
+      
   int getDimensions() const { return dimensions; }
   int getVersion() const { return version; }
 
@@ -642,6 +639,7 @@ class Graph : public MBRObject {
   std::vector<face_data_s> face_attributes;
   std::vector<region_data_s> region_attributes;
   double total_edge_weight = 0;
+  std::shared_ptr<NodeArray> nodes;
  
  private:
   void lockReader() const { nodes->lockReader(); }
@@ -653,7 +651,6 @@ class Graph : public MBRObject {
   short source_id = 0;
 
   int id;
-  std::shared_ptr<NodeArray> nodes;
   int dimensions;
   int highlighted_node = -1, highlighted_region = -1;
   bool show_clusters = true, show_nodes = true, show_edges = true, show_regions = true, show_labels = true;
