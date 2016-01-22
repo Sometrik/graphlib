@@ -17,7 +17,7 @@ NodeArray::applyGravity(float gravity) {
     int n1 = size();
     for (int i = 0; i < n1; i++) {
       auto & pd = getNodeData(i);
-      if (pd.size > 0 && !(pd.flags & NODE_FIXED_POSITION)) {
+      if (!(pd.flags & NODE_FIXED_POSITION)) {
 	glm::vec3 pos = pd.position;
 	glm::vec3 origin;
 #if 0
@@ -79,24 +79,6 @@ NodeArray::applyDragAndAge(RenderMode mode, float friction) {
   }
 #endif
   version++;
-}
-
-void
-NodeArray::updateAppearance() {
-  if (node_size_method.getValue() == SizeMethod::SIZE_FROM_COLUMN) {
-    table::Column & sc = nodes[node_size_method.getColumn()];
-    for (unsigned int i = 0; i < size(); i++) {
-      node_geometry[i].size = 2 * (1 + log(1 + sc.getDouble(i)) / log(1.5));
-    }
-    version++;
-  } else if (node_size_method.getValue() == SizeMethod::SIZE_FROM_NODE_COUNT) {
-    for (unsigned int i = 0; i < size(); i++) {
-      // auto & nested_graph = node_geometry2[i].nested_graph;
-      float a = 0.0f; // nested_graph.get() ? nested_graph->size() : 0;
-      node_geometry[i].size = 2 * (1 + log(1 + a) / log(2));
-    }
-    version++;
-  }
 }
 
 void
