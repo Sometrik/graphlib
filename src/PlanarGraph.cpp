@@ -3,7 +3,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace table;
 
 PlanarGraph::PlanarGraph(int _id) : Graph(2, _id) {
   
@@ -18,23 +17,16 @@ std::shared_ptr<Graph>
 PlanarGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new PlanarGraph(getId()));
   graph->setLocationGraphValid(false);
-  graph->setAlpha3(getAlpha2());
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
-  graph->setNodeSizeMethod(getNodeSizeMethod());
   graph->setClusterVisibility(getClusterVisibility());
   graph->setNodeVisibility(getNodeVisibility());
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setRegionVisibility(getRegionVisibility());
   graph->setLabelVisibility(getLabelVisibility());
-
-  for (auto it = getNodeData().getColumns().begin(); it != getNodeData().getColumns().end(); it++) {
-    if (it->first != "posts") {
-      graph->getNodeData().addColumn(it->second->create());
-    }
-  }
-
+  graph->setNodeArray(nodes);
+  
   return graph;
 }
 
@@ -63,7 +55,7 @@ PlanarGraph::mapFacesToNodes(Graph & target) {
 
       } else {
 	pair<int, int> ed = getFaceEdgeSourceNodeAndDirection(i, edge);
-	center += getPosition(ed.first);
+	center += getNodeArray().getPosition(ed.first);
 	n++;
       }
       int other_face = getEdgeTargetFace(i, edge);
@@ -87,11 +79,11 @@ PlanarGraph::mapFacesToNodes(Graph & target) {
 
   cerr << "added edges " << added_edge_count << endl;
 
-  map<string, std::shared_ptr<Column> > & columns = getFaceData().getColumns();
-  for (map<string, std::shared_ptr<Column> >::iterator it = columns.begin(); it != columns.end(); it++) {
+  auto & columns = getFaceData().getColumns();
+  for (auto it = columns.begin(); it != columns.end(); it++) {
     if (it->first[0] != '_') {
       cerr << "adding column " << it->first << endl;
-      target.getNodeData().addColumn(it->second);
+      target.getNodeArray().getTable().addColumn(it->second);
     }
   }
 #endif
@@ -117,7 +109,7 @@ PlanarGraph::mapRegionsToNodes(Graph & target) {
 
       } else {
 	pair<int, int> ed = getFaceEdgeSourceNodeAndDirection(i, edge);
-	center += getPosition(ed.first);
+	center += getNodeArray().getPosition(ed.first);
 	n++;
       }
       int other_face = getEdgeTargetFace(i, edge);
@@ -141,11 +133,11 @@ PlanarGraph::mapRegionsToNodes(Graph & target) {
 
   cerr << "added edges " << added_edge_count << endl;
 
-  map<string, std::shared_ptr<Column> > & columns = getFaceData().getColumns();
-  for (map<string, std::shared_ptr<Column> >::iterator it = columns.begin(); it != columns.end(); it++) {
+  auto & columns = getFaceData().getColumns();
+  for (auto it = columns.begin(); it != columns.end(); it++) {
     if (it->first[0] != '_') {
       cerr << "adding column " << it->first << endl;
-      target.getNodeData().addColumn(it->second);
+      target.getNodeArray().getTable().addColumn(it->second);
     }
   }
 #endif
@@ -154,8 +146,8 @@ PlanarGraph::mapRegionsToNodes(Graph & target) {
 void
 PlanarGraph::calculateRegionAreas() {
 #if 0
-  Column & areas = regions.addDoubleColumn("Area");
-  ColumnArc & g = dynamic_cast<ColumnArc &>(edges["_geometry"]);
+  auto & areas = regions.addDoubleColumn("Area");
+  auto & g = dynamic_cast<ColumnArc &>(edges["_geometry"]);
 
   bool has_arcs = hasArcData();
   assert(has_arcs);
@@ -226,8 +218,8 @@ void
 PlanarGraph::updateMBR(int edge) {
   if (hasArcData()) {
 #if 0
-    ColumnArc & g = dynamic_cast<ColumnArc&>(getEdgeData()["_geometry"]);
-    const ArcData2D & arc = g.getArc(edge);
+    auto & g = dynamic_cast<ColumnArc&>(getEdgeData()["_geometry"]);
+    auto & arc = g.getArc(edge);
     
     int left_face = edges["_leftFace"].getInt(edge);
     int right_face = edges["_rightFace"].getInt(edge);
@@ -283,7 +275,7 @@ PlanarGraph::findContainingRegion(const glm::dvec3 & point) const {
     
       int wn = 0; // the winding number counter
   
-      const ColumnArc & g = dynamic_cast<const ColumnArc &>(getEdgeData()["_geometry"]);
+      auto & g = dynamic_cast<const ColumnArc &>(getEdgeData()["_geometry"]);
       glm::dvec3 v1;
       for (list<pair<int, int> >::iterator it = edges.begin(); it != edges.end(); it++) {
 	const ArcData2D & arc = g.getArc(it->first);
@@ -320,8 +312,8 @@ PlanarGraph::findContainingRegion(const glm::dvec3 & point) const {
 
 void
 PlanarGraph::spatialAggregation(const Graph & other) {
-  const map<string, std::shared_ptr<Column> > & columns = other.getNodeData().getColumns();
-  for (map<string, std::shared_ptr<Column> >::const_iterator it = columns.begin(); it != columns.end(); it++) {
+  auto & columns = other.getNodeArray().getTable().getColumns();
+  for (auto it = columns.begin(); it != columns.end(); it++) {
     if (it->first == "COUNT" || it->first == "LIKES") {
       cerr << "adding column " << it->first << endl;
       getRegionData().addIntColumn(it->first.c_str());
@@ -329,13 +321,13 @@ PlanarGraph::spatialAggregation(const Graph & other) {
   }
 
   for (unsigned int i = 0; i < other.getNodeCount(); i++) {
-    const glm::vec3 & v = other.getPosition(i);
+    const glm::vec3 & v = other.getNodeArray().getPosition(i);
     int region = findContainingRegion(glm::dvec3(v.x, v.y, v.z));
     if (region != -1) {
-      for (map<string, std::shared_ptr<Column> >::const_iterator it = columns.begin(); it != columns.end(); it++) {
+      for (auto it = columns.begin(); it != columns.end(); it++) {
 	const string & n = it->first;
 	if (n == "COUNT" || n == "LIKES") {
-	  Column & col = getRegionData()[n];
+	  auto & col = getRegionData()[n];
 	  col.setValue(region, col.getInt(region) + it->second->getInt(i));
 	}
       }
