@@ -12,7 +12,6 @@
 
 using namespace std;
 using namespace tinyxml2;
-using namespace table;
 
 GraphML::GraphML() : FileTypeHandler("GraphML", true) {
   addExtension("graphml");
@@ -51,7 +50,7 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
   }
   graph->setNodeArray(std::make_shared<NodeArray>());
   
-  auto & node_table = graph->getNodeData();
+  auto & node_table = graph->getNodeArray().getTable();
   auto & edge_table = directed ? graph->getEdgeData() : graph->getFaceData();
   
   auto & node_id_column = node_table.addTextColumn("id");
@@ -66,13 +65,13 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     
     assert(key_type && key_id && for_type);
     
-    std::shared_ptr<Column> column;
+    std::shared_ptr<table::Column> column;
     if (strcmp(key_type, "string") == 0) {
-      column = std::make_shared<ColumnText>(key_id ? key_id : "");
+      column = std::make_shared<table::ColumnText>(key_id ? key_id : "");
     } else if (strcmp(key_type, "double") == 0 || strcmp(key_type, "float") == 0) {
-      column = std::make_shared<ColumnDouble>(key_id ? key_id : "");
+      column = std::make_shared<table::ColumnDouble>(key_id ? key_id : "");
     } else if (strcmp(key_type, "int") == 0) {
-      column = std::make_shared<ColumnInt>(key_id ? key_id : "");
+      column = std::make_shared<table::ColumnInt>(key_id ? key_id : "");
     } else {
       assert(0);
     }
@@ -182,7 +181,7 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
   graphml_element->SetAttribute("xmlns", "http://graphml.graphdrawing.org/xmlns");
 
   bool directed = graph.isDirected();
-  auto & node_table = graph.getNodeData();
+  auto & node_table = graph.getNodeArray().getTable();
   auto & edge_table = directed ? graph.getEdgeData() : graph.getFaceData();
 
   for (auto & col : node_table.getColumns()) {
