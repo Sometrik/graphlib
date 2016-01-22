@@ -52,7 +52,7 @@ CSVLoader::openGraph(const char * filename) {
 	}
       }
     } else {
-      int node_id = graph->addNode();
+      int node_id = graph->getNodeArray().addNode();
       double x = 0, y = 0;
       for (unsigned int i = 0; i < row.size(); i++) {
 	if (row[i].empty()) continue;
@@ -64,7 +64,7 @@ CSVLoader::openGraph(const char * filename) {
 	  graph->getNodeData()[header[i]].setValue(node_id, row[i]);	  
 	}
       }
-      graph->setPosition(node_id, glm::vec3(x, y, 0));
+      graph->getNodeArray().setPosition(node_id, glm::vec3(x, y, 0));
     }
   }
 
