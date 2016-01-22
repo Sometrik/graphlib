@@ -9,7 +9,6 @@
 #include "../system/StringUtils.h"
 
 using namespace std;
-using namespace table;
 
 CSVLoader::CSVLoader() : FileTypeHandler("Comma separated values", false) {
   addExtension("csv");
@@ -46,10 +45,10 @@ CSVLoader::openGraph(const char * filename) {
       for (vector<string>::const_iterator it = header.begin(); it != header.end(); it++) {
 	string n = StringUtils::toLower(*it);
 	if (n == "likes" || n == "count") {
-	  graph->getNodeData().addIntColumn(it->c_str());
+	  graph->getNodeArray().getTable().addIntColumn(it->c_str());
 	} else if (n != "x" && n != "y" && n != "z" && n != "lat" && n != "lon" &&
 		   n != "long" && n != "lng" && n != "latitude" && n != "longitude") {
-	  graph->getNodeData().addTextColumn(it->c_str());
+	  graph->getNodeArray().getTable().addTextColumn(it->c_str());
 	}
       }
     } else {
@@ -62,7 +61,7 @@ CSVLoader::openGraph(const char * filename) {
 	} else if (header[i] == "Y") {
 	  y = stof(row[i]);
 	} else {
-	  graph->getNodeData()[header[i]].setValue(node_id, row[i]);	  
+	  graph->getNodeArray().getTable()[header[i]].setValue(node_id, row[i]);	  
 	}
       }
       graph->getNodeArray().setPosition(node_id, glm::vec3(x, y, 0));
