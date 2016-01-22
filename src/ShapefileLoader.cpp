@@ -59,6 +59,7 @@ ShapefileLoader::openGraph(const char * filename) {
       if (!graph.get()) {
 	cerr << "creating pointcloud for shapefile\n";
 	graph = std::make_shared<PointCloud>();
+	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
       }
       assert(shape_dimensions == graph->getDimensions());
@@ -74,6 +75,7 @@ ShapefileLoader::openGraph(const char * filename) {
       if (!graph.get()) {
 	cerr << "creating undirected graph for shapefile\n";
 	graph = std::make_shared<MultiArcGraph>();
+	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
 	graph->setNodeVisibility(false);
@@ -106,6 +108,7 @@ ShapefileLoader::openGraph(const char * filename) {
       if (!graph.get()) {
 	cerr << "creating planar graph for shapefile\n";
 	graph = std::make_shared<PlanarGraph>();
+	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
 	graph->setNodeVisibility(false);
