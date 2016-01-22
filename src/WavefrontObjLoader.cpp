@@ -11,7 +11,6 @@
 #include <glm/glm.hpp>
 
 using namespace std;
-using namespace table;
 
 WavefrontObjLoader::WavefrontObjLoader() : FileTypeHandler("WaveFront object", false) {
   addExtension("obj");
