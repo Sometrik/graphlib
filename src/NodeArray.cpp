@@ -18,12 +18,10 @@ NodeArray::applyGravity(float gravity) {
     for (int i = 0; i < n1; i++) {
       auto & pd = getNodeData(i);
       if (pd.size > 0 && !(pd.flags & NODE_FIXED_POSITION)) {
-	auto & sd = getNodeSecondaryData(i);
-	
 	glm::vec3 pos = pd.position;
 	glm::vec3 origin;
 #if 0
-	if (sd.cluster_id >= 0) origin = getClusterAttributes(sd.cluster_id).position;
+	if (pd.cluster_id >= 0) origin = getClusterAttributes(pd.cluster_id).position;
 #endif
 	pos -= origin;
 	float d = glm::length(pos);
@@ -80,7 +78,7 @@ NodeArray::applyDragAndAge(RenderMode mode, float friction) {
     pd.position = new_pos;    
   }
 #endif
-  // version++;
+  version++;
 }
 
 void
@@ -90,14 +88,14 @@ NodeArray::updateAppearance() {
     for (unsigned int i = 0; i < size(); i++) {
       node_geometry[i].size = 2 * (1 + log(1 + sc.getDouble(i)) / log(1.5));
     }
-    // version++;
+    version++;
   } else if (node_size_method.getValue() == SizeMethod::SIZE_FROM_NODE_COUNT) {
     for (unsigned int i = 0; i < size(); i++) {
       // auto & nested_graph = node_geometry2[i].nested_graph;
       float a = 0.0f; // nested_graph.get() ? nested_graph->size() : 0;
       node_geometry[i].size = 2 * (1 + log(1 + a) / log(2));
     }
-    // version++;
+    version++;
   }
 }
 
@@ -186,14 +184,14 @@ NodeArray::setNodeColorByColumn(int column) {
     };
     setNodeColor2(v[i], tmp);
   }
-  // version++;
+  version++;
   // updateFlags(GF_PER_NODE_COLORS, true);
 }
 
 void
 NodeArray::setNormal(int i, const glm::vec4 & v) {
   node_geometry[i].normal = glm::packSnorm3x10_1x2(v);
-  // version++;
+  version++;
 }
 
 void
