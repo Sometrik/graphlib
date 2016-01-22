@@ -18,6 +18,7 @@ CSVLoader::CSVLoader() : FileTypeHandler("Comma separated values", false) {
 std::shared_ptr<Graph>
 CSVLoader::openGraph(const char * filename) {
   auto graph = std::make_shared<PointCloud>();
+  graph->setNodeArray(std::make_shared<NodeArray>());
 
   ifstream in(filename, ios::in);
   if (!in) {
