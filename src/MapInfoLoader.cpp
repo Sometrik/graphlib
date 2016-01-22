@@ -8,7 +8,6 @@
 #include "../system/StringUtils.h"
 
 using namespace std;
-using namespace table;
 
 MapInfoLoader::MapInfoLoader() : FileTypeHandler("MapInfo data interchange format", false) {
   addExtension("mif");
