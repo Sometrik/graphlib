@@ -1197,20 +1197,39 @@ static bool compareSize(const label_data_s & a, const label_data_s & b) {
 bool
 Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
-  
-  for (int i = 0; i < (int)getNodeCount(); i++) {
-    auto & pd = getNodeArray().getNodeData(i);
-    auto & td = getNodeTertiaryData(i);
-    if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
-      if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
-			  getNodeArray().getNodeLabelVisibility(i))) {
-	glm::vec3 win = display.project(pd.position);
-	bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	all_labels.push_back({ glm::vec2(win.x, win.y), td.size, i, is_selected });
+  vector<bool> processed_nodes;
+  processed_nodes.resize(getNodeCount());
+
+  auto end = end_edges();
+  for (auto it = begin_edges(); it != end; ++it) {
+    if (!processed_nodes[it->tail]) {
+      processed_nodes[it->tail] = true;
+      
+      auto & pd = getNodeArray().getNodeData(it->tail);
+      auto & td = getNodeTertiaryData(it->tail);
+      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
+	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
+			    getNodeArray().getNodeLabelVisibility(it->tail))) {
+	  glm::vec3 win = display.project(pd.position);
+	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->tail, is_selected });
+	}
       }
+
+      pd = getNodeArray().getNodeData(it->head);
+      td = getNodeTertiaryData(it->head);
+      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
+	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
+			    getNodeArray().getNodeLabelVisibility(it->head))) {
+	  glm::vec3 win = display.project(pd.position);
+	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->head, is_selected });
+	}
+      }
+
     }
   }
-
+  
   bool changed = false;
   
   if (all_labels.size() <= 10) {
