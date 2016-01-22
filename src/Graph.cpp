@@ -1205,25 +1205,25 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
     if (!processed_nodes[it->tail]) {
       processed_nodes[it->tail] = true;
       
-      auto & pd = getNodeArray().getNodeData(it->tail);
-      auto & td = getNodeTertiaryData(it->tail);
-      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
-	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
+      auto & pd1 = getNodeArray().getNodeData(it->tail);
+      auto & td1 = getNodeTertiaryData(it->tail);
+      if (!pd1.label.empty() || getNodeArray().getDefaultSymbolId()) {
+	if (pd1.age >= 0 && (display.isPointVisible(pd1.position) ||
 			    getNodeArray().getNodeLabelVisibility(it->tail))) {
-	  glm::vec3 win = display.project(pd.position);
+	  glm::vec3 win = display.project(pd1.position);
 	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->tail, is_selected });
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td1.size, it->tail, is_selected });
 	}
       }
 
-      pd = getNodeArray().getNodeData(it->head);
-      td = getNodeTertiaryData(it->head);
-      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
-	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
+      auto & pd2 = getNodeArray().getNodeData(it->head);
+      auto & td2 = getNodeTertiaryData(it->head);
+      if (!pd2.label.empty() || getNodeArray().getDefaultSymbolId()) {
+	if (pd2.age >= 0 && (display.isPointVisible(pd2.position) ||
 			    getNodeArray().getNodeLabelVisibility(it->head))) {
-	  glm::vec3 win = display.project(pd.position);
+	  glm::vec3 win = display.project(pd2.position);
 	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->head, is_selected });
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td2.size, it->head, is_selected });
 	}
       }
 
