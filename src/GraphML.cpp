@@ -49,6 +49,7 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
   } else {
     graph = std::make_shared<UndirectedGraph>();
   }
+  graph->setNodeArray(std::make_shared<NodeArray>());
   
   auto & node_table = graph->getNodeData();
   auto & edge_table = directed ? graph->getEdgeData() : graph->getFaceData();
@@ -92,7 +93,7 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     const char * node_id_text = node_element->Attribute("id");
     assert(node_id_text);
 
-    int node_id = graph->addNode();
+    int node_id = graph->getNodeArray().addNode();
     node_id_column.setValue(node_id, node_id_text);
     nodes_by_id[node_id_text] = node_id + 1;
     
@@ -106,14 +107,14 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
       }
     }
 
-    graph->updateNodeAppearanceSlow(node_id);
+    graph->getNodeArray().updateNodeAppearanceSlow(node_id);
 
     XMLElement * nested_graph_element = node_element->FirstChildElement("graph");
     if (nested_graph_element) {
       auto nested_graph = createGraphFromElement(graphml_element, *nested_graph_element);
       assert(nested_graph.get());
       is_complex = true;
-      graph->setNestedGraph(node_id, nested_graph);
+      graph->getNodeArray().setNestedGraph(node_id, nested_graph);
     }
   }
 
