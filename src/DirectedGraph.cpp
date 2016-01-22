@@ -6,10 +6,9 @@
 #include "RawStatistics.h"
 
 using namespace std;
-using namespace table;
 
 DirectedGraph::DirectedGraph(int _id) : Graph(1, _id) {
-  setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_INDEGREE));
+
 }
 
 DirectedGraph::DirectedGraph(const DirectedGraph & other)
@@ -21,24 +20,17 @@ std::shared_ptr<Graph>
 DirectedGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new DirectedGraph(getId()));
   graph->setLocationGraphValid(false);
-  graph->setAlpha3(getAlpha2());
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
-  graph->setNodeSizeMethod(getNodeSizeMethod());
   graph->setClusterVisibility(getClusterVisibility());
   graph->setNodeVisibility(getNodeVisibility());
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setRegionVisibility(getRegionVisibility());
   graph->setLabelVisibility(getLabelVisibility());
   graph->setLineWidth(getLineWidth());
-  graph->setLabelStyle(getLabelStyle());
-  graph->setDefaultSymbolId(getDefaultSymbolId());
+  graph->setNodeArray(nodes);
   
-  for (auto it = getNodeData().getColumns().begin(); it != getNodeData().getColumns().end(); it++) {
-    graph->getNodeData().addColumn(it->second->create());
-  }
-
   return graph;
 }
 
