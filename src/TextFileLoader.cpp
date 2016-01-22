@@ -18,6 +18,7 @@ TextFileLoader::TextFileLoader() : FileTypeHandler("Text file", false) {
 std::shared_ptr<Graph>
 TextFileLoader::openGraph(const char * filename) {
   auto graph = std::make_shared<PointCloud>();
+  graph->setNodeArray(std::make_shared<NodeArray>());
 
   ifstream in(filename, ios::in);
   if (!in) {
@@ -33,7 +34,7 @@ TextFileLoader::openGraph(const char * filename) {
     StringUtils::trim(s);
     if (s.empty()) continue;
 
-    int node_id = graph->addNode();
+    int node_id = graph->getNodeArray().addNode();
     text_data.setValue(node_id, s);
 
     cerr << "added node " << node_id << ": " << s << endl;
