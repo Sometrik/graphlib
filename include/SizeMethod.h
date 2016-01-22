@@ -9,17 +9,18 @@ struct node_tertiary_data_s;
 class SizeMethod {
  public:
   enum Method {
-    NO_SIZE = 0,
+    CONSTANT = 0,
     SIZE_FROM_DEGREE,
     SIZE_FROM_INDEGREE,
     SIZE_FROM_COLUMN,
     SIZE_FROM_NODE_COUNT
   };
-  SizeMethod(Method _method = NO_SIZE) : method(_method) { }
- SizeMethod(Method _method, const std::string & _column) : method(_method), column(_column) { }
+ SizeMethod(Method _method, float _constant = 0.0f) : method(_method), constant(_constant) { }
+ SizeMethod(Method _method, const std::string & _column) : method(_method), column(_column), constant(0.0f) { }
 
   Method getValue() const { return method; }
   const std::string & getColumn() const { return column; }
+  float getConstant() const { return constant; }
   bool definedForSource() const { return method == SIZE_FROM_DEGREE; }
   bool definedForTarget() const { return method == SIZE_FROM_DEGREE || method == SIZE_FROM_INDEGREE; }
   
@@ -28,6 +29,7 @@ class SizeMethod {
  private:
   Method method;
   std::string column;
+  float constant;
 };
 
 #endif
