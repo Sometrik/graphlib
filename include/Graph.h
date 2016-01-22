@@ -222,6 +222,12 @@ class Graph : public MBRObject {
 
   bool hasEdge(int n1, int n2) const;
 
+  int addNode(NodeType type = NODE_ANY, float size = 0.0f, float age = 0.0f) {
+    int node_id = nodes->add(type, size, age);
+    updateNodeSize(node_id);
+    return node_id;
+  }
+
 #if 0
   void setEdgeId(int edge, const std::string & edge_id) {
     getEdgeData().addTextColumn("id").setValue(edge, edge_id);
