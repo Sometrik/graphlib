@@ -16,19 +16,16 @@ class DirectedGraph : public Graph {
     assert(n1 != -1 && n2 != -1);
     int edge = (int)edge_attributes.size();
     int next_node_edge = getNodeFirstEdge(n1);
-    node_geometry2[n1].first_edge = edge;
     int next_face_edge = -1;
     if (face != -1) next_face_edge = getFaceFirstEdge(face);
 
-    node_geometry2[n1].outdegree += weight;
-    total_outdegree += weight;
-    if (getNodeSizeMethod().definedForSource()) {
+    setNodeFirstEdge(n1, edge);
+    updateOutdegree(n1, weight);
+    if (getNodeArray().getNodeSizeMethod().definedForSource()) {
       updateNodeSize(n1);
     }
-
-    node_geometry2[n2].indegree += weight;
-    total_indegree += weight;
-    if (getNodeSizeMethod().definedForTarget()) {
+    updateIndegree(n2, weight);
+    if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
       updateNodeSize(n2);	
     }
     
