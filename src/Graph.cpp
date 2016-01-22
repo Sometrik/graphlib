@@ -594,7 +594,7 @@ Graph::extractLocationGraph(Graph & target_graph) {
   map<string, int> node_mapping;
   target_graph.getNodeArray().getTable().addTextColumn("name");
 
-  // Column & sentiment = target_graph.getNodeArray().getNodeData().addDoubleColumn("sentiment");
+  // Column & sentiment = target_graph.getNodeArray().getNodeArray().getTable().addDoubleColumn("sentiment");
 
   const table::Column & lat_column = getNodeArray().getTable()["latitude"], & lon_column = getNodeArray().getTable()["longitude"];  
  
@@ -955,6 +955,7 @@ Graph::createClusters() {
 
 void
 Graph::storeChangesFromFinal() {
+#if 0
   for (auto & g : final_graphs) {
     for (int j = 0; j < g->getNodeCount(); j++) {
       auto & sd = g->getNodeArray().getNodeSecondaryData(j);
@@ -986,11 +987,12 @@ Graph::storeChangesFromFinal() {
     getNodeArray().setAlpha3(g->getNodeArray().getAlpha2());
     // setAlphaVelocity2(g->getAlphaVelocity2());
   }
+#endif
 }
 
 unsigned int
 Graph::getSuitableFinalGraphCount() const {
-  if (getNodeCount() >= 100 || 1) {
+  if (getNodeCount() >= 100 && 0) {
     return 2;
   } else {
     return 1;
