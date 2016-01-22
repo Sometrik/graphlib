@@ -28,23 +28,15 @@ class UndirectedGraph : public Graph {
 
     int next_node_edge = -1;
     if (n1 != -1) {
-      int prev_first_edge = getNodeFirstEdge(n1);
-      assert(edge != prev_first_edge);
+      next_node_edge = getNodeFirstEdge(n1);
       setNodeFirstEdge(n1, edge);
       updateOutdegree(n1, 1);
-      next_node_edge = prev_first_edge;
-
       if (getNodeArray().getNodeSizeMethod().definedForSource()) {
 	updateNodeSize(n1);
       }
     }
-    if (n2 != -1) { // && n1 != n2) {
-      // int prev_first_edge = getNodeFirstEdge(n2);
-      // assert(edge != prev_first_edge);
-      // node_geometry2[n2].first_edge = edge;
+    if (n2 != -1) {
       updateIndegree(n2, 1);
-      // next_head_edge = prev_first_edge;
-
       if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
 	updateNodeSize(n2);
       }      
