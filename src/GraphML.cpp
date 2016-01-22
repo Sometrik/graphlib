@@ -45,11 +45,14 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
   std::shared_ptr<Graph> graph;
   if (directed) {
     graph = std::make_shared<DirectedGraph>();
+    graph->setNodeArray(std::make_shared<NodeArray>());
+    graph->getNodeArray().setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_INDEGREE));
   } else {
     graph = std::make_shared<UndirectedGraph>();
+    graph->setNodeArray(std::make_shared<NodeArray>());
+    graph->getNodeArray().setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_DEGREE));
   }
-  graph->setNodeArray(std::make_shared<NodeArray>());
-  
+
   auto & node_table = graph->getNodeArray().getTable();
   auto & edge_table = directed ? graph->getEdgeData() : graph->getFaceData();
   
@@ -92,7 +95,8 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     const char * node_id_text = node_element->Attribute("id");
     assert(node_id_text);
 
-    int node_id = graph->getNodeArray().addNode();
+    int node_id = graph->addNode();
+    graph->addEdge(node_id, node_id);
     node_id_column.setValue(node_id, node_id_text);
     nodes_by_id[node_id_text] = node_id + 1;
     
