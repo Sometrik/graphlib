@@ -4,7 +4,7 @@
 #include <string>
 
 class Graph;
-struct node_secondary_data_s;
+struct node_tertiary_data_s;
 
 class SizeMethod {
  public:
@@ -23,7 +23,7 @@ class SizeMethod {
   bool definedForSource() const { return method == SIZE_FROM_DEGREE; }
   bool definedForTarget() const { return method == SIZE_FROM_DEGREE || method == SIZE_FROM_INDEGREE; }
   
-  float calculateSize(const node_secondary_data_s & data, double total_indegree, double total_outdegree, size_t node_count) const;
+  float calculateSize(const node_tertiary_data_s & data, double total_indegree, double total_outdegree, size_t node_count) const;
   
  private:
   Method method;
