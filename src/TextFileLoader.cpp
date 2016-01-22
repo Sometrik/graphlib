@@ -9,7 +9,6 @@
 #include "../system/StringUtils.h"
 
 using namespace std;
-using namespace table;
 
 TextFileLoader::TextFileLoader() : FileTypeHandler("Text file", false) {
   addExtension("txt");
@@ -26,7 +25,7 @@ TextFileLoader::openGraph(const char * filename) {
     return 0;
   }
 
-  Column & text_data = graph->getNodeData().addTextColumn("text");
+  auto & text_data = graph->getNodeArray().getTable().addTextColumn("text");
   
   while (!in.eof() && !in.fail()) {
     string s;
