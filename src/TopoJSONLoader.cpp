@@ -14,7 +14,6 @@
 #include <glm/glm.hpp>
 
 using namespace std;
-using namespace table;
 
 TopoJSONLoader::TopoJSONLoader() : FileTypeHandler("TopoJSON", false) {
   addExtension("json");
@@ -41,10 +40,10 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
       key << v.x << "/" << v.y;
       map<string, int>::iterator it = nodes.find(key.str());
       if (it != nodes.end()) {
-	graph.getNodeData()["id"].setValue(it->second, id_text);
+	graph.getNodeArray().getTable()["id"].setValue(it->second, id_text);
       } else {
 	int node_id = nodes[key.str()] = graph.getNodeArray().addNode();
-	graph.getNodeData()["id"].setValue(it->second, id_text);
+	graph.getNodeArray().getTable()["id"].setValue(it->second, id_text);
 	graph.getNodeArray().setPosition(node_id, v);
       }
     } else if (type == "MultiPoint") {
@@ -186,7 +185,7 @@ TopoJSONLoader::openGraph(const char * filename) {
   graph->setNodeArray(std::make_shared<NodeArray>());
   graph->setHasSpatialData(true);
   graph->setHasArcData(true);
-  graph->getNodeData().addTextColumn("id");
+  graph->getNodeArray().getTable().addTextColumn("id");
   
   assert(root_type == "Topology");
 
