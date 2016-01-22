@@ -7,6 +7,7 @@ using namespace std;
 float
 SizeMethod::calculateSize(const node_tertiary_data_s & data, double total_indegree, double total_outdegree, size_t node_count) const {
   switch (method) {
+  case CONSTANT: return constant;    
   case SIZE_FROM_DEGREE:
     {
       float degree = data.indegree + data.outdegree;      
