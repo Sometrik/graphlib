@@ -466,8 +466,8 @@ class Graph : public MBRObject {
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
     nodes->clearTextures(clear_flags);
     for (int i = 0; i < getNodeCount(); i++) {
-      if (getNodeArray().node_geometry2[i].nested_graph.get()) {
-	getNodeArray().node_geometry2[i].nested_graph->clearTextures(clear_flags);
+      if (getNodeArray().node_geometry[i].nested_graph.get()) {
+	getNodeArray().node_geometry[i].nested_graph->clearTextures(clear_flags);
       }
     }
     version++;
@@ -481,7 +481,7 @@ class Graph : public MBRObject {
   const NodeArray & getNodeArray() const { return *nodes; }
       
   int getDimensions() const { return dimensions; }
-  int getVersion() const { return version; }
+  int getVersion() const { return version + nodes->getVersion(); }
 
   void createClusters();
   void calculateEdgeCentrality();
@@ -518,16 +518,11 @@ class Graph : public MBRObject {
     cluster_attributes.clear();
     face_attributes.clear();
     region_attributes.clear();
-    // node_geometry.clear();
-    // node_geometry2.clear();
-    // node_cache.clear();
-    // nodes.clear();
 
     highlighted_node = -1;
     highlighted_region = -1;
     has_node_selection = false;
-    // total_indegree = total_outdegree = 0.0;
-    total_edge_weight = 0.0;
+    total_edge_weight = total_indegree = total_outdegree = 0.0;
   }
       
   std::map<skey, int> & getFaceCache() { return face_cache; } 
@@ -539,7 +534,7 @@ class Graph : public MBRObject {
 
   void setNodeCluster(int node_id, int cluster_id) {
     assert(node_id >= 0 && node_id < getNodeCount());
-    auto & nd = getNodeArray().getNodeSecondaryData(node_id);
+    auto & nd = getNodeArray().getNodeData(node_id);
     if (nd.cluster_id != -1) {
       assert(nd.cluster_id >= 0 && nd.cluster_id <= (int)getClusterCount());
       getClusterAttributes(nd.cluster_id).num_nodes--;
@@ -613,7 +608,7 @@ class Graph : public MBRObject {
 
   std::string getGraphName(int graph_id) const {
     for (int i = 0; i < getNodeCount(); i++) {
-      auto & graph = getNodeArray().node_geometry2[i].nested_graph;
+      auto & graph = getNodeArray().node_geometry[i].nested_graph;
       if (graph.get() && graph->getId() == graph_id) {
 	return nodes->getTable()["name"].getText(i);
       }
