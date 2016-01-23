@@ -467,9 +467,6 @@ class Graph : public MBRObject {
   void setNodeTexture(const skey & key, int texture);
   
   void clearTextures(int clear_flags = CLEAR_ALL) {
-    for (auto & g : final_graphs) {
-      g->clearTextures(clear_flags);
-    }
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
     nodes->clearTextures(clear_flags);
     for (int i = 0; i < getNodeCount(); i++) {
@@ -477,7 +474,6 @@ class Graph : public MBRObject {
 	getNodeArray().node_geometry[i].nested_graph->clearTextures(clear_flags);
       }
     }
-    version++;
   }
   void setLabelTexture(const skey & key, int texture);  
 
