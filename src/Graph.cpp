@@ -566,21 +566,18 @@ Graph::relaxLinks() {
     float l = glm::length(d);
     if (l < EPSILON) continue;
     if (pd1.cluster_id != pd2.cluster_id) continue;
+    auto & td1 = getNodeTertiaryData(s), & td2 = getNodeTertiaryData(t);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= getNodeArray().getAlpha2(); // * fabsf(it->weight) / avg_edge_weight;
-    float w1 = pd1.type == NODE_HASHTAG ? 0 : 1.0f; // pd1.size;
-    float w2 = pd2.type == NODE_HASHTAG ? 0 : 1.0f; // pd2.size;
+    float w1 = pd1.type == NODE_HASHTAG ? 0 : td1.size;
+    float w2 = pd2.type == NODE_HASHTAG ? 0 : td2.size;
     float k;
     if (fixed1) {
       k = 1.0f;
     } else if (fixed2) {
       k = 0.0f;
     } else {
-#if 1
       k = w1 / (w1 + w2);
-#else
-      k = 0.5f;
-#endif
     }
     pos2 -= d * k;
     pos1 += d * (1 - k);
@@ -1023,7 +1020,7 @@ Graph::storeChangesFromFinal() {
 
 unsigned int
 Graph::getSuitableFinalGraphCount() const {
-  if (getNodeCount() >= 100 && 0) {
+  if (getNodeCount() >= 100) {
     return 2;
   } else {
     return 1;
@@ -1044,7 +1041,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     if (count == 2) {
       auto g1 = createSimilar();
       auto g2 = createSimilar();
-      g1->setMinSignificance(10.0f);
+      g1->setMinSignificance(20.0f);
       g1->setMinScale(1.0f);
       addFinalGraph(g1);
       addFinalGraph(g2);
@@ -1078,7 +1075,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   bool changed = false;
   for (unsigned int i = 0; i < final_graphs.size(); i++) {
     auto & g = final_graphs[i];
-    Graph * base_graph = i > 0 ? final_graphs[i].get() : 0;
+    Graph * base_graph = i > 0 ? final_graphs[0].get() : 0;
     if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, base_graph)) {
       g->updateAppearance();
       g->incVersion();
@@ -1203,30 +1200,31 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     if (!processed_nodes[it->tail]) {
-      processed_nodes[it->tail] = true;
-      
-      auto & pd1 = getNodeArray().getNodeData(it->tail);
-      auto & td1 = getNodeTertiaryData(it->tail);
-      if (!pd1.label.empty() || getNodeArray().getDefaultSymbolId()) {
-	if (pd1.age >= 0 && (display.isPointVisible(pd1.position) ||
+      processed_nodes[it->tail] = true;      
+      auto & pd = getNodeArray().getNodeData(it->tail);
+      auto & td = getNodeTertiaryData(it->tail);
+      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
+	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
 			    getNodeArray().getNodeLabelVisibility(it->tail))) {
-	  glm::vec3 win = display.project(pd1.position);
+	  glm::vec3 win = display.project(pd.position);
 	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td1.size, it->tail, is_selected });
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->tail, is_selected });
 	}
       }
+    }
 
-      auto & pd2 = getNodeArray().getNodeData(it->head);
-      auto & td2 = getNodeTertiaryData(it->head);
-      if (!pd2.label.empty() || getNodeArray().getDefaultSymbolId()) {
-	if (pd2.age >= 0 && (display.isPointVisible(pd2.position) ||
+    if (!processed_nodes[it->head]) {
+      processed_nodes[it->head] = true;     
+      auto & pd = getNodeArray().getNodeData(it->head);
+      auto & td = getNodeTertiaryData(it->head);
+      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
+	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
 			    getNodeArray().getNodeLabelVisibility(it->head))) {
-	  glm::vec3 win = display.project(pd2.position);
+	  glm::vec3 win = display.project(pd.position);
 	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td2.size, it->head, is_selected });
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->head, is_selected });
 	}
       }
-
     }
   }
   
@@ -1387,7 +1385,7 @@ Graph::getFinal(float scale) {
   cerr << "getting final for scale " << scale << endl;
   for (auto & g : final_graphs) {
     if (scale >= g->getMinScale()) {
-      cerr << "  min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << endl;
+      cerr << "  min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << endl;
       return g;
     }
   }
@@ -1396,13 +1394,14 @@ Graph::getFinal(float scale) {
 
 const std::shared_ptr<const Graph>
 Graph::getFinal(float scale) const {
-  cerr << "getting final for scale " << scale << ", levels = " << final_graphs.size() << ", nodes = " << getNodeCount() << endl;
-  for (auto & g : final_graphs) {
+  for (unsigned int i = 0; i < final_graphs.size(); i++) {
+    auto & g = final_graphs[i];
     if (!g->getMinScale() || scale < g->getMinScale()) {
-      cerr << "  min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << endl;
+      cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ")\n";
       return g;
     }
   }
+  cerr << "no final graph available\n";
   return std::shared_ptr<Graph>(0);
 }
 
