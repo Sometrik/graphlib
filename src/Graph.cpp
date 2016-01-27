@@ -381,7 +381,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
     if (!stored_nodes[it->head]) {
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
-      auto & td = getNodeTertiaryData(it->tail);
+      auto & td = getNodeTertiaryData(it->head);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.prev_position, nd.age, td.size, nd.texture, nd.flags });
     }    
   }
@@ -1020,8 +1020,8 @@ Graph::storeChangesFromFinal() {
 
 unsigned int
 Graph::getSuitableFinalGraphCount() const {
-  if (getNodeCount() >= 100) {
-    return 2;
+  if (getNodeCount() >= 100 && 0) {
+    return 5;
   } else {
     return 1;
   }
@@ -1038,15 +1038,28 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     storeChangesFromFinal();
     final_graphs.clear();
     cerr << "CREATING FINALs!\n";
-    if (count == 2) {
+    if (count == 5) {
+      auto g0 = createSimilar();
       auto g1 = createSimilar();
       auto g2 = createSimilar();
-      g1->setMinSignificance(20.0f);
-      g1->setMinScale(1.0f);
+      auto g3 = createSimilar();
+      auto g4 = createSimilar();
+      g1->setMinSignificance(2.0f);
+      g1->setMinScale(3.2f);
+      g2->setMinSignificance(4.0f);
+      g2->setMinScale(0.8f);
+      g3->setMinSignificance(8.0f);
+      g3->setMinScale(0.2f);
+      g4->setMinSignificance(16.0f);
+      g4->setMinScale(0.05f);
+      addFinalGraph(g0);
       addFinalGraph(g1);
       addFinalGraph(g2);
+      addFinalGraph(g3);
+      addFinalGraph(g4);
     } else {
-      addFinalGraph(createSimilar());
+      auto g1 = createSimilar();
+      addFinalGraph(g1);
     }
     statistics.clear();
   } else if (!final_graphs.front()->hasPosition()) {
@@ -1061,7 +1074,6 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     
     for (int j = 0; j < getNodeCount(); j++) {
       auto & pd = getNodeArray().getNodeData(j);
-      // auto & sd = getNodeArray().getNodeSecondaryData(j);
       pd.age = -2.0f;
       pd.flags = NODE_SELECTED;
       pd.label_visibility_val = 0;
@@ -1075,8 +1087,8 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   bool changed = false;
   for (unsigned int i = 0; i < final_graphs.size(); i++) {
     auto & g = final_graphs[i];
-    Graph * base_graph = i > 0 ? final_graphs[0].get() : 0;
-    if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, base_graph)) {
+    Graph * base_graph = final_graphs[0].get();
+    if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
       g->updateAppearance();
       g->incVersion();
       setLocationGraphValid(false);
@@ -1086,6 +1098,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
       changed = true;
     }
   }
+  
   return changed;         
 }
 
@@ -1382,22 +1395,23 @@ Graph::setLabelTexture(const skey & key, int texture) {
 
 std::shared_ptr<Graph>
 Graph::getFinal(float scale) {
-  cerr << "getting final for scale " << scale << endl;
-  for (auto & g : final_graphs) {
-    if (scale >= g->getMinScale()) {
-      cerr << "  min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << endl;
+  for (int i = int(final_graphs.size()) - 1; i >= 0; i--) {
+    auto & g = final_graphs[i];
+    if (i == 0 || (scale > 0.0f && g->getEdgeCount() > 0 && scale < g->getMinScale())) {
+      // cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << ")\n";
       return g;
     }
   }
+  cerr << "no final graph available\n";
   return std::shared_ptr<Graph>(0);
 }
 
 const std::shared_ptr<const Graph>
 Graph::getFinal(float scale) const {
-  for (unsigned int i = 0; i < final_graphs.size(); i++) {
+  for (int i = int(final_graphs.size()) - 1; i >= 0; i--) {
     auto & g = final_graphs[i];
-    if (!g->getMinScale() || scale < g->getMinScale()) {
-      cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ")\n";
+    if (i == 0 || (scale > 0.0f && g->getEdgeCount() >= 0 && scale < g->getMinScale())) {
+      // cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << ")\n";
       return g;
     }
   }
