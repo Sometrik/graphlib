@@ -1,10 +1,11 @@
 #ifndef _NODEARRAY_H_
 #define _NODEARRAY_H_
 
+#include <skey.h>
+
 #include "NodeType.h"
 #include "SizeMethod.h"
 #include "../system/Mutex.h"
-#include "skey.h"
 #include "graph_color.h"
 #include "LabelStyle.h"
 #include "RenderMode.h"
