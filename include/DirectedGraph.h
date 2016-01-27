@@ -20,13 +20,15 @@ class DirectedGraph : public Graph {
     if (face != -1) next_face_edge = getFaceFirstEdge(face);
 
     setNodeFirstEdge(n1, edge);
-    updateOutdegree(n1, weight);
-    if (getNodeArray().getNodeSizeMethod().definedForSource()) {
-      updateNodeSize(n1);
-    }
-    updateIndegree(n2, weight);
-    if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
-      updateNodeSize(n2);	
+    if (n1 != n2) {
+      updateOutdegree(n1, 1.0f); // weight);
+      if (getNodeArray().getNodeSizeMethod().definedForSource()) {
+	updateNodeSize(n1);
+      }
+      updateIndegree(n2, 1.0f); // weight);
+      if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
+	updateNodeSize(n2);	
+      }
     }
     
     edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, next_face_edge, arc ));
