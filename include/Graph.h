@@ -1,8 +1,9 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
+#include <FeedMode.h>
+
 #include "MBRObject.h"
-#include "FeedMode.h"
 #include "RawStatistics.h"
 #include "NodeArray.h"
 
