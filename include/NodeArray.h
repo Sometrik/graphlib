@@ -60,7 +60,7 @@ class NodeArray {
   table::Table & getTable() { return nodes; }
   const table::Table & getTable() const { return nodes; }
 
-  void setNodeSizeMethod(SizeMethod m) { size_method = m; }
+  void setNodeSizeMethod(const SizeMethod & m) { size_method = m; }
   const SizeMethod & getNodeSizeMethod() const { return size_method; }
 
   void setLabelMethod(const LabelMethod & m) { label_method = m; }
