@@ -305,10 +305,11 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     unsigned int ec = getEdgeCount();
     unsigned int asize = 2 * ec * sizeof(line_data_s);
     std::unique_ptr<line_data_s[]> new_geometry(new line_data_s[2 * ec]);
+    
     unsigned int vn = 0;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {    
-      auto & g1 = getNodeArray().node_geometry[it->tail], & g2 = getNodeArray().node_geometry[it->head];
+      auto & g1 = nodes->node_geometry[it->tail], & g2 = nodes->node_geometry[it->head];
       
       if (getNodeArray().node_geometry[it->tail].type == NODE_HASHTAG ||
 	  getNodeArray().node_geometry[it->head].type == NODE_HASHTAG) continue;
@@ -557,7 +558,7 @@ Graph::relaxLinks() {
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int s = it->tail, t = it->head;
-    auto & pd1 = getNodeArray().getNodeData(s), & pd2 = getNodeArray().getNodeData(t);
+    auto & pd1 = nodes->getNodeData(s), & pd2 = nodes->getNodeData(t);
     bool fixed1 = pd1.flags & NODE_FIXED_POSITION;
     bool fixed2 = pd2.flags & NODE_FIXED_POSITION;
     if (fixed1 && fixed2) continue;      
@@ -1491,7 +1492,7 @@ Graph::applyGravity(float gravity) {
   }
 }
 
-static inline void applyDragAndAgeToNode(RenderMode mode, float friction, node_data_s & nd) {
+static inline void applyDragAndAgeToNode(RenderMode mode, float friction, node_data_s & pd) {
   glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
     
   glm::vec3 new_pos = pos - (ppos - pos) * friction;
