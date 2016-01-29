@@ -309,11 +309,8 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     unsigned int vn = 0;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {    
-      auto & g1 = nodes->node_geometry[it->tail], & g2 = nodes->node_geometry[it->head];
-      
-      if (getNodeArray().node_geometry[it->tail].type == NODE_HASHTAG ||
-	  getNodeArray().node_geometry[it->head].type == NODE_HASHTAG) continue;
       if (it->tail == it->head) continue;
+      auto & g1 = nodes->node_geometry[it->tail], & g2 = nodes->node_geometry[it->head];
       
       glm::vec3 pos1, pos2;
       if (is_spherical) {
