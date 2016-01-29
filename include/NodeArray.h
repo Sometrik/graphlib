@@ -70,9 +70,6 @@ class NodeArray {
   void updateNodeAppearanceAll();
   void updateNodeAppearanceSlow(int node_id);
 
-  // std::string getNodeName(int i) const { return nodes["name"].getText(i); }
-  // std::string getNodeUsername(int i) const { return nodes["uname"].getText(i); }
-
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
