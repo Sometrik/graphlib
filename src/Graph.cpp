@@ -305,53 +305,53 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     unsigned int ec = getEdgeCount();
     unsigned int asize = 2 * ec * sizeof(line_data_s);
     std::unique_ptr<line_data_s[]> new_geometry(new line_data_s[2 * ec]);
-    vector<int> node_mapping;
+    vector<unsigned int> node_mapping, indices;
     node_mapping.resize(getNodeCount());
     graph_color_s sel_color = { 100, 200, 255, 255 };
     unsigned int vn = 0;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {    
       if (it->tail == it->head) continue;
-      int i1 = node_mapping[it->tail], it2 = node_mapping[it->head];
+      auto & g1 = nodes->node_geometry[it->tail];
+      auto & g2 = nodes->node_geometry[it->head];
+      int i1 = node_mapping[it->tail], i2 = node_mapping[it->head];
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (!i1) {
-	auto & g = nodes->node_geometry[it->tail];
 	glm::vec3 pos;
 	if (is_spherical) {
-	  double lat = g.position.y / 180.0 * M_PI, lon = g.position.x / 180.0 * M_PI;
+	  double lat = g1.position.y / 180.0 * M_PI, lon = g1.position.x / 180.0 * M_PI;
 	  pos = glm::vec3( -earth_radius * cos(lat) * cos(lon),
 			   earth_radius * sin(lat),
 			   earth_radius * cos(lat) * sin(lon)
 			   );
 	} else {
-	  pos = g.position;
+	  pos = g1.position;
 	}
-	auto color = is_edge_selected ? sel_color : g.color;
-	line_data_s s = { color.r, color.g, color.b, color.a, pos, g.age, 1.0f }; // g.size
+	auto color = edge_selected ? sel_color : g1.color;
+	line_data_s s = { color.r, color.g, color.b, color.a, pos, g1.age, 1.0f }; // g1.size
 	i1 = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
       if (!i2) {
-	auto & g = nodes->node_geometry[it->head];
 	glm::vec3 pos;
 	if (is_spherical) {
-	  double lat = g.position.y / 180.0 * M_PI, lon = g.position.x / 180.0 * M_PI;
+	  double lat = g2.position.y / 180.0 * M_PI, lon = g2.position.x / 180.0 * M_PI;
 	  pos = glm::vec3( -earth_radius * cos(lat) * cos(lon),
 			   earth_radius * sin(lat),
 			   earth_radius * cos(lat) * sin(lon)
 			   );
 	} else {
-	  pos = g.position;
+	  pos = g2.position;
 	}
-	auto color = is_edge_selected ? sel_color : g.color;
+	auto color = edge_selected ? sel_color : g2.color;
 	i2 = vn + 1;
-	line_data_s s = { color.r, color.g, color.b, color.a, pos, g.age, 1.0f }; // g.size
+	line_data_s s = { color.r, color.g, color.b, color.a, pos, g2.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
-      indices.push_back(i1);
-      indices.push_back(i2);      
+      indices.push_back(i1 - 1);
+      indices.push_back(i2 - 1);      
     }
     assert(vn <= 2 * ec);
     // cerr << "uploading edges: vn = " << vn << ", edges = " << ec << ", ptrs = " << new_geometry.get() << ", asize = " << asize << ", ssize = " << sizeof(line_data_s) << endl;
