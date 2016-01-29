@@ -312,8 +312,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {    
       if (it->tail == it->head) continue;
-      auto & g1 = nodes->node_geometry[it->tail];
-      auto & g2 = nodes->node_geometry[it->head];
+      auto & g1 = nodes->node_geometry[it->tail], & g2 = nodes->node_geometry[it->head];
       int i1 = node_mapping[it->tail], i2 = node_mapping[it->head];
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (!i1) {
@@ -329,7 +328,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	}
 	auto color = edge_selected ? sel_color : g1.color;
 	line_data_s s = { color.r, color.g, color.b, color.a, pos, g1.age, 1.0f }; // g1.size
-	i1 = vn + 1;
+	i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
@@ -345,7 +344,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	  pos = g2.position;
 	}
 	auto color = edge_selected ? sel_color : g2.color;
-	i2 = vn + 1;
+	i2 = node_mapping[it->head] = vn + 1;
 	line_data_s s = { color.r, color.g, color.b, color.a, pos, g2.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
@@ -357,7 +356,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     // cerr << "uploading edges: vn = " << vn << ", edges = " << ec << ", ptrs = " << new_geometry.get() << ", asize = " << asize << ", ssize = " << sizeof(line_data_s) << endl;
 #if 1
     vbo.upload(VBO::EDGES, new_geometry.get(), vn * sizeof(line_data_s));
-    vbo.uploadIndices(&(indices.front()), indices.size());
+    vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
 #endif
   }
 }
@@ -587,6 +586,7 @@ Graph::relaxLinks() {
     pos2 -= d * k;
     pos1 += d * (1 - k);
   }
+  version++;
 }
 
 int
@@ -1540,4 +1540,10 @@ Graph::applyDragAndAge(RenderMode mode, float friction) {
   }
 #endif
   version++;
+}
+
+bool
+Graph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+  assert(0);
+  return false;
 }
