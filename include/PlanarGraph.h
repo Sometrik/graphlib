@@ -23,15 +23,6 @@ class PlanarGraph : public Graph {
   
   void addUniversalRegion() override;
 
-  void setEdgeFace(int edge, int face) override {
-    assert(edge_attributes[edge].face <= 0); // ??? universal?
-    edge_attributes[edge].face = face;
-    if (face != -1) {
-      edge_attributes[edge].next_face_edge = getFaceFirstEdge(face);
-      face_attributes[face].first_edge = edge;
-    }
-  }
-
   int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
     int edge = (int)edge_attributes.size();
     int next_node_edge = -1;
