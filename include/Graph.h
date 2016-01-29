@@ -187,6 +187,7 @@ class Graph : public MBRObject {
   virtual bool isDirected() const { return false; }
   virtual bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph = 0);
   virtual void reset() { }
+
   void extractLocationGraph(Graph & target_graph);
 
   int getNextNodeEdge(int edge) const {
@@ -195,12 +196,20 @@ class Graph : public MBRObject {
   int getEdgeTargetNode(int edge) const {
     return getEdgeAttributes(edge).head;
   }
-  virtual int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0) = 0;
-  virtual void setEdgeFace(int edge1, int face) { }
-  
+  void setEdgeFace(int edge, int face) {
+    auto & ed = getEdgeAttributes(edge);
+    assert(ed.face <= 0); // ??? universal?
+    ed.face = face;
+    if (face != -1) {
+      ed.next_face_edge = getFaceFirstEdge(face);
+      face_attributes[face].first_edge = edge;
+    }
+  }
+
+  virtual int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0) = 0;  
   virtual int getNextFaceEdge(int edge) const { return -1; }
-  virtual int getEdgeRightFace(int edge) const { return -1; }
-  virtual int getEdgeLeftFace(int edge) const { return -1; }
+  // virtual int getEdgeRightFace(int edge) const { return -1; }
+  // virtual int getEdgeLeftFace(int edge) const { return -1; }
   virtual int addRegion() { return -1; }
   virtual int getRegionFirstFace(int region) const { return -1; }
   virtual int getRegionNextFace(int region, int face) const { return -1; }
@@ -229,20 +238,6 @@ class Graph : public MBRObject {
     updateNodeSize(node_id);
     return node_id;
   }
-
-#if 0
-  void setEdgeId(int edge, const std::string & edge_id) {
-    getEdgeData().addTextColumn("id").setValue(edge, edge_id);
-  }
-
-  void setFaceId(int face, const std::string & face_id) {
-    getFaceData().addTextColumn("id").setValue(face, face_id);
-  }
-
-  void setRegionId(int region, const std::string & region_id) {
-    getRegionData().addTextColumn("id").setValue(region, region_id);
-  }
-#endif
 
   void setNodeFirstEdge(int n, int edge) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
