@@ -631,6 +631,7 @@ class Graph : public MBRObject {
   std::vector<int> createSortedNodeIndices(const glm::vec3 & camera_pos) const;
 
   void applyGravity(float gravity);
+  void applyDragAndAge(RenderMode mode, float friction);
 
  protected:
   unsigned int getSuitableFinalGraphCount() const;

@@ -11,39 +11,6 @@
 using namespace std;
 
 void
-NodeArray::applyDragAndAge(RenderMode mode, float friction) {
-  int n = size();
-  for (int i = 0; i < n; i++) {
-    auto & pd = getNodeData(i);
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
-    glm::vec3 new_pos = pos - (ppos - pos) * friction;
-    if (mode == RENDERMODE_2D) {
-      new_pos.z = 0;
-    }
-    pd.prev_position = pos;
-    pd.position = new_pos;
-    pd.age += 1.0f / 50.0f;
-  }
-
-#if 0
-  n = getClusterCount();
-  for (int i = 0; i < n; i++) {
-    auto & pd = getClusterAttributes(i);
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
-    glm::vec3 new_pos = pos - (ppos - pos) * friction;
-    if (mode == RENDERMODE_2D) {
-      new_pos.z = 0;
-    }
-    pd.prev_position = pos;
-    pd.position = new_pos;    
-  }
-#endif
-  version++;
-}
-
-void
 NodeArray::updateNodeAppearanceAll() {
   for (unsigned int i = 0; i < size(); i++) {
     updateNodeAppearanceSlow(i);

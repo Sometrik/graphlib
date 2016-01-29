@@ -244,8 +244,6 @@ class NodeArray {
 
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
-
-  void applyDragAndAge(RenderMode mode, float friction);
   
   void setAlpha3(float f) { alpha = f; }
   void updateAlpha() { alpha *= 0.99f; }

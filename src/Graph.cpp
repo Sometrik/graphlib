@@ -1458,10 +1458,9 @@ static inline void applyGravityToNode(float k, node_data_s & pd) {
 }
 
 void
-NodeArray::applyGravity(float gravity) {
-  float k = getAlpha2() * gravity;
+Graph::applyGravity(float gravity) {
+  float k = nodes->getAlpha2() * gravity;
   if (k > EPSILON) {
-    auto & nodes = getNodeArray();
     vector<bool> processed_nodes;
     processed_nodes.resize(getNodeCount());
     
@@ -1490,4 +1489,50 @@ NodeArray::applyGravity(float gravity) {
     }
 #endif
   }
+}
+
+static inline void applyDragAndAgeToNode(RenderMode mode, float friction, node_data_s & nd) {
+  glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
+    
+  glm::vec3 new_pos = pos - (ppos - pos) * friction;
+  if (mode == RENDERMODE_2D) {
+    new_pos.z = 0;
+  }
+  pd.prev_position = pos;
+  pd.position = new_pos;
+  pd.age += 1.0f / 50.0f;
+}
+
+void
+Graph::applyDragAndAge(RenderMode mode, float friction) {
+  vector<bool> processed_nodes;
+  processed_nodes.resize(getNodeCount());
+  
+  auto end = end_edges();
+  for (auto it = begin_edges(); it != end; ++it) {
+    if (!processed_nodes[it->tail]) {
+      processed_nodes[it->tail] = true;
+      applyDragAndAgeToNode(mode, friction, nodes->getNodeData(it->tail));
+    }
+    if (!processed_nodes[it->head]) {
+      processed_nodes[it->head] = true;
+      applyDragAndAgeToNode(mode, friction, nodes->getNodeData(it->head));
+    }
+  }
+  
+#if 0
+  n = getClusterCount();
+  for (int i = 0; i < n; i++) {
+    auto & pd = getClusterAttributes(i);
+    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
+    
+    glm::vec3 new_pos = pos - (ppos - pos) * friction;
+    if (mode == RENDERMODE_2D) {
+      new_pos.z = 0;
+    }
+    pd.prev_position = pos;
+    pd.position = new_pos;    
+  }
+#endif
+  version++;
 }
