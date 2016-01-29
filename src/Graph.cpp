@@ -1402,7 +1402,6 @@ Graph::getFinal(float scale) {
       return g;
     }
   }
-  cerr << "no final graph available\n";
   return std::shared_ptr<Graph>(0);
 }
 
@@ -1410,12 +1409,11 @@ const std::shared_ptr<const Graph>
 Graph::getFinal(float scale) const {
   for (int i = int(final_graphs.size()) - 1; i >= 0; i--) {
     auto & g = final_graphs[i];
-    if (i == 0 || (scale > 0.0f && g->getEdgeCount() >= 0 && scale < g->getMinScale())) {
+    if (i == 0 || (scale > 0.0f && g->getEdgeCount() > 0 && scale < g->getMinScale())) {
       // cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << ")\n";
       return g;
     }
   }
-  cerr << "no final graph available\n";
   return std::shared_ptr<Graph>(0);
 }
 
@@ -1440,5 +1438,56 @@ Graph::updateAppearance() {
     for (unsigned int i = 0; i < getNodeCount(); i++) {
       node_geometry3[i].size = method.getConstant();
     }    
+  }
+}
+
+static inline void applyGravityToNode(float k, node_data_s & pd) {
+  if (!(pd.flags & NODE_FIXED_POSITION)) {
+    glm::vec3 origin, pos = pd.position;
+#if 0
+    if (pd.cluster_id >= 0) origin = getClusterAttributes(pd.cluster_id).position;
+#endif
+    pos -= origin;
+    float d = glm::length(pos);
+    if (d > 0.001) {
+      pos -= pos * (k * sqrtf(d) / d);
+      pos += origin;
+      pd.position = pos;
+    }
+  }
+}
+
+void
+NodeArray::applyGravity(float gravity) {
+  float k = getAlpha2() * gravity;
+  if (k > EPSILON) {
+    auto & nodes = getNodeArray();
+    vector<bool> processed_nodes;
+    processed_nodes.resize(getNodeCount());
+    
+    auto end = end_edges();
+    for (auto it = begin_edges(); it != end; ++it) {
+      if (!processed_nodes[it->tail]) {
+	processed_nodes[it->tail] = true;
+	applyGravityToNode(k, nodes->getNodeData(it->tail));
+      }
+      if (!processed_nodes[it->head]) {
+	processed_nodes[it->head] = true;
+	applyGravityToNode(k, nodes->getNodeData(it->head));
+      }
+    }
+
+#if 0
+    int n2 = getClusterCount();
+    for (int i = 0; i < n2; i++) {
+      auto & pd = getClusterAttributes(i);
+      glm::vec3 pos = pd.position;
+      float d = glm::length(pos);
+      if (d > 0.0001) {
+	pos -= pos * (k * sqrtf(d) / d);
+	pd.position = pos;
+      }
+    }
+#endif
   }
 }

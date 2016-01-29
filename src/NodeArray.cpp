@@ -11,44 +11,6 @@
 using namespace std;
 
 void
-NodeArray::applyGravity(float gravity) {
-  float k = getAlpha2() * gravity;
-  if (k > EPSILON) {
-    int n1 = size();
-    for (int i = 0; i < n1; i++) {
-      auto & pd = getNodeData(i);
-      if (!(pd.flags & NODE_FIXED_POSITION)) {
-	glm::vec3 pos = pd.position;
-	glm::vec3 origin;
-#if 0
-	if (pd.cluster_id >= 0) origin = getClusterAttributes(pd.cluster_id).position;
-#endif
-	pos -= origin;
-	float d = glm::length(pos);
-	if (d > 0.001) {
-	  pos -= pos * (k * sqrtf(d) / d);
-	  pos += origin;
-	  pd.position = pos;
-	}
-      }
-    }
-
-#if 0
-    int n2 = getClusterCount();
-    for (int i = 0; i < n2; i++) {
-      auto & pd = getClusterAttributes(i);
-      glm::vec3 pos = pd.position;
-      float d = glm::length(pos);
-      if (d > 0.0001) {
-	pos -= pos * (k * sqrtf(d) / d);
-	pd.position = pos;
-      }
-    }
-#endif
-  }
-}
-
-void
 NodeArray::applyDragAndAge(RenderMode mode, float friction) {
   int n = size();
   for (int i = 0; i < n; i++) {
