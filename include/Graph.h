@@ -558,7 +558,6 @@ class Graph : public MBRObject {
   virtual ConstEdgeIterator end_edges() const = 0;
 
   int getGraphNodeId(int graph_id) const;
-  void storeChangesFromFinal();
   bool updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
 
   const RawStatistics & getStatistics() const { return statistics; }
