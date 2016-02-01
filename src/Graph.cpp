@@ -122,7 +122,7 @@ void
 Graph::randomizeGeometry(bool use_2d) {
   assert(!hasSpatialData());
   mbr = Rect2d();
-  unsigned int num_nodes = size()
+  unsigned int num_nodes = getNodeArray().size();
   for (unsigned int i = 0; i < num_nodes; i++) {
     glm::vec3 v( 100.0 * ((float)rand() / RAND_MAX) - 50,
 		 100.0 * ((float)rand() / RAND_MAX) - 50,
@@ -294,7 +294,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     assert(in <= num_indices);
     assert(vn <= num_vertices);
 
-    cerr << "uploading, vbo = " << &vbo << ", in = " << in << ", vn = " << vn << "\n";
+    cerr << "uploading, vbo = " << &vbo << ", edges = " << getEdgeCount() << ", in = " << in << ", vn = " << vn << "\n";
     
     vbo.upload(VBO::ARCS_2D, new_geometry.get(), vn * sizeof(arc_data_2d_s));
     vbo.uploadIndices(indices.get(), in * sizeof(unsigned int));
@@ -350,11 +350,9 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
       indices.push_back(i2 - 1);      
     }
     assert(vn <= 2 * ec);
-    // cerr << "uploading edges: vn = " << vn << ", edges = " << ec << ", ptrs = " << new_geometry.get() << ", asize = " << asize << ", ssize = " << sizeof(line_data_s) << endl;
-#if 1
+    cerr << "uploading edges: vn = " << vn << ", indices = " << indices.size() << endl;
     vbo.upload(VBO::EDGES, new_geometry.get(), vn * sizeof(line_data_s));
     vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
-#endif
   }
 }
 
@@ -367,6 +365,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
   vector<bool> stored_nodes;
   stored_nodes.resize(nodes->size());
   vector<node_vbo_s> new_geometry;
+  unsigned int edge_count = 0;
 
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -376,16 +375,19 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[it->tail] = true;
       auto & nd = nodes->getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.prev_position, nd.age, 3 + td.size, nd.texture, nd.flags });
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, 3 + td.size, nd.texture, nd.flags });
     }
     if (!stored_nodes[it->head]) {
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.prev_position, nd.age, 3 + td.size, nd.texture, nd.flags });
-    }    
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, 3 + td.size, nd.texture, nd.flags });
+    }
+    edge_count++;
   }
-
+  
+  cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
+  
   vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
 }
 
@@ -916,7 +918,7 @@ Graph::createClusters() {
   do {
     cerr << "level " << level << ":\n";
     cerr << "  network size: " 
-	 << c.getGraph().nodes->size() << " nodes, " 
+	 << c.getGraph().getNodeCount() << " nodes, " 
 	 << c.getGraph().getLinkCount() << " links, " << endl;
     improvement = c.one_level();
     new_mod = c.modularity();
