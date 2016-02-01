@@ -465,15 +465,13 @@ class Graph : public MBRObject {
   void clearTextures(int clear_flags = CLEAR_ALL) {
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
     nodes->clearTextures(clear_flags);
-    for (int i = 0; i < getNodeCount(); i++) {
+    for (int i = 0; i < nodes->size(); i++) {
       if (getNodeArray().node_geometry[i].nested_graph.get()) {
 	getNodeArray().node_geometry[i].nested_graph->clearTextures(clear_flags);
       }
     }
   }
   void setLabelTexture(const skey & key, int texture);  
-
-  int getNodeCount() const { return nodes->size(); }
 
   void setNodeArray(const std::shared_ptr<NodeArray> & _nodes) { nodes = _nodes; }
   NodeArray & getNodeArray() { return *nodes; }
@@ -532,7 +530,7 @@ class Graph : public MBRObject {
   int pickNode(const DisplayInfo & display, int x, int y, float node_scale) const;
 
   void setNodeCluster(int node_id, int cluster_id) {
-    assert(node_id >= 0 && node_id < getNodeCount());
+    assert(node_id >= 0 && node_id < nodes->size());
     auto & nd = getNodeArray().getNodeData(node_id);
     if (nd.cluster_id != -1) {
       assert(nd.cluster_id >= 0 && nd.cluster_id <= (int)getClusterCount());
@@ -540,7 +538,9 @@ class Graph : public MBRObject {
     }
     nd.cluster_id = cluster_id;
     assert(nd.cluster_id >= 0 && nd.cluster_id <= (int)getClusterCount());
-    getClusterAttributes(nd.cluster_id).num_nodes++;
+    if (cluster_id != -1) {
+      getClusterAttributes(nd.cluster_id).num_nodes++;
+    }
   }
   
   cluster_data_s & getClusterAttributes(int i) { return cluster_attributes[i]; }
@@ -599,14 +599,14 @@ class Graph : public MBRObject {
 
   void updateNodeSize(int n) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, getNodeCount());
+    node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, nodes->size());
   }
 
   GraphRefR getGraphForReading(int graph_id) const;
   GraphRefW getGraphForWriting(int graph_id);
 
   std::string getGraphName(int graph_id) const {
-    for (int i = 0; i < getNodeCount(); i++) {
+    for (int i = 0; i < nodes->size(); i++) {
       auto & graph = getNodeArray().node_geometry[i].nested_graph;
       if (graph.get() && graph->getId() == graph_id) {
 	return nodes->getTable()["name"].getText(i);
