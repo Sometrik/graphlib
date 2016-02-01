@@ -83,8 +83,8 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
       is_first = fd.first_edge == current_pos;
     }
 
-    if (it->tail < 0 || it->head < 0 || it->tail >= source_graph.getNodeCount() || it->head >= source_graph.getNodeCount()) {
-      cerr << "invalid values: tail = " << it->tail << ", head = " << it->head << ", t = " << t << ", count = " << source_graph.getNodeCount() << ", n = " << num_edges_processed << endl;
+    if (it->tail < 0 || it->head < 0 || it->tail >= nodes.size() || it->head >= nodes.size()) {
+      cerr << "invalid values: tail = " << it->tail << ", head = " << it->head << ", t = " << t << ", count = " << nodes.size() << ", n = " << num_edges_processed << endl;
       assert(0);
     }
 
@@ -161,11 +161,11 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
     }  
   }
 
-  cerr << "updated graph data, nodes = " << getNodeCount() << ", edges = " << getEdgeCount() << ", min_sig = " << getMinSignificance() << ", skipped = " << skipped_count << ", first = " << is_first_level << endl;
+  cerr << "updated graph data, nodes = " << nodes.size() << ", edges = " << getEdgeCount() << ", min_sig = " << getMinSignificance() << ", skipped = " << skipped_count << ", first = " << is_first_level << endl;
 
   if (is_first_level) {
     stats.setTimeRange(min_time, max_time);
-    stats.setNumRawNodes(source_graph.getNodeCount());
+    stats.setNumRawNodes(nodes.size());
     stats.setNumRawEdges(source_graph.getEdgeCount());
     // stats.setNumPosts(num_posts);
     // stats.setNumActiveUsers(num_active_users);
