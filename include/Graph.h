@@ -344,18 +344,6 @@ class Graph : public MBRObject {
   void selectNodes(int node_id = -1, int depth = 0);
 
   void setRegionColorByColumn(int column);
-
-  void setClusterVisibility(bool t) { show_clusters = t; }
-  void setNodeVisibility(bool t) { show_nodes = t; }
-  void setEdgeVisibility(bool t) { show_edges = t; }
-  void setRegionVisibility(bool t) { show_regions = t; }
-  void setLabelVisibility(bool t) { show_labels = t; }
-
-  bool getClusterVisibility() const { return show_clusters; }
-  bool getNodeVisibility() const { return show_nodes; }
-  bool getEdgeVisibility() const { return show_edges; }
-  bool getRegionVisibility() const { return show_regions; }
-  bool getLabelVisibility() const { return show_labels; }
   
   const graph_color_s & getRegionColor(int i) const { return region_attributes[i].color; }
   void setRegionColor(int i, const graph_color_s & c) { region_attributes[i].color = c; }
@@ -371,14 +359,6 @@ class Graph : public MBRObject {
   void setKeywords(const std::string & k) { keywords = k; }
   const std::string & getKeywords() const { return keywords; }
   
-  const glm::vec4 & getDefaultNodeColor() const { return node_color; }
-  const glm::vec4 & getDefaultEdgeColor() const { return edge_color; }
-  const glm::vec4 & getDefaultRegionColor() const { return region_color; }
-  
-  void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
-  void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
-  void setDefaultRegionColor(const glm::vec4 & color) { region_color = color; }
-
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
   Graph & updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); return *this; }
 
@@ -651,8 +631,6 @@ class Graph : public MBRObject {
   int id;
   int dimensions;
   int highlighted_node = -1, highlighted_region = -1;
-  bool show_clusters = true, show_nodes = true, show_edges = true, show_regions = true, show_labels = true;
-  glm::vec4 node_color, edge_color, region_color;
   unsigned int flags = 0;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;

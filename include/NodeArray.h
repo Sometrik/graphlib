@@ -245,6 +245,26 @@ class NodeArray {
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
   
+  const glm::vec4 & getDefaultNodeColor() const { return node_color; }
+  const glm::vec4 & getDefaultEdgeColor() const { return edge_color; }
+  const glm::vec4 & getDefaultRegionColor() const { return region_color; }
+  
+  void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
+  void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
+  void setDefaultRegionColor(const glm::vec4 & color) { region_color = color; }
+
+  void setClusterVisibility(bool t) { show_clusters = t; }
+  void setNodeVisibility(bool t) { show_nodes = t; }
+  void setEdgeVisibility(bool t) { show_edges = t; }
+  void setRegionVisibility(bool t) { show_regions = t; }
+  void setLabelVisibility(bool t) { show_labels = t; }
+
+  bool getClusterVisibility() const { return show_clusters; }
+  bool getNodeVisibility() const { return show_nodes; }
+  bool getEdgeVisibility() const { return show_edges; }
+  bool getRegionVisibility() const { return show_regions; }
+  bool getLabelVisibility() const { return show_labels; }
+
   void setAlpha3(float f) { alpha = f; }
   void updateAlpha() { alpha *= 0.99f; }
   float getAlpha2() const { return alpha; }
@@ -283,6 +303,8 @@ class NodeArray {
   int default_symbol_id = 0;
   float alpha = 0.0f;
   int version = 1;
+  bool show_clusters = true, show_nodes = true, show_edges = true, show_regions = true, show_labels = true;
+  glm::vec4 node_color, edge_color, region_color;
 
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
