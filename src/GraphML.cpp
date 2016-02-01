@@ -213,7 +213,7 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
     graph_element->SetAttribute("edgedefault", "undirected");
   }
 
-  for (unsigned int i = 0; i < graph.getNodeCount(); i++) {
+  for (unsigned int i = 0; i < graph.getNodeArray().size(); i++) {
     XMLElement * node_element = doc.NewElement("node");
     string node_id = "n" + to_string(i);
     node_element->SetAttribute("id", node_id.c_str());    
