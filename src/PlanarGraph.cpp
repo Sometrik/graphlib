@@ -32,7 +32,7 @@ PlanarGraph::createSimilar() const {
 
 bool
 PlanarGraph::checkConsistency() const {
-  return getNodeCount() - getEdgeCount() + getFaceCount() == 2;
+  return getNodeArray().size() - getEdgeCount() + getFaceCount() == 2;
 }
 
 void
@@ -320,7 +320,7 @@ PlanarGraph::spatialAggregation(const Graph & other) {
     }
   }
 
-  for (unsigned int i = 0; i < other.getNodeCount(); i++) {
+  for (unsigned int i = 0; i < other.getNodeArray().size(); i++) {
     const glm::vec3 & v = other.getNodeArray().getPosition(i);
     int region = findContainingRegion(glm::dvec3(v.x, v.y, v.z));
     if (region != -1) {
