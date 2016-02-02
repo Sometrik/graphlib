@@ -414,9 +414,6 @@ class Graph : public MBRObject {
 
   void relaxLinks();
 
-  int getSRID() const { return srid; }
-  void setSRID(int _srid) { srid = _srid; }
-
   virtual int addCluster() {
     int cluster_id = cluster_attributes.size();
     cluster_attributes.push_back({ { 127, 127, 127, 127 }, glm::vec3(), glm::vec3(), 0 });
@@ -625,7 +622,7 @@ class Graph : public MBRObject {
   void lockWriter() { nodes->lockWriter(); }
   void unlockWriter() { nodes->unlockWriter(); }
   
-  int srid = 0, version = 1;
+  int version = 1;
   short source_id = 0;
 
   int id;

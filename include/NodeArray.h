@@ -53,7 +53,7 @@ struct node_data_s {
 class NodeArray {
  public:
   friend class Graph;
- NodeArray() : size_method(SizeMethod::CONSTANT, 1.0f) { }
+  NodeArray();
 
   size_t size() const { return nodes.size(); }
   bool empty() const { return nodes.empty(); }
@@ -272,7 +272,10 @@ class NodeArray {
   void stop() { alpha = 0.0f; }
 
   int getVersion() const { return version; }
-  
+
+  int getSRID() const { return srid; }
+  void setSRID(int _srid) { srid = _srid; }
+
  protected:
 
  private:
@@ -302,7 +305,7 @@ class NodeArray {
   LabelStyle label_style = LABEL_PLAIN;
   int default_symbol_id = 0;
   float alpha = 0.0f;
-  int version = 1;
+  int srid = 0, version = 1;
   bool show_clusters = true, show_nodes = true, show_edges = true, show_regions = true, show_labels = true;
   glm::vec4 node_color, edge_color, region_color;
 

@@ -10,6 +10,15 @@
 
 using namespace std;
 
+NodeArray::NodeArray()
+  : size_method(SizeMethod::CONSTANT, 1.0f),
+    node_color(0.0f, 0.0f, 0.0f, 0.0f),
+    edge_color(0.0f, 0.0f, 0.0f, 0.0f),
+    region_color(0.0f, 0.0f, 0.0f, 0.0f)
+{
+  
+}
+
 void
 NodeArray::updateNodeAppearanceAll() {
   for (unsigned int i = 0; i < size(); i++) {
