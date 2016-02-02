@@ -17,11 +17,6 @@ UndirectedGraph::createSimilar() const {
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
-  graph->setClusterVisibility(getClusterVisibility());
-  graph->setNodeVisibility(getNodeVisibility());
-  graph->setEdgeVisibility(getEdgeVisibility());
-  graph->setRegionVisibility(getRegionVisibility());
-  graph->setLabelVisibility(getLabelVisibility());
   graph->setNodeArray(nodes);  
 
   return graph;

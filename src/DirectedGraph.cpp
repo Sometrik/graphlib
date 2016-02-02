@@ -24,11 +24,6 @@ DirectedGraph::createSimilar() const {
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
   graph->setDoubleBufferedVBO(hasDoubleBufferedVBO());
-  graph->setClusterVisibility(getClusterVisibility());
-  graph->setNodeVisibility(getNodeVisibility());
-  graph->setEdgeVisibility(getEdgeVisibility());
-  graph->setRegionVisibility(getRegionVisibility());
-  graph->setLabelVisibility(getLabelVisibility());
   graph->setLineWidth(getLineWidth());
   graph->setNodeArray(nodes);
   

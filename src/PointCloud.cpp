@@ -18,11 +18,6 @@ PointCloud::createSimilar() const {
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
-  graph->setClusterVisibility(getClusterVisibility());
-  graph->setNodeVisibility(getNodeVisibility());
-  graph->setEdgeVisibility(getEdgeVisibility());
-  graph->setRegionVisibility(getRegionVisibility());
-  graph->setLabelVisibility(getLabelVisibility());
   graph->getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
   graph->getNodeArray().setAlpha3(getNodeArray().getAlpha2());
 
