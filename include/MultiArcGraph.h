@@ -21,15 +21,11 @@ class MultiArcGraph : public Graph {
       next_node_edge = getNodeFirstEdge(n1);
       setNodeFirstEdge(n1, edge);
       updateOutdegree(n1, 1.0f); // weight
-      if (getNodeArray().getNodeSizeMethod().definedForSource()) {
-	updateNodeSize(n1);
-      }
+      updateNodeSize(n1);
     }
     if (n2 != -1) {
       updateIndegree(n2, 1.0f); // weight
-      if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
-	updateNodeSize(n2);
-      }    
+      updateNodeSize(n2);
     }
 
     if (face != -1) {

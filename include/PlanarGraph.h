@@ -30,15 +30,11 @@ class PlanarGraph : public Graph {
       next_node_edge = getNodeFirstEdge(n1);
       setNodeFirstEdge(n1, edge);
       updateOutdegree(n1, 1);
-      if (getNodeArray().getNodeSizeMethod().definedForSource()) {
-	updateNodeSize(n1);
-      }
+      updateNodeSize(n1);
     }
     if (n2 != -1 && n1 != n2) {
       updateIndegree(n2, 1);
-      if (getNodeArray().getNodeSizeMethod().definedForTarget()) {
-	updateNodeSize(n2);
-      }  
+      updateNodeSize(n2);
     }
 
     edge_attributes.push_back(planar_edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
