@@ -77,7 +77,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
-	graph->setNodeVisibility(false);
+	graph->getNodeArray().setNodeVisibility(false);
       }
       assert(shape_dimensions == graph->getDimensions());
       {
@@ -110,8 +110,8 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
-	graph->setNodeVisibility(false);
-	graph->setEdgeVisibility(false);
+	graph->getNodeArray().setNodeVisibility(false);
+	graph->getNodeArray().setEdgeVisibility(false);
 	// graph->addUniversalRegion();
       }
       assert(shape_dimensions == graph->getDimensions());
