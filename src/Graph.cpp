@@ -26,10 +26,7 @@ using namespace std;
 int Graph::next_id = 1;
 
 Graph::Graph(int _dimensions, int _id) : dimensions(_dimensions),
-					 id(_id),
-					 node_color(0.0f, 0.0f, 0.0f, 0.0f),
-					 edge_color(0.0f, 0.0f, 0.0f, 0.0f),
-					 region_color(0.0f, 0.0f, 0.0f, 0.0f)
+					 id(_id)
 {
   if (!id) id = next_id++;
 }
@@ -48,16 +45,8 @@ Graph::Graph(const Graph & other)
     face_attributes(other.face_attributes),
     region_attributes(other.region_attributes),
     node_color_column(other.node_color_column),
-    srid(other.srid),
     version(other.version),
     dimensions(other.dimensions),
-    show_nodes(other.show_nodes),
-    show_edges(other.show_edges),
-    show_regions(other.show_regions),
-    show_labels(other.show_labels),
-    node_color(other.node_color),
-    edge_color(other.edge_color),
-    region_color(other.region_color),
     flags(other.flags),
     source_id(other.source_id),
     personality(other.personality)
@@ -154,7 +143,7 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
     for (unsigned int ri = 0; ri < getRegionCount(); ri++) {   
       auto this_color = getRegionColor(ri);
       glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
-      if (!color.w || 1) color = getDefaultRegionColor();
+      if (!color.w || 1) color = nodes->getDefaultRegionColor();
       if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
       
       int face = getRegionFirstFace(ri);
@@ -255,10 +244,10 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 
 #if 0
     glm::vec4 color(0.0f);
-    if (!color.w || 1) color = getDefaultEdgeColor();
+    if (!color.w || 1) color = nodes->getDefaultEdgeColor();
     if (!color.w) color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 #else
-    glm::vec4 color = getDefaultEdgeColor();
+    glm::vec4 color = nodes->getDefaultEdgeColor();
 #endif
 
     // premultiply
@@ -532,23 +521,24 @@ void
 Graph::relaxLinks() {
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   // cerr << "avg edge weight = " << avg_edge_weight << endl;
+  float alpha = getNodeArray().getAlpha2();
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int s = it->tail, t = it->head;
     auto & pd1 = nodes->getNodeData(s), & pd2 = nodes->getNodeData(t);
     bool fixed1 = pd1.flags & NODE_FIXED_POSITION;
     bool fixed2 = pd2.flags & NODE_FIXED_POSITION;
-    if (fixed1 && fixed2) continue;      
+    if (fixed1 && fixed2 && 0) continue;      
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
-    if (pd1.cluster_id != pd2.cluster_id) continue;
+    if (pd1.cluster_id != pd2.cluster_id && 0) continue;
     auto & td1 = getNodeTertiaryData(s), & td2 = getNodeTertiaryData(t);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
-    d *= getNodeArray().getAlpha2(); // * fabsf(it->weight) / avg_edge_weight;
-    float w1 = pd1.type == NODE_HASHTAG ? 0 : td1.size;
-    float w2 = pd2.type == NODE_HASHTAG ? 0 : td2.size;
+    d *= alpha; // * fabsf(it->weight) / avg_edge_weight;
+    float w1 = 1.0f; // pd1.type == NODE_HASHTAG ? 0 : td1.size;
+    float w2 = 1.0f; // pd2.type == NODE_HASHTAG ? 0 : td2.size;
     float k;
     if (fixed1) {
       k = 1.0f;
@@ -671,13 +661,13 @@ Graph::extractLocationGraph(Graph & target_graph) {
     }
   }
   
-  target_graph.setSRID(4326);
+  target_graph.getNodeArray().setSRID(4326);
   target_graph.getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
   target_graph.updateAppearance();
-  target_graph.setNodeVisibility(true);
-  target_graph.setEdgeVisibility(true);
-  target_graph.setRegionVisibility(false);
-  target_graph.setLabelVisibility(true);  
+  target_graph.getNodeArray().setNodeVisibility(true);
+  target_graph.getNodeArray().setEdgeVisibility(true);
+  target_graph.getNodeArray().setRegionVisibility(false);
+  target_graph.getNodeArray().setLabelVisibility(true);  
 }
 
 static bool compareCameraDistance(const pair<int, float> & a, const pair<int, float> & b) {
