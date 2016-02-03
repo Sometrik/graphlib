@@ -339,7 +339,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
       indices.push_back(i2 - 1);      
     }
     assert(vn <= 2 * ec);
-    cerr << "uploading edges: vn = " << vn << ", indices = " << indices.size() << endl;
+    // cerr << "uploading edges: vn = " << vn << ", indices = " << indices.size() << endl;
     vbo.upload(VBO::EDGES, new_geometry.get(), vn * sizeof(line_data_s));
     vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
   }
@@ -364,18 +364,18 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[it->tail] = true;
       auto & nd = nodes->getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, 3 + td.size, nd.texture, nd.flags });
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
     }
     if (!stored_nodes[it->head]) {
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, 3 + td.size, nd.texture, nd.flags });
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
     }
     edge_count++;
   }
   
-  cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
+  // cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
   
   vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
 }
