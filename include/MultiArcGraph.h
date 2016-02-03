@@ -16,17 +16,14 @@ class MultiArcGraph : public Graph {
     // assert(n1 != n2);
     int edge = (int)edge_attributes.size();
     
-    int next_node_edge = -1;
-    if (n1 != -1) {
-      next_node_edge = getNodeFirstEdge(n1);
-      setNodeFirstEdge(n1, edge);
+    int next_node_edge = getNodeFirstEdge(n1);
+    setNodeFirstEdge(n1, edge);
+    if (n1 != n2) {
       updateOutdegree(n1, 1.0f); // weight
-      updateNodeSize(n1);
-    }
-    if (n2 != -1) {
       updateIndegree(n2, 1.0f); // weight
-      updateNodeSize(n2);
     }
+    updateNodeSize(n1);
+    updateNodeSize(n2);
 
     if (face != -1) {
       
