@@ -11,7 +11,7 @@
 #include "RenderMode.h"
 #include "LabelMethod.h"
 
-#define INITIAL_ALPHA		0.075f
+#define INITIAL_ALPHA		0.15f
 
 #include <Table.h>
 #include <glm/glm.hpp>
