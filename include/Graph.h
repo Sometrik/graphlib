@@ -17,7 +17,8 @@ class DisplayInfo;
 
 struct node_tertiary_data_s {
   int first_edge;
-  float indegree, outdegree, size;
+  float indegree, outdegree, size, coverage_weight;
+  long long coverage;
 };
 
 struct cluster_data_s {
@@ -28,12 +29,13 @@ struct cluster_data_s {
 };
 
 struct edge_data_s {
-edge_data_s() : weight(1.0f), tail(-1), head(-1), next_node_edge(-1), face(-1), next_face_edge(-1), arc(0) { }
-edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc)
-: weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc) { }
-
+edge_data_s() : weight(1.0f), tail(-1), head(-1), next_node_edge(-1), face(-1), next_face_edge(-1), arc(0), coverage(0) { }
+edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc, long long _coverage = 0)
+: weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc), coverage(_coverage) { }
+  
   float weight;
   int tail, head, next_node_edge, face, next_face_edge, arc;
+  long long coverage;
 };
 
 struct face_data_s {
@@ -154,7 +156,8 @@ class Graph : public MBRObject {
   void updateEdgeWeight(int i, float d) {
     auto & attr = getEdgeAttributes(i);
     attr.weight += d;
-    total_edge_weight += fabsf(d);
+    if (attr.weight > max_edge_weight) max_edge_weight = attr.weight;
+    total_edge_weight += d;
   }
   void setPersonality(Personality _personality) { personality = _personality; }
   Personality getPersonality() const { return personality; }
@@ -206,10 +209,8 @@ class Graph : public MBRObject {
     }
   }
 
-  virtual int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0) = 0;  
+  virtual int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0, long long coverage = 0) = 0;  
   virtual int getNextFaceEdge(int edge) const { return -1; }
-  // virtual int getEdgeRightFace(int edge) const { return -1; }
-  // virtual int getEdgeLeftFace(int edge) const { return -1; }
   virtual int addRegion() { return -1; }
   virtual int getRegionFirstFace(int region) const { return -1; }
   virtual int getRegionNextFace(int region, int face) const { return -1; }
@@ -578,6 +579,19 @@ class Graph : public MBRObject {
     node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, nodes->size());
   }
 
+  void updateNodeCoverage(int n, long long coverage) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    auto & nd = node_geometry3[n];
+    nd.coverage |= coverage;
+    float new_weight = 0;
+    for (int i = 0; i < 64; i++) {
+      if (nd.coverage & (1 << i)) new_weight += 1.0f;
+    }
+    new_weight /= 64.0f;
+    nd.coverage_weight = new_weight;
+    if (new_weight > max_node_coverage_weight) max_node_coverage_weight = new_weight;
+  }
+
   GraphRefR getGraphForReading(int graph_id) const;
   GraphRefW getGraphForWriting(int graph_id);
 
@@ -603,7 +617,8 @@ class Graph : public MBRObject {
 
   void applyGravity(float gravity);
   void applyDragAndAge(RenderMode mode, float friction);
-
+  float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
+  
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -613,7 +628,8 @@ class Graph : public MBRObject {
   std::vector<cluster_data_s> cluster_attributes;
   std::vector<face_data_s> face_attributes;
   std::vector<region_data_s> region_attributes;
-  double total_edge_weight = 0;
+  double total_edge_weight = 0.0;
+  float max_edge_weight = 0.0f, max_node_coverage_weight = 0.0f;
   std::shared_ptr<NodeArray> nodes;
  
  private:
