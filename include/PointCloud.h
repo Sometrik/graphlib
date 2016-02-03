@@ -11,8 +11,7 @@ class PointCloud : public Graph {
   std::shared_ptr<Graph> createSimilar() const override;
   Graph * copy() const override { return new PointCloud(*this); }
       
-  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
-    assert(0);
+  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0, long long coverage = 0) override {
     return -1;
   }
 
