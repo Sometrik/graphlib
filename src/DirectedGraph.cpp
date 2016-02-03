@@ -30,8 +30,43 @@ DirectedGraph::createSimilar() const {
   return graph;
 }
 
+int
+DirectedGraph::addEdge(int n1, int n2, int face, float weight, int arc, long long coverage) {
+  assert(n1 != -1 && n2 != -1);
+  int edge = (int)edge_attributes.size();
+  int next_node_edge = getNodeFirstEdge(n1);
+  int next_face_edge = -1;
+  if (face != -1) next_face_edge = getFaceFirstEdge(face);
+  setNodeFirstEdge(n1, edge);
+  if (n1 != n2) {
+    updateOutdegree(n1, 1.0f); // weight);
+    updateIndegree(n2, 1.0f); // weight);
+  }
+  updateNodeSize(n1);
+  updateNodeSize(n2);
+  updateNodeCoverage(n1, coverage);
+  updateNodeCoverage(n2, coverage);
+  
+  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, next_face_edge, arc, coverage ));
+  edges.addRow();
+  total_edge_weight += fabsf(weight);
+  if (weight > max_edge_weight) max_edge_weight = weight;
+  
+  if (face != -1) {
+    face_attributes[face].first_edge = edge;
+  }
+  
+  incVersion();
+  return edge;
+}
+
 bool
 DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+  if (!(end_time > start_time)) {
+    cerr << "invalid time range for updateData: " << start_time << " - " << end_time << endl;
+    return false;
+  }
+  
   auto & sid = source_graph.getNodeArray().getTable()["source"];
   auto & soid = source_graph.getNodeArray().getTable()["id"];
   auto & user_type = source_graph.getNodeArray().getTable()["type"];
@@ -136,21 +171,32 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
 	}
 
+	assert(end_time > start_time);
+	long long coverage = 0;
+	int time_pos = 63LL * (t - start_time) / (end_time - start_time);
+	assert(time_pos >= 0 && time_pos < 64);
+	coverage |= 1 << time_pos;
+	
 	unordered_map<int, unordered_map<int, int> >::iterator it1;
 	unordered_map<int, int>::iterator it2;
 	if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
 	    (it2 = it1->second.find(np.second)) != it1->second.end()) {
-	  updateEdgeWeight(it2->second, 1.0f);
+#if 0
 	  updateOutdegree(np.first, 1.0f);
-	  if (nodes.getNodeSizeMethod().definedForSource()) {
-	    updateNodeSize(np.first);
-	  }
 	  updateIndegree(np.second, 1.0f);
-	  if (nodes.getNodeSizeMethod().definedForTarget()) {
-	    updateNodeSize(np.second);
+	  updateNodeSize(np.first);
+	  updateNodeSize(np.second);
+#endif
+	  auto & ed = getEdgeAttributes(it2->second);
+	  ed.coverage |= coverage;
+	  float new_weight = 0;
+	  for (int i = 0; i < 64; i++) {
+	    if (ed.coverage & (1 << i)) new_weight += 1.0f;
 	  }
+	  new_weight /= 64.0f;
+	  updateEdgeWeight(it2->second, new_weight - ed.weight);
 	} else {
-	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f);
+	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, coverage);
 	}
       }
     }  

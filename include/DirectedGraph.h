@@ -18,31 +18,7 @@ class DirectedGraph : public Graph {
 
   bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) override;
 
-  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
-    assert(n1 != -1 && n2 != -1);
-    int edge = (int)edge_attributes.size();
-    int next_node_edge = getNodeFirstEdge(n1);
-    int next_face_edge = -1;
-    if (face != -1) next_face_edge = getFaceFirstEdge(face);
-    setNodeFirstEdge(n1, edge);
-    if (n1 != n2) {
-      updateOutdegree(n1, 1.0f); // weight);
-      updateIndegree(n2, 1.0f); // weight);
-    }
-    updateNodeSize(n1);
-    updateNodeSize(n2);	
-    
-    edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, next_face_edge, arc ));
-    edges.addRow();
-    total_edge_weight += fabsf(weight);
-
-    if (face != -1) {
-      face_attributes[face].first_edge = edge;
-    }
-
-    incVersion();
-    return edge;
-  }
+  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0, long long coverage = 0) override;
 
   void clear() override {
     Graph::clear();
@@ -72,6 +48,8 @@ class DirectedGraph : public Graph {
     num_hashtags = 0;
     min_time = 0;
     max_time = 0;
+    max_edge_weight = 0.0f;
+    max_node_coverage_weight = 0.0f;
   }
   
  private:
