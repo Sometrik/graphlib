@@ -18,33 +18,7 @@ class UndirectedGraph : public Graph {
     return hyperedge_id;
   }
   
-  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
-    assert(n1 != -1 || n2 != -1);
-    // assert(n1 != n2);
-    int edge = (int)edge_attributes.size();
-
-    int next_face_edge = -1;
-    if (face != -1) next_face_edge = getFaceFirstEdge(face);
-
-    int next_node_edge = -1;
-    if (n1 != -1) {
-      next_node_edge = getNodeFirstEdge(n1);
-      setNodeFirstEdge(n1, edge);
-      updateOutdegree(n1, 1);
-      updateNodeSize(n1);
-    }
-    if (n2 != -1) {
-      updateIndegree(n2, 1);
-      updateNodeSize(n2);
-    }
-
-    edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, next_face_edge, arc ));
-    edges.addRow();
-    total_edge_weight += fabsf(weight);
-
-    incVersion();
-    return edge;
-  }
+  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0, long long coverage = 0) override;
   
   void clear() override {
     Graph::clear();
