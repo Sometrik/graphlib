@@ -291,17 +291,17 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     unsigned int ec = getEdgeCount();
     unsigned int asize = 2 * ec * sizeof(line_data_s);
     std::unique_ptr<line_data_s[]> new_geometry(new line_data_s[2 * ec]);
-    vector<unsigned int> node_mapping, indices;
-    node_mapping.resize(nodes->size());
+    // vector<unsigned int> node_mapping, indices;
+    // node_mapping.resize(nodes->size());
     graph_color_s sel_color = { 100, 200, 255, 255 };
     unsigned int vn = 0;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {    
       if (it->tail == it->head) continue;
       auto & g1 = nodes->node_geometry[it->tail], & g2 = nodes->node_geometry[it->head];
-      int i1 = node_mapping[it->tail], i2 = node_mapping[it->head];
+      // int i1 = node_mapping[it->tail], i2 = node_mapping[it->head];
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
-      if (!i1) {
+      if (1) { // !i1) {
 	glm::vec3 pos;
 	if (is_spherical) {
 	  double lat = g1.position.y / 180.0 * M_PI, lon = g1.position.x / 180.0 * M_PI;
@@ -313,12 +313,13 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	  pos = g1.position;
 	}
 	auto color = edge_selected ? sel_color : g1.color;
-	line_data_s s = { color.r, color.g, color.b, color.a, pos, g1.age, 1.0f }; // g1.size
-	i1 = node_mapping[it->tail] = vn + 1;
+	float a = powf(it->weight / max_edge_weight, 0.9);
+	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g1.age, 1.0f }; // g1.size
+	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
-      if (!i2) {
+      if (1) { // !i2) {
 	glm::vec3 pos;
 	if (is_spherical) {
 	  double lat = g2.position.y / 180.0 * M_PI, lon = g2.position.x / 180.0 * M_PI;
@@ -330,18 +331,19 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	  pos = g2.position;
 	}
 	auto color = edge_selected ? sel_color : g2.color;
-	i2 = node_mapping[it->head] = vn + 1;
-	line_data_s s = { color.r, color.g, color.b, color.a, pos, g2.age, 1.0f }; // g.size
+	float a = powf(it->weight / max_edge_weight, 0.9);
+	// i2 = node_mapping[it->head] = vn + 1;
+	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g2.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
-      indices.push_back(i1 - 1);
-      indices.push_back(i2 - 1);      
+      // indices.push_back(i1 - 1);
+      // indices.push_back(i2 - 1);      
     }
     assert(vn <= 2 * ec);
     // cerr << "uploading edges: vn = " << vn << ", indices = " << indices.size() << endl;
     vbo.upload(VBO::EDGES, new_geometry.get(), vn * sizeof(line_data_s));
-    vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
+    // vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
   }
 }
 
@@ -519,16 +521,18 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 // Gauss-Seidel relaxation for links
 void
 Graph::relaxLinks() {
+  cerr << "relax: " << max_edge_weight << endl;
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   // cerr << "avg edge weight = " << avg_edge_weight << endl;
   float alpha = getNodeArray().getAlpha2();
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int s = it->tail, t = it->head;
+    if (s == t || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     auto & pd1 = nodes->getNodeData(s), & pd2 = nodes->getNodeData(t);
     bool fixed1 = pd1.flags & NODE_FIXED_POSITION;
     bool fixed2 = pd2.flags & NODE_FIXED_POSITION;
-    if (fixed1 && fixed2 && 0) continue;      
+    if (fixed1 && fixed2) continue;      
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
@@ -536,9 +540,9 @@ Graph::relaxLinks() {
     if (pd1.cluster_id != pd2.cluster_id && 0) continue;
     auto & td1 = getNodeTertiaryData(s), & td2 = getNodeTertiaryData(t);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
-    d *= alpha; // * fabsf(it->weight) / avg_edge_weight;
-    float w1 = 1.0f; // pd1.type == NODE_HASHTAG ? 0 : td1.size;
-    float w2 = 1.0f; // pd2.type == NODE_HASHTAG ? 0 : td2.size;
+    d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
+    float w1 = td1.size; // * td1.coverage_weight;
+    float w2 = td2.size; // * td2.coverage_weight;
     float k;
     if (fixed1) {
       k = 1.0f;
@@ -1369,7 +1373,7 @@ Graph::updateAppearance() {
   }
 }
 
-static inline void applyGravityToNode(float k, node_data_s & pd) {
+static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td) {
   if (!(pd.flags & NODE_FIXED_POSITION)) {
     glm::vec3 origin, pos = pd.position;
 #if 0
@@ -1378,7 +1382,7 @@ static inline void applyGravityToNode(float k, node_data_s & pd) {
     pos -= origin;
     float d = glm::length(pos);
     if (d > 0.001) {
-      pos -= pos * (k * sqrtf(d) / d);
+      pos -= pos * (k * sqrtf(d) / d) * td.coverage_weight;
       pos += origin;
       pd.position = pos;
     }
@@ -1396,11 +1400,11 @@ Graph::applyGravity(float gravity) {
     for (auto it = begin_edges(); it != end; ++it) {
       if (!processed_nodes[it->tail]) {
 	processed_nodes[it->tail] = true;
-	applyGravityToNode(k, nodes->getNodeData(it->tail));
+	applyGravityToNode(k, nodes->getNodeData(it->tail), getNodeTertiaryData(it->tail));
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
-	applyGravityToNode(k, nodes->getNodeData(it->head));
+	applyGravityToNode(k, nodes->getNodeData(it->head), getNodeTertiaryData(it->head));
       }
     }
 
