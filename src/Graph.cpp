@@ -40,10 +40,10 @@ Graph::Graph(const Graph & other)
   : nodes(other.nodes), // copy node array by reference
     edges(other.edges),
     faces(other.faces),
-    regions(other.regions),
-    shells(other.shells),
+    // regions(other.regions),
+    // shells(other.shells),
     face_attributes(other.face_attributes),
-    region_attributes(other.region_attributes),
+    // region_attributes(other.region_attributes),
     node_color_column(other.node_color_column),
     version(other.version),
     dimensions(other.dimensions),
@@ -81,6 +81,7 @@ static bool compareRows(const int & a, const int & b) {
 
 void
 Graph::setRegionColorByColumn(int column) {
+#if 0
   sort_col = &(regions[column]);
   cerr << "setting colors by column " << sort_col->name() << endl;
   vector<int> v;
@@ -105,6 +106,7 @@ Graph::setRegionColorByColumn(int column) {
 
   }
   version++;
+#endif
 }
 
 void
@@ -139,7 +141,59 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
   glm::vec3 normal(0.0f);
 
   if (hasArcData()) {
-    cerr << "creating complex region VBO\n"; 
+    cerr << "creating complex region VBO\n";
+#if 1
+    for (unsigned int fi = 0; fi < getFaceCount(); fi++) {   
+      auto this_color = getFaceColor(fi);
+      glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
+      if (!color.w || 1) color = nodes->getDefaultFaceColor();
+      if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+      
+      list<int> edges;
+      int edge = getFaceFirstEdge(face);
+      while (edge != -1) {
+	auto & ed = getEdgeAttributes(edge);
+	// pair<int, int> ed = getFaceEdgeSourceNodeAndDirection(face, edge);
+	// assert(ed.first != -1);
+	// edges.push_front(pair<int, int>(edge, ed.second));
+	// edges.push_back(edge);
+	assert(ed.arc);
+	if (ed.arc) edges.push_back(ed.arc);
+	edge = getNextFaceEdge(edge);
+	// assert(edge >= -1 && edge < (int)getEdgeCount());
+      }
+      if (!edges.empty()) {
+	int start_index = new_geometry.size();
+	int vi = 0;
+	for (auto & arc_id : edges) {
+	  auto & geometry = arc_geometry[abs(arc_id) - 1].data;
+	  int dir = arc_id > 0 ? 1 : -1;
+	  assert(!geometry.empty());
+	  for (int i = 0; i < geometry.size(); i++) {
+	    auto & v = geometry[dir == -1 ? geometry.size() - 1 - i : i];
+	    new_geometry.push_back({ (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), glm::vec2((float)v.x, (float)v.y) });
+	    
+	    if (vi >= 2) {
+	      int i1 = start_index, i2 = start_index + vi, i3 = start_index + vi - 1;
+	      auto & A = new_geometry[i1].position, & B = new_geometry[i2].position, & C = new_geometry[i3].position;
+	      glm::vec3 AB(B - A, 0.0f), AC(C - A, 0.0f);
+	      glm::vec3 normal = glm::normalize(glm::cross(AB, AC));
+	      if (normal.z < 0.0f) {
+		front_indices.push_back(i1);
+		front_indices.push_back(i2);
+		front_indices.push_back(i3);
+	      } else {
+		back_indices.push_back(i1);
+		back_indices.push_back(i2);
+		back_indices.push_back(i3);
+	      }
+	    }
+	    vi++;
+	  }
+	}	
+      }
+    }
+#else
     for (unsigned int ri = 0; ri < getRegionCount(); ri++) {   
       auto this_color = getRegionColor(ri);
       glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
@@ -197,6 +251,7 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
 	face = getRegionNextFace(ri, face);
       }
     }
+#endif
 
     back_indices.insert(back_indices.begin(), front_indices.begin(), front_indices.end());
     
@@ -670,7 +725,8 @@ Graph::extractLocationGraph(Graph & target_graph) {
   target_graph.updateAppearance();
   target_graph.getNodeArray().setNodeVisibility(true);
   target_graph.getNodeArray().setEdgeVisibility(true);
-  target_graph.getNodeArray().setRegionVisibility(false);
+  target_graph.getNodeArray().setFaceVisibility(false);
+  // target_graph.getNodeArray().setRegionVisibility(false);
   target_graph.getNodeArray().setLabelVisibility(true);  
 }
 

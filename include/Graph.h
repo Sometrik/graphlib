@@ -41,8 +41,10 @@ edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face,
 struct face_data_s {
   glm::vec3 normal;
   glm::vec2 centroid;
+  graph_color_s color;
   Rect2d mbr;
-  int first_edge, next_face_in_region, region;
+  int first_edge;
+  // int next_face_in_region, region;
   time_t timestamp;
   float sentiment;
   short feed, lang;
@@ -50,12 +52,14 @@ struct face_data_s {
   long long filter_id;
 };
 
+#if 0
 struct region_data_s {
   graph_color_s color;
   std::string label;
   Rect2d mbr;
   int first_face;
 };
+#endif
 
 class EdgeIterator {
  public:
@@ -173,14 +177,14 @@ class Graph : public MBRObject {
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
 
-  table::Table & getRegionData() { return regions; }
-  table::Table & getShellData() { return shells; }
+  // table::Table & getRegionData() { return regions; }
+  // table::Table & getShellData() { return shells; }
 
   bool empty() const { return nodes->empty(); }
   // double calculateTotalEnergy() const;
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
-  int getFaceRegion(int i) const { return face_attributes[i].region; }
+  // int getFaceRegion(int i) const { return face_attributes[i].region; }
 
   virtual void updateLocationGraph(int graph_id) { }
   virtual Graph * simplify() const { return 0; }
@@ -211,9 +215,9 @@ class Graph : public MBRObject {
 
   virtual int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0, long long coverage = 0) = 0;  
   virtual int getNextFaceEdge(int edge) const { return -1; }
-  virtual int addRegion() { return -1; }
-  virtual int getRegionFirstFace(int region) const { return -1; }
-  virtual int getRegionNextFace(int region, int face) const { return -1; }
+  // virtual int addRegion() { return -1; }
+  // virtual int getRegionFirstFace(int region) const { return -1; }
+  // virtual int getRegionNextFace(int region, int face) const { return -1; }
   
   virtual void calculateRegionAreas() { }
   virtual void mapFacesToNodes(Graph & target) { }
@@ -330,31 +334,32 @@ class Graph : public MBRObject {
   size_t getClusterCount() const { return clusters.size(); }
   size_t getEdgeCount() const { return edges.size(); }
   size_t getFaceCount() const { return faces.size(); }  
-  size_t getRegionCount() const { return regions.size(); }
-  size_t getShellCount() const { return shells.size(); }
+  // size_t getRegionCount() const { return regions.size(); }
+  // size_t getShellCount() const { return shells.size(); }
   
-  const std::string & getRegionLabel(int i) const { return region_attributes[i].label; }
-  glm::dvec3 getRegionPosition(int i) {
-    return region_attributes[i].mbr.getCenter();
-  }
-  Rect2d & getRegionMBR(int i) { return region_attributes[i].mbr; }
+  // const std::string & getRegionLabel(int i) const { return region_attributes[i].label; }
+  // glm::dvec3 getRegionPosition(int i) { return region_attributes[i].mbr.getCenter(); }
+  // Rect2d & getRegionMBR(int i) { return region_attributes[i].mbr; }
   Rect2d & getFaceMBR(int i) { return face_attributes[i].mbr; }
   const glm::vec2 & getFaceCentroid(int i) const { return face_attributes[i].centroid; }
         
   bool hasNodeSelection() const { return has_node_selection; }
   void selectNodes(int node_id = -1, int depth = 0);
 
-  void setRegionColorByColumn(int column);
+  // void setRegionColorByColumn(int column);
   
-  const graph_color_s & getRegionColor(int i) const { return region_attributes[i].color; }
-  void setRegionColor(int i, const graph_color_s & c) { region_attributes[i].color = c; }
+  // const graph_color_s & getRegionColor(int i) const { return region_attributes[i].color; }
+  // void setRegionColor(int i, const graph_color_s & c) { region_attributes[i].color = c; }
+  const graph_color_s & getFaceColor(int i) const { return face_attributes[i].color; }
+  void setFaceColor(int i, const graph_color_s & c) { face_attributes[i].color = c; }
   void setFaceNormal(int i, const glm::vec3 & n) { face_attributes[i].normal = n; }
   void setFaceCentroid(int i, const glm::vec2 & c) { face_attributes[i].centroid = c; }
   
-  int getHighlightedRegion() const { return highlighted_region; }
-  void highlightRegion(int i) { highlighted_region = i; }
+  // int getHighlightedRegion() const { return highlighted_region; }
+  // void highlightRegion(int i) { highlighted_region = i; }
   void clearHighlight() {
-    highlighted_node = highlighted_region = -1;
+    highlighted_node = -1;
+    // highlighted_region = -1;
   }
 
   void setKeywords(const std::string & k) { keywords = k; }
@@ -423,15 +428,19 @@ class Graph : public MBRObject {
     }
     return cluster_id;
   }
-  
-  virtual int addFace(int region_id = -1, time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1, int shell1 = -1, int shell2 = -1) {
+
+  // int region_id = -1, 
+  virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
+#if 0
     int next_face_in_region = -1;
     if (region_id >= 0) {
       next_face_in_region = region_attributes[region_id].first_face;
       region_attributes[region_id].first_face = face_id;
     }
-    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), Rect2d(), -1, next_face_in_region, region_id, timestamp, sentiment, feed, lang, app_id, filter_id });
+#endif
+    // next_face_in_region, region_id
+    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id });
     faces.addRow();
     return face_id;
   }
@@ -488,14 +497,14 @@ class Graph : public MBRObject {
     clusters.clear();
     edges.clear();
     faces.clear();    
-    regions.clear();
-    shells.clear();
+    // regions.clear();
+    // shells.clear();
     cluster_attributes.clear();
     face_attributes.clear();
-    region_attributes.clear();
+    // region_attributes.clear();
 
     highlighted_node = -1;
-    highlighted_region = -1;
+    // highlighted_region = -1;
     has_node_selection = false;
     total_edge_weight = total_indegree = total_outdegree = 0.0;
   }
@@ -624,10 +633,11 @@ class Graph : public MBRObject {
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
 
-  table::Table clusters, edges, faces, regions, shells;
+  table::Table clusters, edges, faces;
+  // table::Table regions, shells;
   std::vector<cluster_data_s> cluster_attributes;
   std::vector<face_data_s> face_attributes;
-  std::vector<region_data_s> region_attributes;
+  // std::vector<region_data_s> region_attributes;
   double total_edge_weight = 0.0;
   float max_edge_weight = 0.0f, max_node_coverage_weight = 0.0f;
   std::shared_ptr<NodeArray> nodes;
@@ -643,7 +653,8 @@ class Graph : public MBRObject {
 
   int id;
   int dimensions;
-  int highlighted_node = -1, highlighted_region = -1;
+  int highlighted_node = -1;
+  // highlighted_region = -1;
   unsigned int flags = 0;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
