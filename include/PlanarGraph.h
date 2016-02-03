@@ -24,19 +24,17 @@ class PlanarGraph : public Graph {
   void addUniversalRegion() override;
 
   int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
+    assert(n1 != -1 && n2 != -1);
     int edge = (int)edge_attributes.size();
-    int next_node_edge = -1;
-    if (n1 != -1) {
-      next_node_edge = getNodeFirstEdge(n1);
-      setNodeFirstEdge(n1, edge);
+    int next_node_edge = getNodeFirstEdge(n1);
+    setNodeFirstEdge(n1, edge);
+    if (n1 != n2) {
       updateOutdegree(n1, 1);
-      updateNodeSize(n1);
-    }
-    if (n2 != -1 && n1 != n2) {
       updateIndegree(n2, 1);
-      updateNodeSize(n2);
     }
-
+    updateNodeSize(n1);
+    updateNodeSize(n2);
+    
     edge_attributes.push_back(planar_edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
     edges.addRow();
     total_edge_weight += fabsf(weight);
