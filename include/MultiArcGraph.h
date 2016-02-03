@@ -12,8 +12,7 @@ class MultiArcGraph : public Graph {
   Graph * copy() const override { return new MultiArcGraph(*this); }
  
   int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
-    assert(n1 != -1 || n2 != -1);
-    // assert(n1 != n2);
+    assert(n1 != -1 && n2 != -1);
     int edge = (int)edge_attributes.size();
     
     int next_node_edge = getNodeFirstEdge(n1);
