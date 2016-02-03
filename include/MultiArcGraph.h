@@ -11,30 +11,7 @@ class MultiArcGraph : public Graph {
   std::shared_ptr<Graph> createSimilar() const override;
   Graph * copy() const override { return new MultiArcGraph(*this); }
  
-  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0) override {
-    assert(n1 != -1 && n2 != -1);
-    int edge = (int)edge_attributes.size();
-    
-    int next_node_edge = getNodeFirstEdge(n1);
-    setNodeFirstEdge(n1, edge);
-    if (n1 != n2) {
-      updateOutdegree(n1, 1.0f); // weight
-      updateIndegree(n2, 1.0f); // weight
-    }
-    updateNodeSize(n1);
-    updateNodeSize(n2);
-
-    if (face != -1) {
-      
-    }
-
-    edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, -1, arc ));
-    edges.addRow();
-    total_edge_weight += fabsf(weight);
-
-    incVersion();
-    return edge;
-  }
+  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0, long long coverage = 0) override;
   
   void clear() override {
     Graph::clear();
