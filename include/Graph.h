@@ -155,7 +155,7 @@ class Graph : public MBRObject {
 
   virtual ~Graph();  
   
-  std::string getEdgeId(int i) { return edges["id"].getText(i); }
+  // std::string getEdgeId(int i) { return edges["id"].getText(i); }
 
   void updateEdgeWeight(int i, float d) {
     auto & attr = getEdgeAttributes(i);
@@ -170,10 +170,12 @@ class Graph : public MBRObject {
   std::vector<int> getNestedGraphIds() const;
 
   table::Table & getClusterData() { return clusters; }
-  
+
+#if 0
   table::Table & getEdgeData() { return edges; }
   const table::Table & getEdgeData() const { return edges; }
-
+#endif
+  
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
 
@@ -336,10 +338,8 @@ class Graph : public MBRObject {
   // int getTotalDegrees(int i) const { return 1; }; //return getInDegrees() + getOutDegrees(); }
 
   size_t getClusterCount() const { return clusters.size(); }
-  size_t getEdgeCount() const { return edges.size(); }
+  size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
-  // size_t getRegionCount() const { return regions.size(); }
-  // size_t getShellCount() const { return shells.size(); }
   
   // const std::string & getRegionLabel(int i) const { return region_attributes[i].label; }
   // glm::dvec3 getRegionPosition(int i) { return region_attributes[i].mbr.getCenter(); }
@@ -499,17 +499,13 @@ class Graph : public MBRObject {
 
   virtual void clear() {
     clusters.clear();
-    edges.clear();
+    // edges.clear();
     faces.clear();    
-    // regions.clear();
-    // shells.clear();
     cluster_attributes.clear();
     face_attributes.clear();
-    // region_attributes.clear();
     edge_attributes.clear();
 
     highlighted_node = -1;
-    // highlighted_region = -1;
     has_node_selection = false;
     total_edge_weight = total_indegree = total_outdegree = 0.0;
   }
@@ -645,8 +641,8 @@ class Graph : public MBRObject {
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
 
-  table::Table clusters, edges, faces;
-  // table::Table regions, shells;
+  table::Table clusters, faces;
+  // table::Table edges, regions, shells;
   std::vector<cluster_data_s> cluster_attributes;
   std::vector<face_data_s> face_attributes;
   std::vector<edge_data_s> edge_attributes;
