@@ -34,7 +34,7 @@ WavefrontObjLoader::openGraph(const char * filename) {
   vector<glm::vec2> uvs;
   vector<glm::vec3> normals;
 
-  int region_id = graph->addRegion();
+  // int region_id = graph->addRegion();
   
   string line;
   while (getline(in, line)) {
@@ -56,7 +56,7 @@ WavefrontObjLoader::openGraph(const char * filename) {
       s >> x >> y;
       uvs.push_back(glm::vec2(x, y));     
     } else if (line.substr(0, 2) == "f ") {      
-      int face_id = graph->addFace(region_id);
+      int face_id = graph->addFace();
       vector<unsigned int> face_nodes;
       istringstream s(line.substr(2));
       for (unsigned int i = 0; i < 3; i++) {
