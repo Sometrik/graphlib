@@ -588,8 +588,11 @@ DXFLoader::openGraph(const char * filename) {
   map<string, int> waiting_faces;
 #if 1
   auto graph = std::make_shared<PlanarGraph>();
+  graph->setNodeArray(std::make_shared<NodeArray>());
+  graph->getNodeArray().setFaceVisibility(true);
 #else
   auto graph = std::make_shared<MultiArcGraph>();
+  graph->setNodeArray(std::make_shared<NodeArray>());
 #endif
   graph->setHasSpatialData(true);
 
@@ -624,9 +627,9 @@ DXFLoader::openGraph(const char * filename) {
 void
 DXFLoader::process3DFace(Graph & graph, map<string, int> & nodes, map<string, int> & waiting_faces, const DXFFace & face) {
   DXFColor c = fromACIColor(face.color);
-  int region_id = graph.addRegion();
-  int face_id = graph.addFace(region_id);
-  graph.setRegionColor(region_id, { c.red, c.green, c.blue });
+  // int region_id = graph.addRegion();
+  int face_id = graph.addFace();
+  graph.setFaceColor(face_id, { c.red, c.green, c.blue });
   graph.setFaceNormal(face_id, face.normal);
   vector<int> face_nodes;      
   for (auto & v : face.v) {
