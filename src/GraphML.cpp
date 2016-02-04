@@ -54,7 +54,7 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
   }
 
   auto & node_table = graph->getNodeArray().getTable();
-  auto & edge_table = directed ? graph->getEdgeData() : graph->getFaceData();
+  auto & edge_table = graph->getFaceData();
   
   auto & node_id_column = node_table.addTextColumn("id");
   auto & edge_id_column = edge_table.addTextColumn("id");
@@ -186,7 +186,7 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
 
   bool directed = graph.isDirected();
   auto & node_table = graph.getNodeArray().getTable();
-  auto & edge_table = directed ? graph.getEdgeData() : graph.getFaceData();
+  auto & edge_table = graph.getFaceData();
 
   for (auto & col : node_table.getColumns()) {
     XMLElement * key_element = doc.NewElement("key");
@@ -228,10 +228,10 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
     graph_element->LinkEndChild(node_element);
   }
 
-#if 0
-  for (unsigned int i = 0; i < graph.getEdgeCount(); i++) {
+  for (unsigned int i = 0; i < graph.getFaceCount(); i++) {
     XMLElement * edge_element = doc.NewElement("edge");
 
+#if 0
     auto edge = graph.getEdgeAttributes(i);
     string node_id1 = "n" + to_string(edge.tail);
     string node_id2 = "n" + to_string(edge.head);
@@ -240,6 +240,7 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
     
     edge_element->SetAttribute("source", node_id1.c_str());
     edge_element->SetAttribute("target", node_id2.c_str());
+#endif
 
     for (auto & col : edge_table.getColumns()) {
       XMLElement * data_element = doc.NewElement("data");
@@ -250,7 +251,6 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
     
     graph_element->LinkEndChild(edge_element);
   }
-#endif
 
   doc.LinkEndChild(graphml_element);
   doc.SaveFile(filename.c_str());
