@@ -11,8 +11,7 @@ DirectedGraph::DirectedGraph(int _id) : Graph(1, _id) {
 
 }
 
-DirectedGraph::DirectedGraph(const DirectedGraph & other)
-  : Graph(other), edge_attributes(other.edge_attributes) {
+DirectedGraph::DirectedGraph(const DirectedGraph & other) : Graph(other) {
   
 }
 
@@ -28,36 +27,6 @@ DirectedGraph::createSimilar() const {
   graph->setNodeArray(nodes);
   
   return graph;
-}
-
-int
-DirectedGraph::addEdge(int n1, int n2, int face, float weight, int arc, long long coverage) {
-  assert(n1 != -1 && n2 != -1);
-  int edge = (int)edge_attributes.size();
-  int next_node_edge = getNodeFirstEdge(n1);
-  int next_face_edge = -1;
-  if (face != -1) next_face_edge = getFaceFirstEdge(face);
-  setNodeFirstEdge(n1, edge);
-  if (n1 != n2) {
-    updateOutdegree(n1, 1.0f); // weight);
-    updateIndegree(n2, 1.0f); // weight);
-  }
-  updateNodeSize(n1);
-  updateNodeSize(n2);
-  updateNodeCoverage(n1, coverage);
-  updateNodeCoverage(n2, coverage);
-  
-  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, next_face_edge, arc, coverage ));
-  edges.addRow();
-  total_edge_weight += fabsf(weight);
-  if (weight > max_edge_weight) max_edge_weight = weight;
-  
-  if (face != -1) {
-    face_attributes[face].first_edge = edge;
-  }
-  
-  incVersion();
-  return edge;
 }
 
 bool
