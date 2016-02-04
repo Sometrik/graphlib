@@ -35,15 +35,13 @@ MultiArcGraph::addEdge(int n1, int n2, int face, float weight, int arc, long lon
   }
   updateNodeSize(n1);
   updateNodeSize(n2);
-  
-  if (face != -1) {
     
-  }
-  
-  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, face, -1, arc ));
+  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
   edges.addRow();
   total_edge_weight += fabsf(weight);
-  
+
+  setEdgeFace(edge, face);
+
   incVersion();
   return edge;
 }
