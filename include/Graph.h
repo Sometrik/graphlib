@@ -34,7 +34,7 @@ edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face,
 : weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc), coverage(_coverage) { }
   
   float weight;
-  int tail, head, next_node_edge, face, next_face_edge, arc;
+  int tail, head, next_node_edge, face, next_face_edge, arc, pair_edge = -1;
   long long coverage;
 };
 
