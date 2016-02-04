@@ -79,9 +79,9 @@ static bool compareRows(const int & a, const int & b) {
   return sort_col->compare(a, b);
 }
 
+#if 0
 void
 Graph::setRegionColorByColumn(int column) {
-#if 0
   sort_col = &(regions[column]);
   cerr << "setting colors by column " << sort_col->name() << endl;
   vector<int> v;
@@ -106,8 +106,8 @@ Graph::setRegionColorByColumn(int column) {
 
   }
   version++;
-#endif
 }
+#endif
 
 void
 Graph::randomizeGeometry(bool use_2d) {
@@ -131,7 +131,7 @@ Graph::randomizeGeometry(bool use_2d) {
 
 void
 Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
-  if (!getRegionCount()) {
+  if (!getFaceCount()) {
     return;
   }
   
@@ -141,54 +141,58 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
   glm::vec3 normal(0.0f);
 
   if (hasArcData()) {
-    cerr << "creating complex region VBO\n";
+    cerr << "creating complex region VBO, faces = " << getFaceCount() << "\n";
 #if 1
-    for (unsigned int fi = 0; fi < getFaceCount(); fi++) {   
-      auto this_color = getFaceColor(fi);
+    for (unsigned int face = 0; face < getFaceCount(); face++) {   
+      auto this_color = getFaceColor(face);
       glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
       if (!color.w || 1) color = nodes->getDefaultFaceColor();
       if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
       
-      list<int> edges;
+      list<list<int> > part_arcs;
       int edge = getFaceFirstEdge(face);
+      int prev_node = -1;
       while (edge != -1) {
 	auto & ed = getEdgeAttributes(edge);
-	// pair<int, int> ed = getFaceEdgeSourceNodeAndDirection(face, edge);
-	// assert(ed.first != -1);
-	// edges.push_front(pair<int, int>(edge, ed.second));
-	// edges.push_back(edge);
+	if (ed.tail != prev_node) {
+	  part_arcs.push_back(list<int>());
+	}
+	prev_node = ed.head;
 	assert(ed.arc);
-	if (ed.arc) edges.push_back(ed.arc);
+	if (ed.arc) part_arcs.back().push_back(ed.arc);
 	edge = getNextFaceEdge(edge);
-	// assert(edge >= -1 && edge < (int)getEdgeCount());
       }
-      if (!edges.empty()) {
-	int start_index = new_geometry.size();
-	int vi = 0;
-	for (auto & arc_id : edges) {
-	  auto & geometry = arc_geometry[abs(arc_id) - 1].data;
-	  int dir = arc_id > 0 ? 1 : -1;
-	  assert(!geometry.empty());
-	  for (int i = 0; i < geometry.size(); i++) {
-	    auto & v = geometry[dir == -1 ? geometry.size() - 1 - i : i];
-	    new_geometry.push_back({ (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), glm::vec2((float)v.x, (float)v.y) });
-	    
-	    if (vi >= 2) {
-	      int i1 = start_index, i2 = start_index + vi, i3 = start_index + vi - 1;
-	      auto & A = new_geometry[i1].position, & B = new_geometry[i2].position, & C = new_geometry[i3].position;
-	      glm::vec3 AB(B - A, 0.0f), AC(C - A, 0.0f);
-	      glm::vec3 normal = glm::normalize(glm::cross(AB, AC));
-	      if (normal.z < 0.0f) {
-		front_indices.push_back(i1);
-		front_indices.push_back(i2);
-		front_indices.push_back(i3);
-	      } else {
-		back_indices.push_back(i1);
-		back_indices.push_back(i2);
-		back_indices.push_back(i3);
+      assert(!part_arcs.empty());
+      for (auto & arcs : part_arcs) {
+	assert(!arcs.empty());
+	if (!arcs.empty()) {
+	  int start_index = new_geometry.size();
+	  int vi = 0;
+	  for (auto & arc_id : arcs) {
+	    auto & geometry = arc_geometry[abs(arc_id) - 1].data;
+	    int dir = arc_id > 0 ? 1 : -1;
+	    assert(!geometry.empty());
+	    for (int i = 0; i < geometry.size(); i++) {
+	      auto & v = geometry[dir == -1 ? geometry.size() - 1 - i : i];
+	      new_geometry.push_back({ (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), glm::vec2((float)v.x, (float)v.y) });
+	      
+	      if (vi >= 2) {
+		int i1 = start_index, i2 = start_index + vi, i3 = start_index + vi - 1;
+		auto & A = new_geometry[i1].position, & B = new_geometry[i2].position, & C = new_geometry[i3].position;
+		glm::vec3 AB(B - A, 0.0f), AC(C - A, 0.0f);
+		glm::vec3 normal = glm::normalize(glm::cross(AB, AC));
+		if (normal.z < 0.0f) {
+		  front_indices.push_back(i1);
+		  front_indices.push_back(i2);
+		  front_indices.push_back(i3);
+		} else {
+		  back_indices.push_back(i1);
+		  back_indices.push_back(i2);
+		  back_indices.push_back(i3);
+		}
 	      }
+	      vi++;
 	    }
-	    vi++;
 	  }
 	}	
       }
