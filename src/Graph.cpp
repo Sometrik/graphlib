@@ -43,6 +43,7 @@ Graph::Graph(const Graph & other)
     // regions(other.regions),
     // shells(other.shells),
     face_attributes(other.face_attributes),
+    edge_attributes(other.edge_attributes),
     // region_attributes(other.region_attributes),
     node_color_column(other.node_color_column),
     version(other.version),
@@ -150,16 +151,17 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
       if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
       
       list<list<int> > part_arcs;
+      // part_arcs.push_back(list<int>());
       int edge = getFaceFirstEdge(face);
       int prev_node = -1;
       while (edge != -1) {
 	auto & ed = getEdgeAttributes(edge);
-	if (ed.tail != prev_node) {
+	if (ed.head != prev_node) {
 	  part_arcs.push_back(list<int>());
 	}
-	prev_node = ed.head;
+	prev_node = ed.tail;
 	assert(ed.arc);
-	if (ed.arc) part_arcs.back().push_back(ed.arc);
+	if (ed.arc) part_arcs.back().push_front(ed.arc);
 	edge = getNextFaceEdge(edge);
       }
       assert(!part_arcs.empty());
@@ -1533,4 +1535,34 @@ bool
 Graph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
   assert(0);
   return false;
+}
+
+int
+Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long coverage) {
+  assert(n1 != -1 && n2 != -1);
+  int edge = (int)edge_attributes.size();
+
+  int next_node_edge = getNodeFirstEdge(n1);
+  setNodeFirstEdge(n1, edge);
+
+  if (n1 != n2) {
+    updateOutdegree(n1, 1.0f); // weight);
+    updateIndegree(n2, 1.0f); // weight);
+  }
+  updateNodeSize(n1);
+  updateNodeSize(n2);
+  updateNodeCoverage(n1, coverage);
+  updateNodeCoverage(n2, coverage);
+  
+  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc, coverage ));
+  edges.addRow();
+  total_edge_weight += fabsf(weight);
+  if (weight > max_edge_weight) max_edge_weight = weight;
+
+  if (face != -1) {
+    setEdgeFace(edge, face);
+  }
+  
+  incVersion();
+  return edge;
 }
