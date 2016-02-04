@@ -78,10 +78,11 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
 	graph->getNodeArray().setNodeVisibility(false);
+	graph->getNodeArray().setFaceVisibility(false);
       }
       assert(shape_dimensions == graph->getDimensions());
       {
-	int hyperedge_id = graph->addFace(-1);
+	int hyperedge_id = graph->addFace();
 	for (int j = 0; j < o->nParts; j++) {
 	  int start = o->nParts > 1 ? o->panPartStart[j] : 0;
 	  int end = o->nParts > 1 && j + 1 < o->nParts ? o->panPartStart[j + 1] : o->nVertices;
@@ -159,10 +160,12 @@ ShapefileLoader::openGraph(const char * filename) {
       SHPObject * o = SHPReadObject(shp, i);
       assert(o);
       assert(o->nSHPType == SHPT_POLYGON || o->nSHPType == SHPT_POLYGONZ || o->nSHPType == SHPT_POLYGONM);
-      int region_id = graph->addRegion();
+      // int region_id = graph->addRegion();
+      int face_id = graph->addFace();
+      double area = 0, centroid_x = 0, centroid_y = 0;	
       assert(o->nParts >= 1); // could be zero to
       for (int j = 0; j < o->nParts; j++) {
-	int face_id = graph->addFace(region_id);
+	// int face_id = graph->addFace(region_id);
 	// cerr << "handling polygon " << i << ", part " << j << endl;
 	int start = o->panPartStart[j];
 	if (j == 0 && start > 0) {
@@ -171,7 +174,6 @@ ShapefileLoader::openGraph(const char * filename) {
 	}
 	int end = j + 1 < o->nParts ? o->panPartStart[j + 1] : o->nVertices;
 	list<glm::dvec2> input;
-      	double area = 0, centroid_x = 0, centroid_y = 0;	
 	for (int k = start; k < end; k++) {
 	  double x = o->padfX[k], y = o->padfY[k], z = o->padfZ[k];
 	  input.push_back(glm::dvec2(x, y));
@@ -181,11 +183,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	    centroid_x -= (o->padfX[k] + o->padfX[k + 1]) * a;
 	    centroid_y -= (o->padfY[k] + o->padfY[k + 1]) * a;
 	  }
-	}
-	area *= 0.5;
-	centroid_x /= (6.0*area);
-	centroid_y /= (6.0*area);
-	graph->setFaceCentroid(face_id, glm::vec2(centroid_x, centroid_y));
+	}	
 	if (input.size() > 1 &&
 	    input.front().x == input.back().x &&
 	    input.front().y == input.back().y) {
@@ -243,6 +241,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	  key1 << node1 << "/" << node2;
 	  map<string, int>::iterator it = waiting_faces.find(key1.str());
 	  if (it != waiting_faces.end()) {
+	    assert(0);
 	    int edge = it->second;
 	    graph->setEdgeFace(edge, face_id);
 	    graph->updateMBR(edge);
@@ -251,6 +250,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	    key2 << node2 << "/" << node1;
 	    it = waiting_faces.find(key2.str());
 	    if (it != waiting_faces.end()) {
+	      assert(0);
 	      int edge = it->second;
 	      graph->setEdgeFace(edge, face_id);
 	      graph->updateMBR(edge);
@@ -269,6 +269,12 @@ ShapefileLoader::openGraph(const char * filename) {
 	  }
 	}
       }
+
+      area *= 0.5;
+      centroid_x /= (6.0*area);
+      centroid_y /= (6.0*area);
+      graph->setFaceCentroid(face_id, glm::vec2(centroid_x, centroid_y));
+	
       SHPDestroyObject(o);
     }
   }
@@ -294,7 +300,7 @@ ShapefileLoader::openGraph(const char * filename) {
       hyperedges_table.addColumn(col);
     }
   } else if (graph->getDimensions() == 2) {
-    table::Table & regions_table = graph->getRegionData();
+    table::Table & regions_table = graph->getFaceData();
     for (auto & col : dbf->getColumns()) {
       regions_table.addColumn(col);
     }
