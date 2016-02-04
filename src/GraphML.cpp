@@ -96,7 +96,6 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     assert(node_id_text);
 
     int node_id = graph->addNode();
-    graph->addEdge(node_id, node_id);
     node_id_column.setValue(node_id, node_id_text);
     nodes_by_id[node_id_text] = node_id + 1;
     
@@ -141,16 +140,15 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     int target_node = nodes_by_id[target];
 
     if (source_node && target_node) {
-      int edge_id;
-      if (directed) {
-	edge_id = graph->addEdge(source_node - 1, target_node - 1);
-	if (edge_id_text && strlen(edge_id_text) != 0) {
-	  edge_id_column.setValue(edge_id, edge_id_text);
-	}
-      } else {
-	edge_id = graph->addFace(-1);
-	graph->addEdge(source_node - 1, target_node - 1, edge_id);
-	graph->addEdge(target_node - 1, source_node - 1, edge_id);       
+      int face_id = graph->addFace(-1);
+      int edge_id1 = graph->addEdge(source_node - 1, target_node - 1, face_id);
+      if (!directed) {
+	int edge_id2 = graph->addEdge(target_node - 1, source_node - 1, face_id);
+	graph->connectEdgePair(edge_id1, edge_id2);
+      }
+
+      if (edge_id_text && strlen(edge_id_text) != 0) {
+	edge_id_column.setValue(face_id, edge_id_text);
       }
 
       XMLElement * data_element = edge_element->FirstChildElement("data");
@@ -160,7 +158,7 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
 	assert(key);
 	const char * text = data_element->GetText();
 	if (text) {
-	  edge_table[key].setValue(edge_id, text);
+	  edge_table[key].setValue(face_id, text);
 	}
       }
     } else {
