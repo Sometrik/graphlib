@@ -156,10 +156,8 @@ MapInfoLoader::handleColumns(ifstream & in, Graph & graph) {
     in >> type;
     
     type = StringUtils::toLower(type);
-
     cerr << "column name: " << name << ", type: " << type << endl;
 
-    // FIX: This is buggy since we do not know if the objects are node, edges or faces
     if (type.compare(0, 4, "char") == 0 || 1) {
       graph.getFaceData().addTextColumn(name.c_str());
     } else if (type == "integer") {
@@ -191,8 +189,17 @@ bool
 MapInfoLoader::handlePoint(ifstream & in, Graph & graph, map<string, int> & nodes) {
   double x, y;
   in >> x;
-  in >> y;  
-  createNode2D(graph, nodes, x, y);
+  in >> y;
+
+  ArcData2D arc;
+  arc.data.push_back(glm::dvec2(x, y));
+  
+  int face_id = graph.addFace();
+  int arc_id = graph.addArcGeometry(arc);
+  pair<int, int> n = createNodesForArc(arc, graph, nodes);
+  assert(n.first == n.second);
+  graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
+  
   return true;
 }
 
@@ -203,11 +210,16 @@ MapInfoLoader::handleLine(ifstream & in, Graph & graph, map<string, int> & nodes
   in >> y1;
   in >> x2;
   in >> y2;
-  
-  int n1 = createNode2D(graph, nodes, x1, y1);
-  int n2 = createNode2D(graph, nodes, x2, y2);
-  graph.addEdge(n1, n2);
-  
+
+  ArcData2D arc;
+  arc.data.push_back(glm::dvec2(x1, y1));
+  arc.data.push_back(glm::dvec2(x2, y2));
+
+  int face_id = graph.addFace();
+  int arc_id = graph.addArcGeometry(arc);
+  pair<int, int> n = createNodesForArc(arc, graph, nodes);
+  graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
+    
   return true;
 }
 
@@ -223,11 +235,11 @@ MapInfoLoader::handlePolyline(ifstream & in, Graph & graph, map<string, int> & n
     arc.data.push_back(glm::dvec2(x, y));
   }
   assert(arc.size() >= 2);
+  int face_id = graph.addFace();
   int arc_id = graph.addArcGeometry(arc);
   pair<int, int> n = createNodesForArc(arc, graph, nodes);
-  int edge_id = graph.addEdge(n.first, n.second, -1, 1.0f, arc_id);
-  // ag.setArc(edge_id, arc);
-
+  graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
+  
   return true;
 }
 
