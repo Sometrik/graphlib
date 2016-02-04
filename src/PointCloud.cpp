@@ -18,12 +18,6 @@ PointCloud::createSimilar() const {
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
   graph->setHasTextures(hasTextures());
-  graph->getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
-  graph->getNodeArray().setAlpha3(getNodeArray().getAlpha2());
-
-  for (auto it = getNodeArray().getTable().getColumns().begin(); it != getNodeArray().getTable().getColumns().end(); it++) {
-    graph->getNodeArray().getTable().addColumn(it->second->create());
-  }
 
   return graph;
 }
