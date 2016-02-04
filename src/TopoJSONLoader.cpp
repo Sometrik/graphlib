@@ -79,12 +79,12 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 	}
 #endif
       } else if (type == "Polygon")  {
-	int region_id = graph.addRegion();
+	int face_id = graph.addFace();
+	// int region_id = graph.addRegion();
 	if (!id_text.empty()) {
-	  graph.getRegionData()["id"].setValue(region_id, id_text);
+	  graph.getFaceData()["id"].setValue(face_id, id_text);
 	}
 	for (unsigned int i = 0; i < arcs.size(); i++) {
-	  int face_id = graph.addFace(region_id);
 	  Json::Value ring = arcs[i];
 	  assert(ring.type() == Json::arrayValue);
 	  for (unsigned int j = 0; j < ring.size(); j++) {
@@ -109,13 +109,14 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 	  }
 	}
       } else if (type == "MultiPolygon") {
-	int region_id = graph.addRegion();
+	int face_id = graph.addFace();
+	// int region_id = graph.addRegion();
 	if (!id_text.empty()) {
-	  graph.getRegionData()["id"].setValue(region_id, id_text);
+	  graph.getFaceData()["id"].setValue(face_id, id_text);
 	}
  	for (unsigned int h = 0; h < arcs.size(); h++) {
 	  Json::Value polygon = arcs[h];
-	  int face_id = graph.addFace(region_id);
+	  // int face_id = graph.addFace(region_id);
 	  assert(polygon.type() == Json::arrayValue);
 	  for (unsigned int i = 0; i < polygon.size(); i++) {
 	    Json::Value ring = polygon[i];
@@ -199,7 +200,7 @@ TopoJSONLoader::openGraph(const char * filename) {
 
   // graph->getEdgeData().addArcColumn("_geometry");
   graph->getFaceData().addTextColumn("id");  
-  graph->getRegionData().addTextColumn("id");
+  // graph->getRegionData().addTextColumn("id");
   
   map<string, int> nodes;
   map<int, vector<int> > connections;
