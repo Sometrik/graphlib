@@ -213,8 +213,12 @@ class Graph : public MBRObject {
     }
   }
 
-  virtual int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0, long long coverage = 0) = 0;  
-  virtual int getNextFaceEdge(int edge) const { return -1; }
+  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0, long long coverage = 0);
+
+  int getNextFaceEdge(int edge) const {
+    return edge_attributes[edge].next_face_edge;
+  }
+
   // virtual int addRegion() { return -1; }
   // virtual int getRegionFirstFace(int region) const { return -1; }
   // virtual int getRegionNextFace(int region, int face) const { return -1; }
@@ -502,6 +506,7 @@ class Graph : public MBRObject {
     cluster_attributes.clear();
     face_attributes.clear();
     // region_attributes.clear();
+    edge_attributes.clear();
 
     highlighted_node = -1;
     // highlighted_region = -1;
@@ -536,14 +541,21 @@ class Graph : public MBRObject {
   face_data_s & getFaceAttributes(int i) { return face_attributes[i]; }
   const face_data_s & getFaceAttributes(int i) const { return face_attributes[i]; }
 
-  virtual edge_data_s & getEdgeAttributes(int i) = 0;
-  virtual const edge_data_s & getEdgeAttributes(int i) const = 0;  
-
-  virtual EdgeIterator begin_edges() = 0;
-  virtual EdgeIterator end_edges() = 0;
-  virtual ConstEdgeIterator begin_edges() const = 0;
-  virtual ConstEdgeIterator end_edges() const = 0;
-
+  edge_data_s & getEdgeAttributes(int i) { return edge_attributes[i]; }
+  const edge_data_s & getEdgeAttributes(int i) const { return edge_attributes[i]; }
+  EdgeIterator begin_edges() { return EdgeIterator(&(edge_attributes.front()), sizeof(edge_data_s)); }
+  EdgeIterator end_edges() {
+    EdgeIterator it(&(edge_attributes.back()), sizeof(edge_data_s));
+    ++it;
+    return it;
+  }
+  ConstEdgeIterator begin_edges() const { return ConstEdgeIterator(&(edge_attributes.front()), sizeof(edge_data_s)); }
+  ConstEdgeIterator end_edges() const {
+    ConstEdgeIterator it(&(edge_attributes.back()), sizeof(edge_data_s));
+    ++it;
+    return it;
+  }
+  
   int getGraphNodeId(int graph_id) const;
   bool updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
 
@@ -637,6 +649,7 @@ class Graph : public MBRObject {
   // table::Table regions, shells;
   std::vector<cluster_data_s> cluster_attributes;
   std::vector<face_data_s> face_attributes;
+  std::vector<edge_data_s> edge_attributes;
   // std::vector<region_data_s> region_attributes;
   double total_edge_weight = 0.0;
   float max_edge_weight = 0.0f, max_node_coverage_weight = 0.0f;
