@@ -40,7 +40,6 @@ MapInfoLoader::openGraph(const char * filename) {
   auto graph = std::make_shared<PlanarGraph>();
   graph->setHasSpatialData(true);
   graph->setHasArcData(true);
-  // graph->getEdgeData().addArcColumn("_geometry");
 
   ifstream in(filename, ios::in);
   if (!in) {
@@ -98,7 +97,7 @@ MapInfoLoader::openGraph(const char * filename) {
       mid.erase(pos);
       mid += ".mid";
       cerr << "loading csv " << mid << endl;
-      graph->getEdgeData().loadCSV(mid.c_str(), ',');
+      graph->getFaceData().loadCSV(mid.c_str(), ',');
     }
     cerr << "done\n";
   } catch (exception & e) {
@@ -162,10 +161,10 @@ MapInfoLoader::handleColumns(ifstream & in, Graph & graph) {
 
     // FIX: This is buggy since we do not know if the objects are node, edges or faces
     if (type.compare(0, 4, "char") == 0 || 1) {
-      graph.getEdgeData().addTextColumn(name.c_str());
+      graph.getFaceData().addTextColumn(name.c_str());
     } else if (type == "integer") {
       assert(0);
-      graph.getEdgeData().addIntColumn(name.c_str());
+      graph.getFaceData().addIntColumn(name.c_str());
     } else {
       assert(0);
     }
@@ -214,8 +213,6 @@ MapInfoLoader::handleLine(ifstream & in, Graph & graph, map<string, int> & nodes
 
 bool
 MapInfoLoader::handlePolyline(ifstream & in, Graph & graph, map<string, int> & nodes) {
-  // ColumnArc & ag = dynamic_cast<ColumnArc &>(graph.getEdgeData()["_geometry"]);
-
   unsigned int num_points = 0;
   in >> num_points;  
   ArcData2D arc;
