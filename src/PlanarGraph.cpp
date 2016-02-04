@@ -175,6 +175,7 @@ PlanarGraph::calculateRegionAreas() {
 
 void
 PlanarGraph::colorizeRegions() {
+#if 0
   vector<glm::vec3> colors;
   colors.push_back(glm::vec3(150.0f / 255.0f, 180.0f / 255.0f, 0.0f));
   colors.push_back(glm::vec3(245.0f / 255.0f, 90.0f / 255.0f, 40.0f / 255.0f));
@@ -207,6 +208,7 @@ PlanarGraph::colorizeRegions() {
     face_attributes[i].color = colors[*it];
 #endif
   }
+#endif
 }
 
 void
@@ -307,6 +309,7 @@ PlanarGraph::findContainingRegion(const glm::dvec3 & point) const {
 
 void
 PlanarGraph::spatialAggregation(const Graph & other) {
+#if 0
   auto & columns = other.getNodeArray().getTable().getColumns();
   for (auto it = columns.begin(); it != columns.end(); it++) {
     if (it->first == "COUNT" || it->first == "LIKES") {
@@ -328,6 +331,7 @@ PlanarGraph::spatialAggregation(const Graph & other) {
       }
     }
   }
+#endif
 }
 
 set<int>
@@ -337,12 +341,14 @@ PlanarGraph::getAdjacentRegions() const {
   return r;
 }
 
+#if 0
 void
 PlanarGraph::addUniversalRegion() {
   int region = addRegion();
   int face = addFace(region);
-  region_attributes[region].label = "UNIVERSAL";  
+  region_attributes[region].label = "UNIVERSAL";
 }
+#endif
 
 int
 PlanarGraph::addEdge(int n1, int n2, int face, float weight, int arc, long long coverage) {
@@ -357,11 +363,12 @@ PlanarGraph::addEdge(int n1, int n2, int face, float weight, int arc, long long 
   updateNodeSize(n1);
   updateNodeSize(n2);
   
-  edge_attributes.push_back(planar_edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
+  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
   edges.addRow();
   total_edge_weight += fabsf(weight);
   
   setEdgeFace(edge, face);
-  
+
+  incVersion();
   return edge;
 }

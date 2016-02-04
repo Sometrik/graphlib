@@ -3,14 +3,6 @@
 
 #include <Graph.h>
 
-struct planar_edge_data_s : public edge_data_s {
- planar_edge_data_s() { }
- planar_edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc)
-   : edge_data_s(_weight, _tail, _head, _next_node_edge, _face, _next_face_edge, _arc) { }
-
- int pair_edge = -1;
-};
-
 class PlanarGraph : public Graph {
  public:
   PlanarGraph(int _id = 0);
@@ -21,9 +13,10 @@ class PlanarGraph : public Graph {
   std::shared_ptr<Graph> createSimilar() const override;
   Graph * copy() const override { return new PlanarGraph(*this); }
   
-  void addUniversalRegion() override;
-
   int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc = 0, long long coverage = 0) override;
+
+#if 0
+  void addUniversalRegion() override;
 
   int addRegion() override {
     int region_id = (int)region_attributes.size();
@@ -43,6 +36,8 @@ class PlanarGraph : public Graph {
   int getNextFaceEdge(int edge) const override {
     return edge_attributes[edge].next_face_edge;
   }
+
+#endif
 
   std::set<int> getAdjacentRegions() const override;
 
@@ -64,21 +59,21 @@ class PlanarGraph : public Graph {
  protected:
   edge_data_s & getEdgeAttributes(int i) override { return edge_attributes[i]; }
   const edge_data_s & getEdgeAttributes(int i) const override { return edge_attributes[i]; }
-  EdgeIterator begin_edges() override { return EdgeIterator(&(edge_attributes.front()), sizeof(planar_edge_data_s)); }
+  EdgeIterator begin_edges() override { return EdgeIterator(&(edge_attributes.front()), sizeof(edge_data_s)); }
   EdgeIterator end_edges() override {
-    EdgeIterator it(&(edge_attributes.back()), sizeof(planar_edge_data_s));
+    EdgeIterator it(&(edge_attributes.back()), sizeof(edge_data_s));
     ++it;
     return it;
   }
-  ConstEdgeIterator begin_edges() const override { return ConstEdgeIterator(&(edge_attributes.front()), sizeof(planar_edge_data_s)); }
+  ConstEdgeIterator begin_edges() const override { return ConstEdgeIterator(&(edge_attributes.front()), sizeof(edge_data_s)); }
   ConstEdgeIterator end_edges() const override {
-    ConstEdgeIterator it(&(edge_attributes.back()), sizeof(planar_edge_data_s));
+    ConstEdgeIterator it(&(edge_attributes.back()), sizeof(edge_data_s));
     ++it;
     return it;
   }
   
  private:
-  std::vector<planar_edge_data_s> edge_attributes;
+  std::vector<edge_data_s> edge_attributes;
 };
 
 #endif
