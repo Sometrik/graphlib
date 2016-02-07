@@ -155,7 +155,7 @@ class Graph : public MBRObject {
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
 
-  bool empty() const { return nodes->empty(); }
+  bool empty() const { return getEdgeCount() > 0; }
   // double calculateTotalEnergy() const;
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
