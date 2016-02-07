@@ -48,6 +48,8 @@ struct node_data_s {
   unsigned short label_visibility_val;
   std::string label;
   std::shared_ptr<Graph> nested_graph;
+  int first_child, next_child, parent_node;
+  unsigned int child_count;
 };
 
 class NodeArray {
@@ -75,7 +77,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>() });
+    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>(), -1, -1, -1, 0 });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -134,6 +136,32 @@ class NodeArray {
     else if (f2 > 65535) f2 = 65535;
     node_geometry[i].label_visibility_val = (unsigned short)f2;
   }
+
+  void addChild(int parent, int child) {
+    node_geometry[child].next_child = node_geometry[parent].first_child;
+    node_geometry[parent].first_child = child;
+    node_geometry[child].parent_node = parent;
+    node_geometry[parent].child_count++;
+  }
+  void removeChild(int child) {
+    int parent = node_geometry[child].parent_node;
+    if (node_geometry[parent].first_child == child) {
+      node_geometry[parent].first_child = node_geometry[parent].next_child;
+    } else {
+      int n = node_geometry[parent].first_child;
+      while (n != -1) {
+	int next_child = node_geometry[n].next_child;
+	if (next_child == child) {
+	  node_geometry[n].next_child = node_geometry[child].next_child;
+	  break;
+	}
+	n = next_child;
+      }
+    }
+    node_geometry[child].parent_node = node_geometry[child].next_child = -1;
+    node_geometry[parent].child_count--;
+  } 
+
   bool setNodeLabelVisibility(int i, bool t) {
     bool orig_t = node_geometry[i].flags | NODE_LABEL_VISIBLE ? true : false;
     if (t != orig_t || 1) {
@@ -280,6 +308,13 @@ class NodeArray {
   int getSRID() const { return srid; }
   void setSRID(int _srid) { srid = _srid; }
 
+  int getZeroDegreeNodeId() {
+    if (zerodegree_node_id == -1) {
+      zerodegree_node_id = add();
+    }
+    return zerodegree_node_id;
+  }
+  
  protected:
 
  private:
@@ -314,7 +349,8 @@ class NodeArray {
   // bool show_regions = true;
   glm::vec4 node_color, edge_color, face_color;
   // glm::vec4 region_color;
-
+  int zerodegree_node_id = -1;
+  
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
 };
