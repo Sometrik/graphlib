@@ -535,7 +535,6 @@ Graph::relaxLinks() {
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
-    if (pd1.cluster_id != pd2.cluster_id && 0) continue;
     auto & td1 = getNodeTertiaryData(s), & td2 = getNodeTertiaryData(t);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
@@ -696,55 +695,6 @@ Graph::createSortedNodeIndices(const glm::vec3 & camera_pos) const {
 }
 
 void
-Graph::simplifyWithClusters(const std::vector<int> & clusters, Graph & target_graph) {
-  map<int, int> created_clusters;
-  map<int, map<int, int> > seen_edges;
-  
-  for (int n1 = 0; n1 < nodes->size(); n1++) {
-    int partition1 = clusters[n1];
-    
-    auto it1 = created_clusters.find(partition1);
-    int cluster1;
-    if (it1 != created_clusters.end()) {
-      cluster1 = it1->second;
-    } else {
-      created_clusters[partition1] = cluster1 = target_graph.addNode();
-    }
-    
-    int edge = getNodeFirstEdge(n1);
-    while (edge != -1) {
-      auto & ed = getEdgeAttributes(edge);
-      int n2 = getEdgeTargetNode(edge);
-      int partition2 = clusters[n1];
-
-      auto it2 = created_clusters.find(partition2);
-      int cluster2;
-      if (it2 != created_clusters.end()) {
-	cluster2 = it2->second;
-      } else {
-	created_clusters[partition2] = cluster2 = target_graph.addNode();
-      }
-
-      assert(n1 != n2);
-      
-      map<int, map<int, int> >::iterator eit1;
-      map<int, int>::iterator eit2;
-      if ((eit1 = seen_edges.find(n1)) != seen_edges.end() &&
-	  (eit2 = eit1->second.find(n2)) != eit1->second.end()) {
-	auto & attr = target_graph.getEdgeAttributes(eit2->second);
-	attr.weight += ed.weight;
-      } else {
-	int new_edge = target_graph.addEdge(n1, n2);
-	seen_edges[n1][n2] = new_edge;
-	auto & attr = target_graph.getEdgeAttributes(new_edge);
-      }
-      
-      edge = getNextNodeEdge(edge);
-    }    
-  }
-}
-
-void
 Graph::selectNodes(int input_node, int depth) {
   if (input_node == -1) {
     has_node_selection = false;
@@ -852,7 +802,7 @@ Graph::getGraphNodeId(int graph_id) const {
 
 void
 Graph::createClusters() {
-#ifndef _WIN32
+#if 0
   double precision = 0.000001;
   
   cerr << "creating arrays, precision = " << precision << "\n";
@@ -1032,21 +982,6 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   }
   
   return changed;         
-}
-
-void
-Graph::setClusterColor(int i, const canvas::Color & c) {
-  int r = int(c.red * 0xff), g = int(c.green * 0xff), b = int(c.blue * 0xff), a = int(c.alpha * 0xff);
-  if (r > 255) r = 255;
-  else if (r < 0) r = 0;
-  if (g > 255) g = 255;
-  else if (g < 0) g = 0;
-  if (b > 255) b = 255;
-  else if (b < 0) b = 0;
-  if (a > 255) a = 255;
-  else if (a < 0) a = 0;
-  graph_color_s tmp = { (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a };
-  setClusterColor(i, tmp);
 }
 
 void
@@ -1372,12 +1307,9 @@ Graph::updateAppearance() {
   }
 }
 
-static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td) {
+static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, const glm::vec3 & origin) {
   if (!(pd.flags & NODE_FIXED_POSITION)) {
-    glm::vec3 origin, pos = pd.position;
-#if 0
-    if (pd.cluster_id >= 0) origin = getClusterAttributes(pd.cluster_id).position;
-#endif
+    glm::vec3 pos = pd.position;
     pos -= origin;
     float d = glm::length(pos);
     if (d > 0.001) {
@@ -1399,26 +1331,19 @@ Graph::applyGravity(float gravity) {
     for (auto it = begin_edges(); it != end; ++it) {
       if (!processed_nodes[it->tail]) {
 	processed_nodes[it->tail] = true;
-	applyGravityToNode(k, nodes->getNodeData(it->tail), getNodeTertiaryData(it->tail));
+	auto & pd = nodes->getNodeData(it->tail);
+	glm::vec3 origin;
+	if (pd.parent_node >= 0) origin = nodes->getNodeData(pd.parent_node).position;
+	applyGravityToNode(k, pd, getNodeTertiaryData(it->tail), origin);
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
-	applyGravityToNode(k, nodes->getNodeData(it->head), getNodeTertiaryData(it->head));
+	auto & pd = nodes->getNodeData(it->head);
+	glm::vec3 origin;
+	if (pd.parent_node >= 0) origin = nodes->getNodeData(pd.parent_node).position;
+	applyGravityToNode(k, pd, getNodeTertiaryData(it->head), origin);
       }
     }
-
-#if 0
-    int n2 = getClusterCount();
-    for (int i = 0; i < n2; i++) {
-      auto & pd = getClusterAttributes(i);
-      glm::vec3 pos = pd.position;
-      float d = glm::length(pos);
-      if (d > 0.0001) {
-	pos -= pos * (k * sqrtf(d) / d);
-	pd.position = pos;
-      }
-    }
-#endif
   }
 }
 
@@ -1451,20 +1376,6 @@ Graph::applyDragAndAge(RenderMode mode, float friction) {
     }
   }
   
-#if 0
-  n = getClusterCount();
-  for (int i = 0; i < n; i++) {
-    auto & pd = getClusterAttributes(i);
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
-    glm::vec3 new_pos = pos - (ppos - pos) * friction;
-    if (mode == RENDERMODE_2D) {
-      new_pos.z = 0;
-    }
-    pd.prev_position = pos;
-    pd.position = new_pos;    
-  }
-#endif
   version++;
 }
 

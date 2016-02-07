@@ -21,13 +21,6 @@ struct node_tertiary_data_s {
   long long coverage;
 };
 
-struct cluster_data_s {
-  graph_color_s color;
-  glm::vec3 position;
-  glm::vec3 prev_position;
-  unsigned int num_nodes;
-};
-
 struct edge_data_s {
 edge_data_s() : weight(1.0f), tail(-1), head(-1), next_node_edge(-1), face(-1), next_face_edge(-1), arc(0), coverage(0) { }
 edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc, long long _coverage = 0)
@@ -158,25 +151,14 @@ class Graph : public MBRObject {
 
   std::vector<int> getLocationGraphs() const;
   std::vector<int> getNestedGraphIds() const;
-
-  table::Table & getClusterData() { return clusters; }
-
-#if 0
-  table::Table & getEdgeData() { return edges; }
-  const table::Table & getEdgeData() const { return edges; }
-#endif
   
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
-
-  // table::Table & getRegionData() { return regions; }
-  // table::Table & getShellData() { return shells; }
 
   bool empty() const { return nodes->empty(); }
   // double calculateTotalEnergy() const;
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
-  // int getFaceRegion(int i) const { return face_attributes[i].region; }
 
   virtual void updateLocationGraph(int graph_id) { }
   virtual Graph * simplify() const { return 0; }
@@ -273,8 +255,6 @@ class Graph : public MBRObject {
     return d;
   }
  
-  void simplifyWithClusters(const std::vector<int> & clusters, Graph & target_graph);
-
   int getNodeFirstEdge(int i) const {
     if (i >= 0 && i < node_geometry3.size()) {
       return node_geometry3[i].first_edge - 1;
@@ -332,7 +312,6 @@ class Graph : public MBRObject {
  
   // int getTotalDegrees(int i) const { return 1; }; //return getInDegrees() + getOutDegrees(); }
 
-  size_t getClusterCount() const { return clusters.size(); }
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
   
@@ -419,16 +398,6 @@ class Graph : public MBRObject {
 
   void relaxLinks();
 
-  virtual int addCluster() {
-    int cluster_id = cluster_attributes.size();
-    cluster_attributes.push_back({ { 127, 127, 127, 127 }, glm::vec3(), glm::vec3(), 0 });
-    while (clusters.size() < cluster_attributes.size()) {
-      clusters.addRow();
-    }
-    return cluster_id;
-  }
-
-  // int region_id = -1, 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
 #if 0
@@ -493,10 +462,7 @@ class Graph : public MBRObject {
   void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
 
   virtual void clear() {
-    clusters.clear();
-    // edges.clear();
     faces.clear();    
-    cluster_attributes.clear();
     face_attributes.clear();
     edge_attributes.clear();
 
@@ -511,24 +477,7 @@ class Graph : public MBRObject {
   int getFaceId(short source_id, long long source_object_id) const;
   
   int pickNode(const DisplayInfo & display, int x, int y, float node_scale) const;
-
-  void setNodeCluster(int node_id, int cluster_id) {
-    assert(node_id >= 0 && node_id < nodes->size());
-    auto & nd = getNodeArray().getNodeData(node_id);
-    if (nd.cluster_id != -1) {
-      assert(nd.cluster_id >= 0 && nd.cluster_id <= (int)getClusterCount());
-      getClusterAttributes(nd.cluster_id).num_nodes--;
-    }
-    nd.cluster_id = cluster_id;
-    assert(nd.cluster_id >= 0 && nd.cluster_id <= (int)getClusterCount());
-    if (cluster_id != -1) {
-      getClusterAttributes(nd.cluster_id).num_nodes++;
-    }
-  }
   
-  cluster_data_s & getClusterAttributes(int i) { return cluster_attributes[i]; }
-  const cluster_data_s & getClusterAttributes(int i) const { return cluster_attributes[i]; }
-
   face_data_s & getFaceAttributes(int i) { return face_attributes[i]; }
   const face_data_s & getFaceAttributes(int i) const { return face_attributes[i]; }
 
@@ -580,12 +529,6 @@ class Graph : public MBRObject {
       
   void invalidateVisibleNodes();
 
-  void setClusterColor(int i, const graph_color_s & c) {
-    cluster_attributes[i].color = c;
-    version++;
-  }
-  void setClusterColor(int i, const canvas::Color & c);
-
   void updateNodeSize(int n) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
     node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, nodes->size());
@@ -636,12 +579,9 @@ class Graph : public MBRObject {
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
 
-  table::Table clusters, faces;
-  // table::Table edges, regions, shells;
-  std::vector<cluster_data_s> cluster_attributes;
+  table::Table faces;
   std::vector<face_data_s> face_attributes;
   std::vector<edge_data_s> edge_attributes;
-  // std::vector<region_data_s> region_attributes;
   double total_edge_weight = 0.0;
   float max_edge_weight = 0.0f, max_node_coverage_weight = 0.0f;
   std::shared_ptr<NodeArray> nodes;
