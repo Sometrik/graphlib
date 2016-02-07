@@ -158,6 +158,15 @@ class Graph : public MBRObject {
   bool empty() const { return getEdgeCount() == 0; }
   // double calculateTotalEnergy() const;
 
+  void addChild(int parent, int child) {
+    nodes->addChild(parent, child);
+    updateNodeSize(parent);
+  }
+  void removeChild(int child) {
+    int parent = nodes->removeChild(child);
+    if (parent != -1) updateNodeSize(parent);    
+  }
+
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
   virtual void updateLocationGraph(int graph_id) { }
@@ -531,7 +540,7 @@ class Graph : public MBRObject {
 
   void updateNodeSize(int n) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), total_indegree, total_outdegree, nodes->size());
+    node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), nodes->getNodeData(n).child_count, total_indegree, total_outdegree, nodes->size());
   }
 
   void updateNodeCoverage(int n, long long coverage) {
