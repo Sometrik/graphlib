@@ -43,7 +43,6 @@ struct node_data_s {
   float age;
   short texture, flags;
   NodeType type;
-  int cluster_id;
   short label_texture;
   unsigned short label_visibility_val;
   std::string label;
@@ -77,7 +76,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, -1, 0, 0, "", std::shared_ptr<Graph>(), -1, -1, -1, 0 });
+    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", std::shared_ptr<Graph>(), -1, -1, -1, 0 });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -281,19 +280,14 @@ class NodeArray {
   void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
   void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
   void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
-  // void setDefaultRegionColor(const glm::vec4 & color) { region_color = color; }
 
-  void setClusterVisibility(bool t) { show_clusters = t; }
   void setNodeVisibility(bool t) { show_nodes = t; }
   void setEdgeVisibility(bool t) { show_edges = t; }
   void setFaceVisibility(bool t) { show_faces = t; }
-  // void setRegionVisibility(bool t) { show_regions = t; }
   void setLabelVisibility(bool t) { show_labels = t; }
 
-  bool getClusterVisibility() const { return show_clusters; }
   bool getNodeVisibility() const { return show_nodes; }
   bool getEdgeVisibility() const { return show_edges; }
-  // bool getRegionVisibility() const { return show_regions; }
   bool getFaceVisibility() const { return show_faces; }
   bool getLabelVisibility() const { return show_labels; }
 
@@ -345,10 +339,8 @@ class NodeArray {
   int default_symbol_id = 0;
   float alpha = 0.0f;
   int srid = 0, version = 1;
-  bool show_clusters = true, show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
-  // bool show_regions = true;
+  bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
-  // glm::vec4 region_color;
   int zerodegree_node_id = -1;
   
   mutable int num_readers = 0;
