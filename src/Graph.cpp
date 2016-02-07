@@ -355,6 +355,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
   stored_nodes.resize(nodes->size());
   vector<node_vbo_s> new_geometry;
   unsigned int edge_count = 0;
+  list<int> parent_nodes;
 
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -365,14 +366,29 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       auto & nd = nodes->getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
+      if (nd.parent_node != -1) parent_nodes.push_back(nd.parent_node);
     }
     if (!stored_nodes[it->head]) {
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
+      if (nd.parent_node != -1) parent_nodes.push_back(nd.parent_node);
     }
     edge_count++;
+  }
+
+  cerr << "parent_nodes = " << parent_nodes.size() << endl;
+  
+  while (!parent_nodes.empty()) {
+    int n = parent_nodes.front();
+    parent_nodes.pop_front();
+    if (!stored_nodes[n]) {
+      auto & nd = nodes->getNodeData(n);
+      auto & td = getNodeTertiaryData(n);
+      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
+      if (nd.parent_node != -1) parent_nodes.push_back(nd.parent_node);
+    }
   }
   
   // cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
@@ -1307,13 +1323,13 @@ Graph::updateAppearance() {
   }
 }
 
-static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, const glm::vec3 & origin) {
+static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, const glm::vec3 & origin, float weight) {
   if (!(pd.flags & NODE_FIXED_POSITION)) {
     glm::vec3 pos = pd.position;
     pos -= origin;
     float d = glm::length(pos);
     if (d > 0.001) {
-      pos -= pos * (k * sqrtf(d) / d) * td.coverage_weight;
+      pos -= pos * (k * sqrtf(d) / d) * weight;
       pos += origin;
       pd.position = pos;
     }
@@ -1332,16 +1348,18 @@ Graph::applyGravity(float gravity) {
       if (!processed_nodes[it->tail]) {
 	processed_nodes[it->tail] = true;
 	auto & pd = nodes->getNodeData(it->tail);
+	auto & td = getNodeTertiaryData(it->tail);
 	glm::vec3 origin;
 	if (pd.parent_node >= 0) origin = nodes->getNodeData(pd.parent_node).position;
-	applyGravityToNode(k, pd, getNodeTertiaryData(it->tail), origin);
+	applyGravityToNode(k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
 	auto & pd = nodes->getNodeData(it->head);
+	auto & td = getNodeTertiaryData(it->head);
 	glm::vec3 origin;
 	if (pd.parent_node >= 0) origin = nodes->getNodeData(pd.parent_node).position;
-	applyGravityToNode(k, pd, getNodeTertiaryData(it->head), origin);
+	applyGravityToNode(k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
       }
     }
   }
