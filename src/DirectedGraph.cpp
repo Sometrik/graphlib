@@ -166,25 +166,25 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  new_weight /= 64.0f;
 	  updateEdgeWeight(it2->second, new_weight - ed.weight);
 	} else {
-	  bool skip = false;
 	  if (td1.indegree == 0 && td1.outdegree == 0) {
-	    if (np.first == np.second) {
-	      int z = nodes.getZeroDegreeNodeId();
-	      nodes.addChild(z, np.first);
+	    bool has_zero = zerodegree_nodes.count(np.first) != 0;
+	    if (np.first == np.second && !has_zero) {
+	      int z = nodes.getZeroDegreeNode();
+	      cerr << "DEBUG: adding node " << np.first << " to zero degree node (id = " << z << ")\n";
+	      addChild(z, np.first);
 	      zerodegree_nodes.insert(np.first);
-	      skip = true;
-	    } else if (zerodegree_nodes.count(np.first)) {
-	      nodes.removeChild(np.first);
+	    } else if (np.first != np.second && has_zero) {
+	      cerr << "DEBUG: removing node " << np.first << " from zero degree node (A)\n";
+	      removeChild(np.first);
 	      zerodegree_nodes.erase(np.first);
 	    }
 	  }
-	  if (td2.indegree == 0 && td2.outdegree == 0 && np.first != np.second && zerodegree_nodes.count(np.second)) {
-	    nodes.removeChild(np.second);
+	  if (td2.indegree == 0 && td2.outdegree == 0 && np.first != np.second && zerodegree_nodes.count(np.second) != 0) {
+	    cerr << "DEBUG: removing node " << np.second << " from zero degree node (B)\n";
+	    removeChild(np.second);
 	    zerodegree_nodes.erase(np.second);
 	  }
-	  if (!skip) {
-	    seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, coverage);
-	  }
+	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, coverage);
 	}
       }
     }  
