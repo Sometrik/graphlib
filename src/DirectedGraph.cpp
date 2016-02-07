@@ -98,13 +98,14 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
       long long first_user_soid = soid.getInt64(np.first);
       long long target_user_soid = soid.getInt64(np.second);
       
+      auto & td1 = base_graph->getNodeTertiaryData(np.first);
+      auto & td2 = base_graph->getNodeTertiaryData(np.second);
+      
       if (!is_first_level) {
-	auto & td1 = base_graph->getNodeTertiaryData(np.first);
 	if (td1.indegree < getMinSignificance()) {
 	  skipped_count++;
 	  continue;
 	}
-	auto & td2 = base_graph->getNodeTertiaryData(np.second);
 	if (td2.indegree < getMinSignificance()) {
 	  skipped_count++;
 	  continue;
@@ -165,7 +166,25 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  new_weight /= 64.0f;
 	  updateEdgeWeight(it2->second, new_weight - ed.weight);
 	} else {
-	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, coverage);
+	  bool skip = false;
+	  if (td1.indegree == 0 && td1.outdegree == 0) {
+	    if (np.first == np.second) {
+	      int z = nodes.getZeroDegreeNodeId();
+	      nodes.addChild(z, np.first);
+	      zerodegree_nodes.insert(np.first);
+	      skip = true;
+	    } else if (zerodegree_nodes.count(np.first)) {
+	      nodes.removeChild(np.first);
+	      zerodegree_nodes.erase(np.first);
+	    }
+	  }
+	  if (td2.indegree == 0 && td2.outdegree == 0 && np.first != np.second && zerodegree_nodes.count(np.second)) {
+	    nodes.removeChild(np.second);
+	    zerodegree_nodes.erase(np.second);
+	  }
+	  if (!skip) {
+	    seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, coverage);
+	  }
 	}
       }
     }  
