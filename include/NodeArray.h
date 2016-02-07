@@ -11,8 +11,6 @@
 #include "RenderMode.h"
 #include "LabelMethod.h"
 
-#define INITIAL_ALPHA		0.15f
-
 #include <Table.h>
 #include <glm/glm.hpp>
 #include <string>
@@ -136,30 +134,8 @@ class NodeArray {
     node_geometry[i].label_visibility_val = (unsigned short)f2;
   }
 
-  void addChild(int parent, int child) {
-    node_geometry[child].next_child = node_geometry[parent].first_child;
-    node_geometry[parent].first_child = child;
-    node_geometry[child].parent_node = parent;
-    node_geometry[parent].child_count++;
-  }
-  void removeChild(int child) {
-    int parent = node_geometry[child].parent_node;
-    if (node_geometry[parent].first_child == child) {
-      node_geometry[parent].first_child = node_geometry[parent].next_child;
-    } else {
-      int n = node_geometry[parent].first_child;
-      while (n != -1) {
-	int next_child = node_geometry[n].next_child;
-	if (next_child == child) {
-	  node_geometry[n].next_child = node_geometry[child].next_child;
-	  break;
-	}
-	n = next_child;
-      }
-    }
-    node_geometry[child].parent_node = node_geometry[child].next_child = -1;
-    node_geometry[parent].child_count--;
-  } 
+  void addChild(int parent, int child);
+  int removeChild(int child);
 
   bool setNodeLabelVisibility(int i, bool t) {
     bool orig_t = node_geometry[i].flags | NODE_LABEL_VISIBLE ? true : false;
@@ -294,7 +270,7 @@ class NodeArray {
   void setAlpha3(float f) { alpha = f; }
   void updateAlpha() { alpha *= 0.99f; }
   float getAlpha2() const { return alpha; }
-  void resume2() { alpha = INITIAL_ALPHA; }
+  void resume2();
   void stop() { alpha = 0.0f; }
 
   int getVersion() const { return version; }
@@ -302,7 +278,8 @@ class NodeArray {
   int getSRID() const { return srid; }
   void setSRID(int _srid) { srid = _srid; }
 
-  int getZeroDegreeNodeId() {
+  bool hasZeroDegreeNode() const { return zerodegree_node_id != -1; }
+  int getZeroDegreeNode() {
     if (zerodegree_node_id == -1) {
       zerodegree_node_id = add();
     }
