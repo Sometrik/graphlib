@@ -44,22 +44,12 @@ struct face_data_s {
   graph_color_s color;
   Rect2d mbr;
   int first_edge;
-  // int next_face_in_region, region;
   time_t timestamp;
   float sentiment;
   short feed, lang;
   long long app_id;
   long long filter_id;
 };
-
-#if 0
-struct region_data_s {
-  graph_color_s color;
-  std::string label;
-  Rect2d mbr;
-  int first_face;
-};
-#endif
 
 class EdgeIterator {
  public:
@@ -217,10 +207,15 @@ class Graph : public MBRObject {
 
   int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0, long long coverage = 0);
 
+  void connectEdgePair(int e1, int e2) {
+    getEdgeAttributes(e1).pair_edge = e2;
+    getEdgeAttributes(e2).pair_edge = e1;
+  }
+  
   int getNextFaceEdge(int edge) const {
     return edge_attributes[edge].next_face_edge;
   }
-
+  
   // virtual int addRegion() { return -1; }
   // virtual int getRegionFirstFace(int region) const { return -1; }
   // virtual int getRegionNextFace(int region, int face) const { return -1; }
