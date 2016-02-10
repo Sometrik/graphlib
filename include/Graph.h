@@ -16,9 +16,11 @@ class Graph;
 class DisplayInfo;
 
 struct node_tertiary_data_s {
-  int first_edge;
-  float indegree, outdegree, size, coverage_weight;
-  long long coverage;
+  int first_edge = -1;
+  float indegree = 0.0f, outdegree = 0.0f, size = 0.0f, coverage_weight = 0.0f;
+  long long coverage = 0;
+  int first_child = -1, next_child = -1, parent_node = -1;
+  unsigned int child_count = 0;
 };
 
 struct edge_data_s {
@@ -158,14 +160,8 @@ class Graph : public MBRObject {
   bool empty() const { return getEdgeCount() == 0; }
   // double calculateTotalEnergy() const;
 
-  void addChild(int parent, int child) {
-    nodes->addChild(parent, child);
-    updateNodeSize(parent);
-  }
-  void removeChild(int child) {
-    int parent = nodes->removeChild(child);
-    if (parent != -1) updateNodeSize(parent);    
-  }
+  void addChild(int parent, int child);
+  void removeChild(int child);
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
@@ -238,7 +234,7 @@ class Graph : public MBRObject {
 
   void setNodeFirstEdge(int n, int edge) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].first_edge = edge + 1;
+    node_geometry3[n].first_edge = edge;
   }
 
   void updateOutdegree(int n, float d) {
@@ -266,7 +262,7 @@ class Graph : public MBRObject {
  
   int getNodeFirstEdge(int i) const {
     if (i >= 0 && i < node_geometry3.size()) {
-      return node_geometry3[i].first_edge - 1;
+      return node_geometry3[i].first_edge;
     } else {
       return -1;
     }
@@ -540,7 +536,8 @@ class Graph : public MBRObject {
 
   void updateNodeSize(int n) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].size = getNodeArray().getNodeSizeMethod().calculateSize(getNodeTertiaryData(n), nodes->getNodeData(n).child_count, total_indegree, total_outdegree, nodes->size());
+    auto & td = node_geometry3[n];
+    td.size = getNodeArray().getNodeSizeMethod().calculateSize(td, total_indegree, total_outdegree, nodes->size());
   }
 
   void updateNodeCoverage(int n, long long coverage) {
