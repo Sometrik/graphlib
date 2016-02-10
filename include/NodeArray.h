@@ -45,8 +45,6 @@ struct node_data_s {
   unsigned short label_visibility_val;
   std::string label;
   std::shared_ptr<Graph> nested_graph;
-  int first_child, next_child, parent_node;
-  unsigned int child_count;
 };
 
 class NodeArray {
@@ -74,7 +72,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", std::shared_ptr<Graph>(), -1, -1, -1, 0 });
+    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -133,9 +131,6 @@ class NodeArray {
     else if (f2 > 65535) f2 = 65535;
     node_geometry[i].label_visibility_val = (unsigned short)f2;
   }
-
-  void addChild(int parent, int child);
-  int removeChild(int child);
 
   bool setNodeLabelVisibility(int i, bool t) {
     bool orig_t = node_geometry[i].flags | NODE_LABEL_VISIBLE ? true : false;

@@ -134,36 +134,3 @@ void
 NodeArray::resume2() {
   alpha = INITIAL_ALPHA;
 }
-
-void
-NodeArray::addChild(int parent, int child) {
-  assert(node_geometry[child].parent_node == -1);
-  assert(node_geometry[child].next_child == -1);
-  node_geometry[child].next_child = node_geometry[parent].first_child;
-  node_geometry[parent].first_child = child;
-  node_geometry[child].parent_node = parent;
-  node_geometry[parent].child_count++;
-}
-
-int
-NodeArray::removeChild(int child) {
-  int parent = node_geometry[child].parent_node;
-  assert(parent != -1);
-  if (node_geometry[parent].first_child == child) {
-    node_geometry[parent].first_child = node_geometry[child].next_child;
-  } else {
-    int n = node_geometry[parent].first_child;
-    while (n != -1) {
-      int next_child = node_geometry[n].next_child;
-      if (next_child == child) {
-	node_geometry[n].next_child = node_geometry[child].next_child;
-	break;
-      }
-      n = next_child;
-      assert(n != -1);
-    }
-  }
-  node_geometry[child].parent_node = node_geometry[child].next_child = -1;
-  node_geometry[parent].child_count--;
-  return parent;
-} 
