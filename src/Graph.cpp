@@ -366,19 +366,26 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       auto & nd = nodes->getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
-      if (nd.parent_node != -1) parent_nodes.push_back(nd.parent_node);
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!stored_nodes[it->head]) {
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
-      if (nd.parent_node != -1) parent_nodes.push_back(nd.parent_node);
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     edge_count++;
   }
 
-  cerr << "parent_nodes = " << parent_nodes.size() << endl;
+  if (!parent_nodes.empty()) {
+    auto it = parent_nodes.begin();
+    cerr << "parent_nodes (" << parent_nodes.size() << "): " << *it;
+    for (auto & id : parent_nodes) {
+      cerr << ", " << *it;
+    }
+    cerr << endl;
+  }
   
   while (!parent_nodes.empty()) {
     int n = parent_nodes.front();
@@ -387,7 +394,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       auto & nd = nodes->getNodeData(n);
       auto & td = getNodeTertiaryData(n);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
-      if (nd.parent_node != -1) parent_nodes.push_back(nd.parent_node);
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
   
@@ -1350,7 +1357,7 @@ Graph::applyGravity(float gravity) {
 	auto & pd = nodes->getNodeData(it->tail);
 	auto & td = getNodeTertiaryData(it->tail);
 	glm::vec3 origin;
-	if (pd.parent_node >= 0) origin = nodes->getNodeData(pd.parent_node).position;
+	if (td.parent_node >= 0) origin = nodes->getNodeData(td.parent_node).position;
 	applyGravityToNode(k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
       }
       if (!processed_nodes[it->head]) {
@@ -1358,7 +1365,7 @@ Graph::applyGravity(float gravity) {
 	auto & pd = nodes->getNodeData(it->head);
 	auto & td = getNodeTertiaryData(it->head);
 	glm::vec3 origin;
-	if (pd.parent_node >= 0) origin = nodes->getNodeData(pd.parent_node).position;
+	if (td.parent_node >= 0) origin = nodes->getNodeData(td.parent_node).position;
 	applyGravityToNode(k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
       }
     }
@@ -1430,4 +1437,43 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
   
   incVersion();
   return edge;
+}
+
+void
+Graph::addChild(int parent, int child) {
+  if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
+  if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
+  assert(node_geometry3[child].parent_node == -1);
+  assert(node_geometry3[child].next_child == -1);
+  node_geometry3[child].next_child = node_geometry3[parent].first_child;
+  node_geometry3[parent].first_child = child;
+  node_geometry3[child].parent_node = parent;
+  node_geometry3[parent].child_count++;
+  updateNodeSize(parent);
+}
+
+void
+Graph::removeChild(int child) {
+  if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
+  int parent = node_geometry3[child].parent_node;
+  assert(parent != -1);
+  if (parent != -1) {
+    if (node_geometry3[parent].first_child == child) {
+      node_geometry3[parent].first_child = node_geometry3[child].next_child;
+    } else {
+      int n = node_geometry3[parent].first_child;
+      while (n != -1) {
+	int next_child = node_geometry3[n].next_child;
+	if (next_child == child) {
+	  node_geometry3[n].next_child = node_geometry3[child].next_child;
+	  break;
+	}
+	n = next_child;
+	assert(n != -1);
+      }
+    }
+    node_geometry3[child].parent_node = node_geometry3[child].next_child = -1;
+    node_geometry3[parent].child_count--;
+    updateNodeSize(parent);    
+  } 
 }
