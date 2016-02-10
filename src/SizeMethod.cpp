@@ -5,7 +5,7 @@
 using namespace std;
 
 float
-SizeMethod::calculateSize(const node_tertiary_data_s & data, unsigned int child_count, double total_indegree, double total_outdegree, size_t node_count) const {
+SizeMethod::calculateSize(const node_tertiary_data_s & data, double total_indegree, double total_outdegree, size_t node_count) const {
   switch (method) {
   case CONSTANT: return constant;    
   case SIZE_FROM_DEGREE:
@@ -19,7 +19,7 @@ SizeMethod::calculateSize(const node_tertiary_data_s & data, unsigned int child_
 	a = 0;
       }
       
-      return 9.0f + 6.0f * (log(1.0 + a) / log(3.0) + sqrtf(child_count));
+      return 9.0f + 6.0f * (log(1.0 + a) / log(3.0) + sqrtf(data.child_count));
     }
   case SIZE_FROM_INDEGREE:
     {
@@ -31,7 +31,7 @@ SizeMethod::calculateSize(const node_tertiary_data_s & data, unsigned int child_
       } else {
 	a = 0;
       }
-      return 9.0f + 6.0f * (log(1.0 + a) / log(1.4) + sqrtf(child_count));
+      return 9.0f + 6.0f * (log(1.0 + a) / log(1.4) + sqrtf(data.child_count));
     }
   case SIZE_FROM_NODE_COUNT:
     {
