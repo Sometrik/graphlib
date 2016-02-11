@@ -51,7 +51,7 @@ GraphML::openGraph(const char * filename) {
   auto & node_table = graph->getNodeArray().getTable();
   auto & edge_table = graph->getFaceData();
   
-  XMLElement * key_element = graphml_element.FirstChildElement("key");
+  XMLElement * key_element = graphml_element->FirstChildElement("key");
   for ( ; key_element ; key_element = key_element->NextSiblingElement("key") ) {
     const char * key_type = key_element->Attribute("attr.type");
     const char * key_id = key_element->Attribute("id");
@@ -80,17 +80,17 @@ GraphML::openGraph(const char * filename) {
     }
   }
   
-  createGraphFromElement(*graph, *graphml_element, *graph_element, nodes_by_id);
+  createGraphFromElement(*graph, *graphml_element, *graph_element, nodes_by_id, directed);
 
-  graph.randomizeGeometry();
-  // graph.setComplexGraph(is_complex);
-  // graph.setHasSubGraphs(is_complex);
+  graph->randomizeGeometry();
+  // graph->setComplexGraph(is_complex);
+  // graph->setHasSubGraphs(is_complex);
 
   return graph;
 }
 
 void
-GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XMLElement & graph_element, map<string, int> & nodes_by_id, int parent_node_id) const {
+GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XMLElement & graph_element, map<string, int> & nodes_by_id, bool is_directed, int parent_node_id) const {
   auto & node_table = graph.getNodeArray().getTable();
   auto & edge_table = graph.getFaceData();
   
@@ -122,7 +122,7 @@ GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XML
 
     XMLElement * nested_graph_element = node_element->FirstChildElement("graph");
     if (nested_graph_element) {
-      createGraphFromElement(graph, graphml_element, *nested_graph_element, nodes_by_id, node_id);
+      createGraphFromElement(graph, graphml_element, *nested_graph_element, nodes_by_id, is_directed, node_id);
     }
   }
   
@@ -144,7 +144,7 @@ GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XML
     if (source_node && target_node) {
       int face_id = graph.addFace(-1);
       int edge_id1 = graph.addEdge(source_node - 1, target_node - 1, face_id);
-      if (!directed) {
+      if (!is_directed) {
 	int edge_id2 = graph.addEdge(target_node - 1, source_node - 1, face_id);
 	graph.connectEdgePair(edge_id1, edge_id2);
       }
