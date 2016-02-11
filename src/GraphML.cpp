@@ -30,14 +30,9 @@ GraphML::openGraph(const char * filename) {
   XMLElement * graph_element = graphml_element->FirstChildElement("graph");
   assert(graph_element);
 
-  return createGraphFromElement(*graphml_element, *graph_element);  
-}
-
-std::shared_ptr<Graph>
-GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph_element) const {
   map<string, int> nodes_by_id;
   
-  const char * edgedefault = graph_element.Attribute("edgedefault");
+  const char * edgedefault = graph_element->Attribute("edgedefault");
   bool directed = true;
   if (edgedefault && strcmp(edgedefault, "undirected") == 0) {
     directed = false;
@@ -56,9 +51,6 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
   auto & node_table = graph->getNodeArray().getTable();
   auto & edge_table = graph->getFaceData();
   
-  auto & node_id_column = node_table.addTextColumn("id");
-  auto & edge_id_column = edge_table.addTextColumn("id");
-    
   XMLElement * key_element = graphml_element.FirstChildElement("key");
   for ( ; key_element ; key_element = key_element->NextSiblingElement("key") ) {
     const char * key_type = key_element->Attribute("attr.type");
@@ -87,17 +79,34 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
       assert(0);
     }
   }
-    
-  bool is_complex = false;
+  
+  createGraphFromElement(*graph, *graphml_element, *graph_element, nodes_by_id);
 
+  graph.randomizeGeometry();
+  // graph.setComplexGraph(is_complex);
+  // graph.setHasSubGraphs(is_complex);
+
+  return graph;
+}
+
+void
+GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XMLElement & graph_element, map<string, int> & nodes_by_id, int parent_node_id) const {
+  auto & node_table = graph.getNodeArray().getTable();
+  auto & edge_table = graph.getFaceData();
+  
+  auto & node_id_column = node_table.addTextColumn("id");
+  auto & edge_id_column = edge_table.addTextColumn("id");
+    
   XMLElement * node_element = graph_element.FirstChildElement("node");
   for ( ; node_element ; node_element = node_element->NextSiblingElement("node") ) {
     const char * node_id_text = node_element->Attribute("id");
     assert(node_id_text);
 
-    int node_id = graph->addNode();
+    int node_id = graph.addNode();
     node_id_column.setValue(node_id, node_id_text);
     nodes_by_id[node_id_text] = node_id + 1;
+
+    if (parent_node_id != -1) graph.addChild(parent_node_id, node_id);
     
     XMLElement * data_element = node_element->FirstChildElement("data");
     for ( ; data_element ; data_element = data_element->NextSiblingElement("data") ) {
@@ -109,21 +118,14 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
       }
     }
 
-    graph->getNodeArray().updateNodeAppearanceSlow(node_id);
+    graph.getNodeArray().updateNodeAppearanceSlow(node_id);
 
     XMLElement * nested_graph_element = node_element->FirstChildElement("graph");
     if (nested_graph_element) {
-      auto nested_graph = createGraphFromElement(graphml_element, *nested_graph_element);
-      assert(nested_graph.get());
-      is_complex = true;
-      graph->getNodeArray().setNestedGraph(node_id, nested_graph);
+      createGraphFromElement(graph, graphml_element, *nested_graph_element, nodes_by_id, node_id);
     }
   }
-
-  graph->randomizeGeometry();
-  graph->setComplexGraph(is_complex);
-  graph->setHasSubGraphs(is_complex);
-
+  
   XMLElement * edge_element = graph_element.FirstChildElement("edge");
   for ( ; edge_element ; edge_element = edge_element->NextSiblingElement("edge") ) {
     const char * edge_id_text = edge_element->Attribute("id");
@@ -140,11 +142,11 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
     int target_node = nodes_by_id[target];
 
     if (source_node && target_node) {
-      int face_id = graph->addFace(-1);
-      int edge_id1 = graph->addEdge(source_node - 1, target_node - 1, face_id);
+      int face_id = graph.addFace(-1);
+      int edge_id1 = graph.addEdge(source_node - 1, target_node - 1, face_id);
       if (!directed) {
-	int edge_id2 = graph->addEdge(target_node - 1, source_node - 1, face_id);
-	graph->connectEdgePair(edge_id1, edge_id2);
+	int edge_id2 = graph.addEdge(target_node - 1, source_node - 1, face_id);
+	graph.connectEdgePair(edge_id1, edge_id2);
       }
 
       if (edge_id_text && strlen(edge_id_text) != 0) {
@@ -170,8 +172,6 @@ GraphML::createGraphFromElement(XMLElement & graphml_element, XMLElement & graph
       }
     }
   }
-
-  return graph;      
 }
 
 bool

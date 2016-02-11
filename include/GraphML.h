@@ -16,9 +16,7 @@ class GraphML : public FileTypeHandler {
   bool saveGraph(const Graph & graph, const std::string & filename) override;
 
  protected:
-  std::shared_ptr<Graph> createGraphFromElement(tinyxml2::XMLElement & graphml_element, tinyxml2::XMLElement & graph_element) const;
-
- private:
+  void createGraphFromElement(Graph & graph, tinyxml2::XMLElement & graphml_element, tinyxml2::XMLElement & graph_element, std::map<std::string, int> & nodes_by_id, int parent_node_id = -1) const;  
 };
 
 #endif
