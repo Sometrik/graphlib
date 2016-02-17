@@ -1,7 +1,6 @@
 #include "DXFLoader.h"
 
 #include "PlanarGraph.h"
-#include "MultiArcGraph.h"
 #include "../../personal/system/StringUtils.h"
 
 #include <string>
@@ -586,14 +585,10 @@ DXFLoader::openGraph(const char * filename) {
   list<std::shared_ptr<DXFEntity> > entities;
   map<string, int> nodes;
   map<string, int> waiting_faces;
-#if 1
+
   auto graph = std::make_shared<PlanarGraph>();
   graph->setNodeArray(std::make_shared<NodeArray>());
   graph->getNodeArray().setFaceVisibility(true);
-#else
-  auto graph = std::make_shared<MultiArcGraph>();
-  graph->setNodeArray(std::make_shared<NodeArray>());
-#endif
   graph->setHasSpatialData(true);
 
   string line1, line2;
