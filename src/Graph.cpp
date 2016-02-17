@@ -139,10 +139,8 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
   glm::vec3 normal(0.0f);
 
   if (hasArcData()) {
-#if 0
-    unordered_map<int, int> stored_arcs;
+    vector<int> stored_arcs;
     stored_arcs.resize(arc_geometry.size());
-#endif
 		       
     cerr << "creating complex region VBO, faces = " << getFaceCount() << "\n";
     for (unsigned int face = 0; face < getFaceCount(); face++) {   
@@ -169,38 +167,43 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
       for (auto & arcs : part_arcs) {
 	assert(!arcs.empty());
 	if (!arcs.empty()) {
-	  int start_index = new_geometry.size();
-	  int vi = 0;
+	  vector<int> part_indices;
 	  for (auto & arc_id : arcs) {
-	    auto & geometry = arc_geometry[abs(arc_id) - 1].data;
-	    int dir = arc_id > 0 ? 1 : -1;
-	    assert(!geometry.empty());
-	    for (int i = 0; i < geometry.size(); i++) {
-	      auto & v = geometry[dir == -1 ? geometry.size() - 1 - i : i];
-	      new_geometry.push_back({ (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), glm::vec2((float)v.x, (float)v.y) });
-	      
-	      if (vi >= 2) {
-		int i1 = start_index, i2 = start_index + vi, i3 = start_index + vi - 1;
-		auto & A = new_geometry[i1].position, & B = new_geometry[i2].position, & C = new_geometry[i3].position;
-		glm::vec3 AB(B - A, 0.0f), AC(C - A, 0.0f);
-		glm::vec3 normal = glm::normalize(glm::cross(AB, AC));
-		if (normal.z < 0.0f) {
-		  front_indices.push_back(i1);
-		  front_indices.push_back(i2);
-		  front_indices.push_back(i3);
-		} else {
-		  back_indices.push_back(i1);
-		  back_indices.push_back(i2);
-		  back_indices.push_back(i3);
-		}
+	    int ai = abs(arc_id) - 1;
+	    assert(ai >= 0 && ai < stored_arcs.size());
+	    int ao = stored_arcs[ai];
+	    auto & geometry = arc_geometry[ai].data;
+	    if (!ao) {
+	      ao = stored_arcs[ai] = new_geometry.size() + 1;
+	      for (auto & v : geometry) {
+		new_geometry.push_back({ (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), glm::vec2((float)v.x, (float)v.y) });
 	      }
-	      vi++;
+	    }
+	    bool rev = arc_id < 0;
+	    for (int i = 0; i < geometry.size(); i++) {
+	      part_indices.push_back(ao - 1 + (rev ? geometry.size() - 1 - i : i));
+	    }
+	  }
+	  assert(!part_indices.empty());
+	  for (int vi = 2; vi < part_indices.size(); vi++) {
+	    int i1 = part_indices[0], i2 = part_indices[vi], i3 = part_indices[vi - 1];
+	    auto & A = new_geometry[i1].position, & B = new_geometry[i2].position, & C = new_geometry[i3].position;
+	    glm::vec3 AB(B - A, 0.0f), AC(C - A, 0.0f);
+	    glm::vec3 normal = glm::normalize(glm::cross(AB, AC));
+	    if (normal.z < 0.0f) {
+	      front_indices.push_back(i1);
+	      front_indices.push_back(i2);
+	      front_indices.push_back(i3);
+	    } else {
+	      back_indices.push_back(i1);
+	      back_indices.push_back(i2);
+	      back_indices.push_back(i3);
 	    }
 	  }
 	}	
       }
     }
-
+    
     back_indices.insert(back_indices.begin(), front_indices.begin(), front_indices.end());
     
     cerr << "uploading, i = " << back_indices.size() << ", g = " << new_geometry.size() << endl;
