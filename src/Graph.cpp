@@ -139,6 +139,11 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
   glm::vec3 normal(0.0f);
 
   if (hasArcData()) {
+#if 0
+    unordered_map<int, int> stored_arcs;
+    stored_arcs.resize(arc_geometry.size());
+#endif
+		       
     cerr << "creating complex region VBO, faces = " << getFaceCount() << "\n";
     for (unsigned int face = 0; face < getFaceCount(); face++) {   
       auto this_color = getFaceColor(face);
