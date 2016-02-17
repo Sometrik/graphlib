@@ -473,9 +473,12 @@ void
 Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {
   unsigned int label_count = 0;
   for (unsigned int i = 0; i < nodes->size(); i++) {
-    auto & data = getNodeArray().getNodeData(i);
-    auto & pd = getNodeArray().getNodeData(i);
-    if (data.flags & NODE_LABEL_VISIBLE && pd.label_texture) label_count++;
+    auto & nd = getNodeArray().getNodeData(i);
+    if (nd.flags & NODE_LABEL_VISIBLE && nd.label_texture) label_count++;
+  }
+  for (unsigned int i = 0; i < face_attributes.size(); i++) {
+    auto & fd = getFaceAttributes(i);
+    if (nd.flags & FACE_LABEL_VISIBLE && fd.label_texture) label_count++;
   }
 
   // cerr << "creating label vbo (n = " << label_count << ")\n";
