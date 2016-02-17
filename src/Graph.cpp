@@ -391,6 +391,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
     int n = parent_nodes.front();
     parent_nodes.pop_front();
     if (!stored_nodes[n]) {
+      stored_nodes[n] = true;
       auto & nd = nodes->getNodeData(n);
       auto & td = getNodeTertiaryData(n);
       new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
@@ -542,7 +543,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 // Gauss-Seidel relaxation for links
 void
 Graph::relaxLinks() {
-  cerr << "relax: " << max_edge_weight << endl;
+  // cerr << "relax: " << max_edge_weight << endl;
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   // cerr << "avg edge weight = " << avg_edge_weight << endl;
   float alpha = getNodeArray().getAlpha2();
@@ -1111,7 +1112,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
 			    getNodeArray().getNodeLabelVisibility(it->tail))) {
 	  glm::vec3 win = display.project(pd.position);
 	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->tail, is_selected });
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size + 10 * td.child_count, it->tail, is_selected });
 	}
       }
     }
@@ -1125,7 +1126,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
 			    getNodeArray().getNodeLabelVisibility(it->head))) {
 	  glm::vec3 win = display.project(pd.position);
 	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size, it->head, is_selected });
+	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size + 10 * td.child_count, it->head, is_selected });
 	}
       }
     }
@@ -1349,7 +1350,8 @@ Graph::applyGravity(float gravity) {
   if (k > EPSILON) {
     vector<bool> processed_nodes;
     processed_nodes.resize(nodes->size());
-    
+    list<int> parent_nodes;
+
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {
       if (!processed_nodes[it->tail]) {
@@ -1357,16 +1359,43 @@ Graph::applyGravity(float gravity) {
 	auto & pd = nodes->getNodeData(it->tail);
 	auto & td = getNodeTertiaryData(it->tail);
 	glm::vec3 origin;
-	if (td.parent_node >= 0) origin = nodes->getNodeData(td.parent_node).position;
-	applyGravityToNode(k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
+	float factor = 1.0f;
+	if (td.parent_node >= 0) {
+	  origin = nodes->getNodeData(td.parent_node).position;
+	  parent_nodes.push_back(td.parent_node);
+	  factor = 10.0f;
+	}
+	applyGravityToNode(factor * k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
 	auto & pd = nodes->getNodeData(it->head);
 	auto & td = getNodeTertiaryData(it->head);
 	glm::vec3 origin;
-	if (td.parent_node >= 0) origin = nodes->getNodeData(td.parent_node).position;
-	applyGravityToNode(k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
+	float factor = 1.0f;
+	if (td.parent_node >= 0) {
+	  origin = nodes->getNodeData(td.parent_node).position;
+	  parent_nodes.push_back(td.parent_node);
+	  factor = 10.0f;
+	}
+	applyGravityToNode(factor * k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
+      }
+    }
+    while (!parent_nodes.empty()) {
+      int n = parent_nodes.front();
+      parent_nodes.pop_front();
+      if (!processed_nodes[n]) {
+	processed_nodes[n] = true;
+	auto & pd = nodes->getNodeData(n);
+	auto & td = getNodeTertiaryData(n);
+	glm::vec3 origin;
+	float factor = 1.0f;
+	if (td.parent_node >= 0) {
+	  origin = nodes->getNodeData(td.parent_node).position;
+	  parent_nodes.push_back(td.parent_node);
+	  factor = 10.0f;
+	}
+	applyGravityToNode(factor * k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
       }
     }
   }
@@ -1388,19 +1417,35 @@ void
 Graph::applyDragAndAge(RenderMode mode, float friction) {
   vector<bool> processed_nodes;
   processed_nodes.resize(nodes->size());
+  list<int> parent_nodes;
   
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     if (!processed_nodes[it->tail]) {
       processed_nodes[it->tail] = true;
       applyDragAndAgeToNode(mode, friction, nodes->getNodeData(it->tail));
+      auto & td = getNodeTertiaryData(it->tail);
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!processed_nodes[it->head]) {
       processed_nodes[it->head] = true;
       applyDragAndAgeToNode(mode, friction, nodes->getNodeData(it->head));
+      auto & td = getNodeTertiaryData(it->head);
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
-  
+
+  while (!parent_nodes.empty()) {
+    int n = parent_nodes.front();
+    parent_nodes.pop_front();
+    if (!processed_nodes[n]) {
+      processed_nodes[n] = true;
+      applyDragAndAgeToNode(mode, friction, nodes->getNodeData(n));
+      auto & td = getNodeTertiaryData(n);
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
+    }
+  }
+
   version++;
 }
 
