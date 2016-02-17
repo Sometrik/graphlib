@@ -1,7 +1,5 @@
 #include "ShapefileLoader.h"
 
-#include "PointCloud.h"
-#include "MultiArcGraph.h"
 #include "PlanarGraph.h"
 #include "ArcData2D.h"
 
@@ -45,42 +43,55 @@ ShapefileLoader::openGraph(const char * filename) {
   for (int i = 0; i < shape_count; i++) {
     SHPObject * o = SHPReadObject(shp, i);
     assert(o);
-    int shape_dimensions;
     
     switch (o->nSHPType) {
     case SHPT_POINT:
     case SHPT_POINTZ:
     case SHPT_POINTM:
-    case SHPT_MULTIPOINT:
-    case SHPT_MULTIPOINTZ:
-    case SHPT_MULTIPOINTM:
-      shape_dimensions = 0;
       if (!graph.get()) {
-	cerr << "creating pointcloud for shapefile\n";
-	graph = std::make_shared<PointCloud>();
+	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
       }
-      assert(shape_dimensions == graph->getDimensions());
+      assert(o->nVertices == 1);
+      {
+	int face_id = graph->addFace();
+	double x = o->padfX[0], y = o->padfY[0], z = o->padfZ[0];
+	int node_id = createNode2D(*graph, nodes, x, y);
+	graph->addEdge(node_id, node_id, face_id, 0.0f);
+	auto & fd = graph->getFaceAttributes(face_id);
+	fd.centroid = glm::vec2(x, y);
+	fd.mbr = glm::vec3(x, y, 0.0f);
+      }
+      break;
+    case SHPT_MULTIPOINT:
+    case SHPT_MULTIPOINTZ:
+    case SHPT_MULTIPOINTM:
+      assert(0);
+#if 0
+      if (!graph.get()) {
+	graph = std::make_shared<PlanarGraph>();
+	graph->setNodeArray(std::make_shared<NodeArray>());
+	graph->setHasSpatialData(true);
+      }
       for (int j = 0; j < o->nVertices; j++) {
 	double x = o->padfX[j], y = o->padfY[j], z = o->padfZ[j];
-	createNode2D(*graph, nodes, x, y);
+	int node_id = createNode2D(*graph, nodes, x, y);
+	graph->addEdge(node_id, node_id, -1, 0.0f);
       }
+#endif
       break;
     case SHPT_ARC: // = polyline
     case SHPT_ARCZ:
     case SHPT_ARCM:
-      shape_dimensions = 1;
       if (!graph.get()) {
-	cerr << "creating undirected graph for shapefile\n";
-	graph = std::make_shared<MultiArcGraph>();
+	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(std::make_shared<NodeArray>());
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
 	graph->getNodeArray().setNodeVisibility(false);
 	graph->getNodeArray().setFaceVisibility(false);
       }
-      assert(shape_dimensions == graph->getDimensions());
       {
 	int hyperedge_id = graph->addFace();
 	for (int j = 0; j < o->nParts; j++) {
@@ -104,7 +115,6 @@ ShapefileLoader::openGraph(const char * filename) {
     case SHPT_POLYGON:
     case SHPT_POLYGONZ:
     case SHPT_POLYGONM:
-      shape_dimensions = 2;
       if (!graph.get()) {
 	cerr << "creating planar graph for shapefile\n";
 	graph = std::make_shared<PlanarGraph>();
@@ -115,7 +125,6 @@ ShapefileLoader::openGraph(const char * filename) {
 	graph->getNodeArray().setEdgeVisibility(false);
 	// graph->addUniversalRegion();
       }
-      assert(shape_dimensions == graph->getDimensions());
       has_polygons = true;
       for (int j = 0; j < o->nParts; j++) {
 	int start = o->nParts > 1 ? o->panPartStart[j] : 0;
@@ -290,23 +299,9 @@ ShapefileLoader::openGraph(const char * filename) {
     cerr << "bad number of records\n";
   }
   
-  if (graph->getDimensions() == 0) {
-    table::Table & nodes_table = graph->getNodeArray().getTable();
-    for (auto & col : dbf->getColumns()) {
-      nodes_table.addColumn(col);
-    }
-  } else if (graph->getDimensions() == 1) {
-    table::Table & hyperedges_table = graph->getFaceData();
-    for (auto & col : dbf->getColumns()) {
-      hyperedges_table.addColumn(col);
-    }
-  } else if (graph->getDimensions() == 2) {
-    table::Table & regions_table = graph->getFaceData();
-    for (auto & col : dbf->getColumns()) {
-      regions_table.addColumn(col);
-    }
-  } else {
-    assert(0);
+  table::Table & table = graph->getFaceData();
+  for (auto & col : dbf->getColumns()) {
+    table.addColumn(col);
   }
   
   return graph;
