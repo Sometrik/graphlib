@@ -149,6 +149,7 @@ ShapefileLoader::openGraph(const char * filename) {
   }
 
   if (has_polygons) {
+    unsigned int connected_face_arcs = 0;
     cerr << "creating nodes (" << node_edges.size() << ")\n";
     for (map<string, pair<glm::dvec2, set<string> > >::iterator it = node_edges.begin(); it != node_edges.end(); it++) {
       if (it->second.second.size() >= 3) {
@@ -237,36 +238,35 @@ ShapefileLoader::openGraph(const char * filename) {
 	  if (node1 == node2) {
 	    // cerr << "same nodes, size = " << face_nodes.size() << endl;
 	  }
-	  ostringstream key1, key2;
-	  key1 << node1 << "/" << node2;
+
+	  int arc_id = 0, pair_edge = -1;
+	  ostringstream key1;
+	  key1 << node2 << "/" << node1;
 	  map<string, int>::iterator it = waiting_faces.find(key1.str());
 	  if (it != waiting_faces.end()) {
-	    assert(0);
-	    int edge = it->second;
-	    graph->setEdgeFace(edge, face_id);
-	    graph->updateMBR(edge);
+	    pair_edge = it->second;
+	    auto & ed = graph->getEdgeAttributes(pair_edge);
+	    assert(ed.arc >= 1 && ed.arc <= graph->getArcGeometry().size());
+	    arc_id = -ed.arc;
 	    waiting_faces.erase(it);
+	    connected_face_arcs++;
 	  } else {
-	    key2 << node2 << "/" << node1;
-	    it = waiting_faces.find(key2.str());
-	    if (it != waiting_faces.end()) {
-	      assert(0);
-	      int edge = it->second;
-	      graph->setEdgeFace(edge, face_id);
-	      graph->updateMBR(edge);
-	      waiting_faces.erase(it);
-	    } else {
-	      int arc_id = graph->addArcGeometry(arcs[l]);
-	      assert(arc_id);
-	      assert(arc_id >= 1 && arc_id <= graph->getArcGeometry().size());
-	      int edge_id = graph->addEdge(node1, node2, face_id, 1.0f, arc_id);
-	      // cerr << "created edge: id = " << edge_id << ", arc = " << arc_id << ", arc2 = " << graph->getEdgeAttributes(edge_id).arc << endl;
-	      assert(graph->getEdgeAttributes(edge_id).arc == arc_id);
-	      // waiting_faces[key1.str()] = edge_id;
-	      // geometries.setArc(edge_id, arcs[l]);
-	      graph->updateMBR(edge_id);
-	    }
+	    arc_id = graph->addArcGeometry(arcs[l]);
+	    assert(arc_id >= 1 && arc_id <= graph->getArcGeometry().size());
 	  }
+
+	  assert(arc_id);
+	  
+	  int edge_id = graph->addEdge(node1, node2, face_id, 1.0f, arc_id);
+	  if (pair_edge != -1) {
+	    graph->connectEdgePair(edge_id, pair_edge);
+	  } else {
+	    graph->updateMBR(edge_id);
+	    ostringstream key2;
+	    key2 << node1 << "/" << node2;
+	    waiting_faces[key2.str()] = edge_id;
+	  }
+	  assert(graph->getEdgeAttributes(edge_id).arc == arc_id);
 	}
       }
 
@@ -277,6 +277,7 @@ ShapefileLoader::openGraph(const char * filename) {
 	
       SHPDestroyObject(o);
     }
+    cerr << "ARCS: connected face arcs = " << connected_face_arcs << ", unconnected = " << waiting_faces.size() << endl;
   }
 
   SHPClose(shp);
