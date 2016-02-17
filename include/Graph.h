@@ -44,6 +44,7 @@ struct face_data_s {
   short feed, lang;
   long long app_id;
   long long filter_id;
+  std::string label;
 };
 
 class EdgeIterator {
@@ -140,8 +141,6 @@ class Graph : public MBRObject {
 
   virtual ~Graph();  
   
-  // std::string getEdgeId(int i) { return edges["id"].getText(i); }
-
   void updateEdgeWeight(int i, float d) {
     auto & attr = getEdgeAttributes(i);
     attr.weight += d;
@@ -405,15 +404,7 @@ class Graph : public MBRObject {
 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-#if 0
-    int next_face_in_region = -1;
-    if (region_id >= 0) {
-      next_face_in_region = region_attributes[region_id].first_face;
-      region_attributes[region_id].first_face = face_id;
-    }
-#endif
-    // next_face_in_region, region_id
-    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id });
+    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "" });
     faces.addRow();
     return face_id;
   }
