@@ -12,6 +12,8 @@
 #include <vector>
 #include <set>
 
+#define FACE_LABEL_VISIBLE	1
+
 class Graph;
 class DisplayInfo;
 
@@ -45,6 +47,7 @@ struct face_data_s {
   long long app_id;
   long long filter_id;
   std::string label;
+  short label_texture, flags;
 };
 
 class EdgeIterator {
@@ -404,7 +407,7 @@ class Graph : public MBRObject {
 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "" });
+    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
     faces.addRow();
     return face_id;
   }
