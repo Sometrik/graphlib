@@ -55,7 +55,7 @@ NodeArray::updateNodeAppearanceSlow(int node_id) {
   if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
     if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
       label = getTable()[label_method.getColumn()].getText(node_id);
-    } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && !label.empty()) {
+    } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && label.empty()) {
       if (!uname.empty()) {
 	label = uname;
       } else if (!name.empty()) {
@@ -64,6 +64,7 @@ NodeArray::updateNodeAppearanceSlow(int node_id) {
 	label = id;
       }    
     }
+    cerr << "setting label for node " << node_id << ": " << label << endl;
     setNodeLabel(node_id, label);
   }
   if (r >= 0 && g >= 0 && b >= 0) {
