@@ -5,7 +5,7 @@
 #include <fstream>
 #include <glm/glm.hpp>
 
-#include "PointCloud.h"
+#include "DirectedGraph.h"
 #include "../system/StringUtils.h"
 
 using namespace std;
@@ -16,7 +16,7 @@ TextFileLoader::TextFileLoader() : FileTypeHandler("Text file", false) {
 
 std::shared_ptr<Graph>
 TextFileLoader::openGraph(const char * filename) {
-  auto graph = std::make_shared<PointCloud>();
+  auto graph = std::make_shared<DirectedGraph>();
   graph->setNodeArray(std::make_shared<NodeArray>());
 
   ifstream in(filename, ios::in);
@@ -25,7 +25,7 @@ TextFileLoader::openGraph(const char * filename) {
     return 0;
   }
 
-  auto & text_data = graph->getNodeArray().getTable().addTextColumn("text");
+  auto & text_data = graph->getFaceData().addTextColumn("text");
   
   while (!in.eof() && !in.fail()) {
     string s;
@@ -33,10 +33,10 @@ TextFileLoader::openGraph(const char * filename) {
     StringUtils::trim(s);
     if (s.empty()) continue;
 
-    int node_id = graph->addNode();
-    text_data.setValue(node_id, s);
+    int face_id = graph->addFace();
+    text_data.setValue(face_id, s);
 
-    cerr << "added node " << node_id << ": " << s << endl;
+    cerr << "added node " << face_id << ": " << s << endl;
   }
   
   return graph;
