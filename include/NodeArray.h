@@ -42,9 +42,33 @@ struct node_data_s {
   short texture, flags;
   NodeType type;
   short label_texture;
-  unsigned short label_visibility_val;
+  unsigned short label_visibility_val;  
   std::string label;
   std::shared_ptr<Graph> nested_graph;
+  
+  bool getLabelVisibility() const { return flags & NODE_LABEL_VISIBLE ? true : false; }
+  float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
+
+  void setLabelVisibilityValue(float f) {
+    int f2 = int(f * 65535);
+    if (f2 < 0) f2 = 0;
+    else if (f2 > 65535) f2 = 65535;
+    label_visibility_val = (unsigned short)f2;
+  }
+
+  bool setLabelVisibility(bool t) {
+    bool orig_t = flags | NODE_LABEL_VISIBLE ? true : false;
+    if (t != orig_t || 1) {
+      if (t) {
+	flags |= NODE_LABEL_VISIBLE;
+      } else {
+	flags &= ~NODE_LABEL_VISIBLE;
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 
 class NodeArray {
@@ -124,37 +148,16 @@ class NodeArray {
     node_geometry[i].label_texture = texture;
     version++;
   }
-
-  void setNodeLabelVisibilityValue(int i, float f) {
-    int f2 = int(f * 65535);
-    if (f2 < 0) f2 = 0;
-    else if (f2 > 65535) f2 = 65535;
-    node_geometry[i].label_visibility_val = (unsigned short)f2;
-  }
-
-  bool setNodeLabelVisibility(int i, bool t) {
-    bool orig_t = node_geometry[i].flags | NODE_LABEL_VISIBLE ? true : false;
-    if (t != orig_t || 1) {
-      if (t) {
-	node_geometry[i].flags |= NODE_LABEL_VISIBLE;
-      } else {
-	node_geometry[i].flags &= ~NODE_LABEL_VISIBLE;
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
   
-  void clearTextures(int clear_flags = CLEAR_ALL) {
-    for (int i = 0; i < size(); i++) {
+  void clearTextures(int clear_flags) {
+    for (auto & nd : node_geometry) {
       if (clear_flags & CLEAR_LABELS) {
-	node_geometry[i].label_texture = 0;
-	node_geometry[i].label_visibility_val = 0;
-	node_geometry[i].flags &= ~NODE_LABEL_VISIBLE;
+	nd.label_texture = 0;
+	nd.label_visibility_val = 0;
+	nd.flags &= ~NODE_LABEL_VISIBLE;
       }
       if (clear_flags & CLEAR_NODES) {
-	node_geometry[i].texture = DEFAULT_PROFILE;
+	nd.texture = DEFAULT_PROFILE;
       }
     }
   }
@@ -165,15 +168,6 @@ class NodeArray {
     nodes.clear();
   }
 
-  bool updateNodeLabelValues(int i, float visibility) {
-    float vv = getNodeLabelVisibilityValue(i) + visibility;
-    if (vv < 0) vv = 0;
-    else if (vv > 1) vv = 1;
-    setNodeLabelVisibilityValue(i, vv);
-    if (vv >= 0.75) return setNodeLabelVisibility(i, true);
-    else if (vv <= 0.25) return setNodeLabelVisibility(i, false);
-    else return false;
-  }
   void setNodeFixedPosition(int i, bool t) {
     if (t) {
       node_geometry[i].flags |= NODE_FIXED_POSITION;
@@ -187,16 +181,26 @@ class NodeArray {
   node_data_s & getNodeData(int i) { return node_geometry[i]; }
   
   const graph_color_s & getNodeColor(int i) const { return node_geometry[i].color; }
-  bool getNodeLabelVisibility(int i) const { return node_geometry[i].flags & NODE_LABEL_VISIBLE ? true : false; }
-  float getNodeLabelVisibilityValue(int i) const { return node_geometry[i].label_visibility_val / 65535.0f; }
-  
-  void setNodeLabel(int i, const std::string & text) {
-    if (node_geometry[i].label != text) {
-      node_geometry[i].label = text;
-      node_geometry[i].label_texture = 0;
+
+  bool updateLabelValues(int i, float visibility) {
+    auto & nd = getNodeData(i);
+    float vv = nd.getLabelVisibilityValue() + visibility;
+    if (vv < 0) vv = 0;
+    else if (vv > 1) vv = 1;
+    nd.setLabelVisibilityValue(vv);
+    if (vv >= 0.75) return nd.setLabelVisibility(true);
+    else if (vv <= 0.25) return nd.setLabelVisibility(false);
+    else return false;
+  }
+
+  void setLabel(int i, const std::string & text) {
+    auto & nd = node_geometry[i];
+    if (nd.label != text) {
+      nd.label = text;
+      nd.label_texture = 0;
     }
   }
-  
+
   void setNestedGraph(int i, std::shared_ptr<Graph> graph) {
     node_geometry[i].nested_graph = graph;
   }
@@ -220,11 +224,7 @@ class NodeArray {
   const std::pair<glm::vec3, glm::vec3> getPositions(int i) const {
     return std::pair<glm::vec3, glm::vec3>(node_geometry[i].position, node_geometry[i].prev_position);
   }
-
-  node_data_s * getGeometryPtr() {
-    node_data_s & a = node_geometry.front();
-    return &a;
-  }
+  
   std::vector<node_data_s> & getGeometry() { return node_geometry; }
 
 #if 0
@@ -236,9 +236,6 @@ class NodeArray {
   int getDefaultSymbolId() const { return default_symbol_id; }
 
   std::vector<node_data_s> node_geometry;
-
-  const std::string & getNodeLabel(int i) const { return node_geometry[i].label; }
-  // void clearLabelTexture(int i) { node_geometry[i].label_texture = 0; }
 
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }

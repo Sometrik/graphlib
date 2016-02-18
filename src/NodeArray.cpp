@@ -65,7 +65,7 @@ NodeArray::updateNodeAppearanceSlow(int node_id) {
       }    
     }
     cerr << "setting label for node " << node_id << ": " << label << endl;
-    setNodeLabel(node_id, label);
+    setLabel(node_id, label);
   }
   if (r >= 0 && g >= 0 && b >= 0) {
     canvas::Color c(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
