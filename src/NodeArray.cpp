@@ -21,14 +21,14 @@ NodeArray::NodeArray()
 }
 
 void
-NodeArray::updateNodeAppearanceAll() {
+NodeArray::updateAppearance() {
   for (unsigned int i = 0; i < size(); i++) {
-    updateNodeAppearanceSlow(i);
+    updateAppearanceSlow(i);
   }
 }
 
 void
-NodeArray::updateNodeAppearanceSlow(int node_id) {
+NodeArray::updateAppearanceSlow(int node_id) {
   string label, id, uname, name;
   int r = -1, g = -1, b = -1;
 
@@ -134,4 +134,12 @@ NodeArray::setNodeColor2(int i, const canvas::Color & c) {
 void
 NodeArray::resume2() {
   alpha = INITIAL_ALPHA;
+}
+
+void
+NodeArray::setLabelTexture(const skey & key, int texture) {
+  auto it2 = getNodeArray().getNodeCache().find(key);
+  if (it2 != getNodeArray().getNodeCache().end()) {
+    getNodeArray().setLabelTexture(it2->second, texture);
+  }
 }

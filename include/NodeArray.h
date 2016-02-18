@@ -88,8 +88,8 @@ class NodeArray {
   void setLabelMethod(const LabelMethod & m) { label_method = m; }
   const LabelMethod & getLabelMethod() const { return label_method; }
 
-  void updateNodeAppearanceAll();
-  void updateNodeAppearanceSlow(int node_id);
+  void updateAppearance();
+  void updateAppearanceSlow(int node_id);
 
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
@@ -143,6 +143,8 @@ class NodeArray {
     node_geometry[i].texture = texture;
     version++;
   }
+
+  void setNodeLabelTexture(const skey & key, int texture);  
 
   void setLabelTexture(int i, int texture) {
     node_geometry[i].label_texture = texture;
