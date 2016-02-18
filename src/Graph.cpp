@@ -50,13 +50,6 @@ Graph::Graph(const Graph & other)
     personality(other.personality)
 {
   id = next_id++;
-#if 0
-  for (auto & d : node_geometry) {
-    if (d.nested_graph.get()) {
-      d.nested_graph = std::shared_ptr<Graph>(d.nested_graph->copy());
-    }
-  }
-#endif
 }
  
 bool
@@ -79,7 +72,7 @@ static bool compareRows(const int & a, const int & b) {
 
 #if 0
 void
-Graph::setRegionColorByColumn(int column) {
+Graph::setFaceColorByColumn(int column) {
   sort_col = &(regions[column]);
   cerr << "setting colors by column " << sort_col->name() << endl;
   vector<int> v;
@@ -520,6 +513,8 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
     labels.push_back({ pos, x, y, pd.label_texture, flags });
   }
 
+  cerr << "updateLabelVBO: labels = " << labels.size() << endl;
+  
   if (labels.empty()) return;
   
   std::unique_ptr<billboard_data_s[]> data(new billboard_data_s[4 * labels.size()]);
@@ -1307,19 +1302,6 @@ Graph::setNodeTexture(const skey & key, int texture) {
   }
 }
 
-void
-Graph::setLabelTexture(const skey & key, int texture) {
-  auto it2 = getNodeArray().getNodeCache().find(key);
-  if (it2 != getNodeArray().getNodeCache().end()) {
-    getNodeArray().setLabelTexture(it2->second, texture);
-  }
-#if 0
-  for (auto & g : final_graphs) {
-    g->setLabelTexture(key, texture);
-  }
-#endif
-}
-
 std::shared_ptr<Graph>
 Graph::getFinal(float scale) {
   for (int i = int(final_graphs.size()) - 1; i >= 0; i--) {
@@ -1365,7 +1347,44 @@ Graph::updateAppearance() {
     for (unsigned int i = 0; i < nodes->size(); i++) {
       node_geometry3[i].size = method.getConstant();
     }    
+    version++;
   }
+
+  auto & label_method = nodes->getLabelMethod();
+  if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
+    for (int i = 0; i < getFaceCount(); i++) {
+      string label, name, text, id;
+      if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
+	label = getFaceData()[label_method.getColumn()].getText(i);
+      } else {
+	for (auto & cd : getFaceData().getColumns()) {
+	  string n = StringUtils::toLower(cd.first);
+	  if (n == "label") {
+	    label = cd.second->getText(i);
+	  } else if (n == "name") {
+	    name = cd.second->getText(i);
+	  } else if (n == "text") {
+	    text = cd.second->getText(i);
+	  } else if (n == "id") {
+	    id = cd.second->getText(i);
+	  }
+	}
+	if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && !label.empty()) {
+	  if (!name.empty()) {
+	    label = name;
+	  } else if (!text.empty()) {
+	    label = text;
+	  } else if (!id.empty()) {
+	    label = id;
+	  }    
+	}
+      }
+      cerr << "setting label for face " << i << ": " << label << endl;
+      getFaceAttributes(i).setLabel(label);
+    }
+  }
+  
+  nodes->updateAppearance();
 }
 
 static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, const glm::vec3 & origin, float weight) {

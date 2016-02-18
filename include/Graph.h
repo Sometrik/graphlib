@@ -466,7 +466,6 @@ class Graph : public MBRObject {
       }
     }
   }
-  void setLabelTexture(const skey & key, int texture);  
 
   void setNodeArray(const std::shared_ptr<NodeArray> & _nodes) { nodes = _nodes; }
   NodeArray & getNodeArray() { return *nodes; }
