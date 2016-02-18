@@ -144,8 +144,7 @@ class NodeArray {
     version++;
   }
 
-  void setNodeLabelTexture(const skey & key, int texture);  
-
+  void setLabelTexture(const skey & key, int texture);  
   void setLabelTexture(int i, int texture) {
     node_geometry[i].label_texture = texture;
     version++;
