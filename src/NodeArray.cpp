@@ -138,8 +138,8 @@ NodeArray::resume2() {
 
 void
 NodeArray::setLabelTexture(const skey & key, int texture) {
-  auto it2 = getNodeArray().getNodeCache().find(key);
-  if (it2 != getNodeArray().getNodeCache().end()) {
-    getNodeArray().setLabelTexture(it2->second, texture);
+  auto it2 = getNodeCache().find(key);
+  if (it2 != getNodeCache().end()) {
+    setLabelTexture(it2->second, texture);
   }
 }
