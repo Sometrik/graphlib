@@ -48,6 +48,37 @@ struct face_data_s {
   long long filter_id;
   std::string label;
   short label_texture, flags;
+  unsigned short label_visibility_val;
+
+  void setLabelVisibilityValue(float f) {
+    int f2 = int(f * 65535);
+    if (f2 < 0) f2 = 0;
+    else if (f2 > 65535) f2 = 65535;
+    label_visibility_val = (unsigned short)f2;
+  }
+
+  bool setLabelVisibility(bool t) {
+    bool orig_t = flags | FACE_LABEL_VISIBLE ? true : false;
+    if (t != orig_t || 1) {
+      if (t) {
+	flags |= FACE_LABEL_VISIBLE;
+      } else {
+	flags &= ~FACE_LABEL_VISIBLE;
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+  bool getLabelVisibility() const { return (flags & FACE_LABEL_VISIBLE) != 0; }
+  float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
+  void setLabel(const std::string & text) {
+    if (label != text) {
+      label = text;
+      label_texture = 0;
+    }
+  }
+  const std::string & getFaceLabel(int i) const { return label; }
 };
 
 class EdgeIterator {
@@ -204,10 +235,22 @@ class Graph : public MBRObject {
   int getNextFaceEdge(int edge) const {
     return edge_attributes[edge].next_face_edge;
   }
-  
-  // virtual int addRegion() { return -1; }
-  // virtual int getRegionFirstFace(int region) const { return -1; }
-  // virtual int getRegionNextFace(int region, int face) const { return -1; }
+
+  void setFaceLabelTexture(int i, int texture) {
+    face_attributes[i].label_texture = texture;
+    version++;
+  }
+
+  bool updateFaceLabelValues(int i, float visibility) {
+    auto & fd = face_attributes[i];
+    float vv = fd.getLabelVisibilityValue() + visibility;
+    if (vv < 0) vv = 0;
+    else if (vv > 1) vv = 1;
+    fd.setLabelVisibilityValue(vv);
+    if (vv >= 0.75) return fd.setLabelVisibility(true);
+    else if (vv <= 0.25) return fd.setLabelVisibility(false);
+    else return false;
+  }
   
   virtual void calculateRegionAreas() { }
   virtual void mapFacesToNodes(Graph & target) { }
@@ -322,19 +365,12 @@ class Graph : public MBRObject {
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
   
-  // const std::string & getRegionLabel(int i) const { return region_attributes[i].label; }
-  // glm::dvec3 getRegionPosition(int i) { return region_attributes[i].mbr.getCenter(); }
-  // Rect2d & getRegionMBR(int i) { return region_attributes[i].mbr; }
   Rect2d & getFaceMBR(int i) { return face_attributes[i].mbr; }
   const glm::vec2 & getFaceCentroid(int i) const { return face_attributes[i].centroid; }
         
   bool hasNodeSelection() const { return has_node_selection; }
   void selectNodes(int node_id = -1, int depth = 0);
 
-  // void setRegionColorByColumn(int column);
-  
-  // const graph_color_s & getRegionColor(int i) const { return region_attributes[i].color; }
-  // void setRegionColor(int i, const graph_color_s & c) { region_attributes[i].color = c; }
   const graph_color_s & getFaceColor(int i) const { return face_attributes[i].color; }
   void setFaceColor(int i, const graph_color_s & c) { face_attributes[i].color = c; }
   void setFaceNormal(int i, const glm::vec3 & n) { face_attributes[i].normal = n; }
@@ -422,6 +458,11 @@ class Graph : public MBRObject {
     for (int i = 0; i < nodes->size(); i++) {
       if (getNodeArray().node_geometry[i].nested_graph.get()) {
 	getNodeArray().node_geometry[i].nested_graph->clearTextures(clear_flags);
+      }
+    }
+    if (clear_flags & CLEAR_LABELS) {
+      for (int i = 0; i < getFaceCount(); i++) {
+	face_attributes[i].label_texture = 0;
       }
     }
   }
