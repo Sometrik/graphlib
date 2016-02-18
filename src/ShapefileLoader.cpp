@@ -303,6 +303,8 @@ ShapefileLoader::openGraph(const char * filename) {
   for (auto & col : dbf->getColumns()) {
     table.addColumn(col);
   }
+
+  graph->updateAppearance();
   
   return graph;
 }

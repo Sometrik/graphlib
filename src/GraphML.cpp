@@ -82,6 +82,7 @@ GraphML::openGraph(const char * filename) {
   
   createGraphFromElement(*graph, *graphml_element, *graph_element, nodes_by_id, directed);
 
+  graph->updateAppearance();
   graph->randomizeGeometry();
   // graph->setComplexGraph(is_complex);
   // graph->setHasSubGraphs(is_complex);
@@ -117,8 +118,6 @@ GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XML
 	node_table[key].setValue(node_id, text);
       }
     }
-
-    graph.getNodeArray().updateNodeAppearanceSlow(node_id);
 
     XMLElement * nested_graph_element = node_element->FirstChildElement("graph");
     if (nested_graph_element) {
