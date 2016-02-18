@@ -469,67 +469,79 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
   vbo.upload(VBO::T2F_C4F_N3F_V3F, data.get(), nodes->size() * 4 * sizeof(vbo_data2_s));
 }
 
+#define LABEL_FLAG_CENTER	1
+#define LABEL_FLAG_MIDDLE	2
+struct label_pos_s {
+  glm::vec3 pos;
+  float x, y;
+  int texture;
+  unsigned short flags;
+};
+
 void
-Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {
-  unsigned int label_count = 0;
-  for (unsigned int i = 0; i < nodes->size(); i++) {
-    auto & nd = getNodeArray().getNodeData(i);
-    if (nd.flags & NODE_LABEL_VISIBLE && nd.label_texture) label_count++;
-  }
-  for (unsigned int i = 0; i < face_attributes.size(); i++) {
-    auto & fd = getFaceAttributes(i);
-    if (nd.flags & FACE_LABEL_VISIBLE && fd.label_texture) label_count++;
-  }
-
-  // cerr << "creating label vbo (n = " << label_count << ")\n";
-  
-  if (!label_count) return;
-  
-  std::unique_ptr<billboard_data_s[]> data(new billboard_data_s[4 * label_count]);
-  std::unique_ptr<unsigned int[]> indices(new unsigned int[6 * label_count]);
-
-  billboard_data_s * current_data = data.get();
-  unsigned int * current_index = indices.get();
-
-  int idx = 0;
+Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {  
   const table::Column & user_type = getNodeArray().getTable()["type"];
-  unsigned int actual_label_count = 0;
+  vector<label_pos_s> labels;
+
+  for (unsigned int i = 0; i < getFaceCount(); i++) {
+    auto & fd = getFaceAttributes(i);
+    if (!(fd.flags & FACE_LABEL_VISIBLE && fd.label_texture)) continue;
+
+    glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
+    float x = 0.0f, y = 0.0f;
+
+    unsigned short flags = 0;
+    flags |= LABEL_FLAG_MIDDLE;
+
+    labels.push_back({ pos, x, y, fd.label_texture, flags });
+  }
   
   for (unsigned int i = 0; i < nodes->size(); i++) {
     auto & pd = getNodeArray().getNodeData(i);
     // auto & sd = getNodeArray().getNodeSecondaryData(i);
     if (!(pd.flags & NODE_LABEL_VISIBLE && pd.label_texture)) continue;
     
-    auto & pos = getNodeArray().getPosition(i);
-    // unsigned int flags = 0;
+    auto & pos = pd.position;
     int offset_x = 0, offset_y = 0;
-    bool text_center = false;
-    bool text_middle = true;
+    unsigned short flags = 0;
+
+    flags |= LABEL_FLAG_MIDDLE;
 
     if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float node_size = 0.0f;
       offset_y -= 0.8 * (3.0 + 2.0 * node_size);
-      text_center = true;
+      flags |= LABEL_FLAG_CENTER;
     }
         
-    auto & tp = atlas.getTexturePos(pd.label_texture);
-
-    double x = 0, y = 0;
-        
-    if (text_center) x -= tp.width / 2.0f;
-    if (text_middle) y -= tp.height / 2.0f;
-    // else y -= tp.height;
-    
+    float x = 0, y = 0;    
     x += offset_x;
     y += offset_y;
-        
+
+    labels.push_back({ pos, x, y, pd.label_texture, flags });
+  }
+
+  if (labels.empty()) return;
+  
+  std::unique_ptr<billboard_data_s[]> data(new billboard_data_s[4 * labels.size()]);
+  std::unique_ptr<unsigned int[]> indices(new unsigned int[6 * labels.size()]);
+  billboard_data_s * current_data = data.get();
+  unsigned int * current_index = indices.get();
+  int idx = 0;
+
+  for (auto & ld : labels) {
+    auto & tp = atlas.getTexturePos(ld.texture);
+
+    if (ld.flags & LABEL_FLAG_CENTER) ld.x -= tp.width / 2.0f;
+    if (ld.flags & LABEL_FLAG_MIDDLE) ld.y -= tp.height / 2.0f;
+    // else y -= tp.height;
+    
     float tx1 = (float)tp.x / atlas.getWidth(), ty1 = (float)tp.y / atlas.getHeight();
     float tx2 = (float)(tp.x + tp.width) / atlas.getWidth(), ty2 = (float)(tp.y + tp.height) / atlas.getHeight();
     
-    *(current_data++) = { pos, glm::packHalf2x16(glm::vec2(x, y + tp.height)), glm::packHalf2x16(glm::vec2(tx1, ty1)) };
-    *(current_data++) = { pos, glm::packHalf2x16(glm::vec2(x, y)), glm::packHalf2x16(glm::vec2(tx1, ty2)) };
-    *(current_data++) = { pos, glm::packHalf2x16(glm::vec2(x + tp.width, y)), glm::packHalf2x16(glm::vec2(tx2, ty2)) };
-    *(current_data++) = { pos, glm::packHalf2x16(glm::vec2(x + tp.width, y + tp.height)), glm::packHalf2x16(glm::vec2(tx2, ty1)) };
+    *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x, ld.y + tp.height)), glm::packHalf2x16(glm::vec2(tx1, ty1)) };
+    *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x, ld.y)), glm::packHalf2x16(glm::vec2(tx1, ty2)) };
+    *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x + tp.width, ld.y)), glm::packHalf2x16(glm::vec2(tx2, ty2)) };
+    *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x + tp.width, ld.y + tp.height)), glm::packHalf2x16(glm::vec2(tx2, ty1)) };
 
     *current_index++ = idx + 0;
     *current_index++ = idx + 1;
@@ -539,16 +551,11 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
     *current_index++ = idx + 3;
 
     idx += 4;
-    actual_label_count++;
-  }
-
-  if (label_count != actual_label_count) {
-    cerr << "WARNING: label_count changed" << endl;
   }
 
   vbo.setDrawType(VBO::TRIANGLES);
-  vbo.uploadIndices(indices.get(), label_count * 6 * sizeof(unsigned int));
-  vbo.upload(VBO::BILLBOARDS, data.get(), label_count * 4 * sizeof(billboard_data_s));
+  vbo.uploadIndices(indices.get(), labels.size() * 6 * sizeof(unsigned int));
+  vbo.upload(VBO::BILLBOARDS, data.get(), labels.size() * 4 * sizeof(billboard_data_s));
 }
 
 // Gauss-Seidel relaxation for links
@@ -703,7 +710,6 @@ Graph::extractLocationGraph(Graph & target_graph) {
   target_graph.getNodeArray().setNodeVisibility(true);
   target_graph.getNodeArray().setEdgeVisibility(true);
   target_graph.getNodeArray().setFaceVisibility(false);
-  // target_graph.getNodeArray().setRegionVisibility(false);
   target_graph.getNodeArray().setLabelVisibility(true);  
 }
 
@@ -1096,10 +1102,11 @@ Graph::calculateEdgeCentrality() {
 }
 
 struct label_data_s {
-  glm::vec2 pos;
+  enum { NODE, FACE } type;
+  glm::vec3 world_pos;
+  glm::vec2 screen_pos;
   float size;
   int index;
-  bool is_selected;
 };
 
 static bool compareSize(const label_data_s & a, const label_data_s & b) {
@@ -1111,35 +1118,51 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   vector<bool> processed_nodes;
   processed_nodes.resize(nodes->size());
-
+  list<int> parent_nodes;
+    
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     if (!processed_nodes[it->tail]) {
       processed_nodes[it->tail] = true;      
       auto & pd = getNodeArray().getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
-	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
-			    getNodeArray().getNodeLabelVisibility(it->tail))) {
-	  glm::vec3 win = display.project(pd.position);
-	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size + 10 * td.child_count, it->tail, is_selected });
-	}
+      if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), td.size + 10 * td.child_count, it->tail });
       }
+      if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
     }
 
     if (!processed_nodes[it->head]) {
       processed_nodes[it->head] = true;     
       auto & pd = getNodeArray().getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      if (!pd.label.empty() || getNodeArray().getDefaultSymbolId()) {
-	if (pd.age >= 0 && (display.isPointVisible(pd.position) ||
-			    getNodeArray().getNodeLabelVisibility(it->head))) {
-	  glm::vec3 win = display.project(pd.position);
-	  bool is_selected = false; // graph.getId() == selected_node.first && i == selected_node.second;
-	  all_labels.push_back({ glm::vec2(win.x, win.y), td.size + 10 * td.child_count, it->head, is_selected });
-	}
+      if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), td.size + 10 * td.child_count, it->head });
       }
+      if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
+    }
+  }
+
+  while (!parent_nodes.empty()) {
+    int id = parent_nodes.front();
+    parent_nodes.pop_front();
+    if (!processed_nodes[id]) {
+      processed_nodes[id] = true;
+      auto & pd = getNodeArray().getNodeData(id);
+      auto & td = getNodeTertiaryData(id);
+      if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), td.size + 10 * td.child_count, id });	
+      }
+      if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
+    }
+  }
+
+  for (int i = 0; i < getFaceCount(); i++) {
+    auto & fd = getFaceAttributes(i);
+    if ((!fd.label.empty() || getNodeArray().getDefaultSymbolId()) &&
+	(display.isPointVisible(fd.centroid) || fd.getLabelVisibility())) {
+      glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
+      all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, i });
     }
   }
   
@@ -1147,45 +1170,46 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   
   if (all_labels.size() <= 10) {
     for (vector<label_data_s>::iterator it = all_labels.begin(); it != all_labels.end(); it++) {
-      getNodeArray().setNodeLabelVisibilityValue(it->index, 1);
-      changed |= getNodeArray().setNodeLabelVisibility(it->index, true);
+      if (it->type == label_data_s::NODE) {
+	auto & nd = getNodeArray().getNodeData(it->index);
+	nd.setLabelVisibilityValue(1);
+	changed |= nd.setLabelVisibility(true);
+      } else {
+	auto & fd = getFaceAttributes(it->index);
+	fd.setLabelVisibilityValue(1);
+	changed |= fd.setLabelVisibility(true);
+      }
     }
   } else {
     sort(all_labels.begin(), all_labels.end(), compareSize);
   
     vector<label_data_s> drawn_labels;
     // const Rect2d & region = getContentRegion();
+    
+    for (auto & ld : all_labels) {
+      auto tmp = display.project(ld.world_pos);
+      ld.screen_pos = glm::vec2(tmp.x, tmp.y);
+      auto & my_pos = ld.screen_pos;
 
-    for (vector<label_data_s>::iterator it = all_labels.begin(); it != all_labels.end(); it++) {
       bool fits = true;
-      auto & my_pos = it->pos;
-      bool reset_this = reset;
-      if (it->is_selected) {
-	reset_this = true;
-#if 0
-      } else if (my_pos.x < region.left || my_pos.y < region.bottom || my_pos.x > region.right || my_pos.y > region.top) {
-	fits = false;
-#endif	
-      } else {
-	for (vector<label_data_s>::const_iterator it2 = drawn_labels.begin(); it2 != drawn_labels.end(); it2++) {
-	  auto & other_pos = it2->pos;
-	  
-	  float dx = fabsf(my_pos.x - other_pos.x);
-	  float dy = fabsf(my_pos.y - other_pos.y);
-	  
-	  if (dx < 200 && dy < 100) {
-	    fits = false;
-	  }
+      
+      for (auto & ld2 : drawn_labels) {
+	auto & other_pos = ld2.screen_pos;
+	
+	float dx = fabsf(my_pos.x - other_pos.x);
+	float dy = fabsf(my_pos.y - other_pos.y);
+	
+	if (dx < 200 && dy < 100) {
+	  fits = false;
 	}
       }
       if (fits) {
-	drawn_labels.push_back(*it);
+	drawn_labels.push_back(ld);
       }
-      if (reset_this) {
-	getNodeArray().setNodeLabelVisibilityValue(it->index, fits ? 1 : 0);
-	changed |= getNodeArray().setNodeLabelVisibility(it->index, fits);
+      if (ld.type == label_data_s::NODE) {
+	changed |= getNodeArray().updateLabelValues(ld.index, fits ? 1.00f : -1.00f);
       } else {
-	changed |= getNodeArray().updateNodeLabelValues(it->index, fits ? 1.00f : -1.00f);
+	changed |= updateFaceLabelValues(ld.index, fits ? 1.00f : -1.00f);
       }
     }
   }
@@ -1289,9 +1313,11 @@ Graph::setLabelTexture(const skey & key, int texture) {
   if (it2 != getNodeArray().getNodeCache().end()) {
     getNodeArray().setLabelTexture(it2->second, texture);
   }
+#if 0
   for (auto & g : final_graphs) {
     g->setLabelTexture(key, texture);
   }
+#endif
 }
 
 std::shared_ptr<Graph>
