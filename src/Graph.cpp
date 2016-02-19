@@ -357,7 +357,8 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
   vector<node_vbo_s> new_geometry;
   unsigned int edge_count = 0;
   list<int> parent_nodes;
-
+  graph_color_s parent_color = { 100, 200, 255, 0 };
+  
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     assert(it->tail >= 0 && it->tail < nodes->size());
@@ -366,19 +367,22 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[it->tail] = true;
       auto & nd = nodes->getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
+      const graph_color_s & col = td.child_count ? parent_color : nd.color;
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, 5 + td.size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!stored_nodes[it->head]) {
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
+      const graph_color_s & col = td.child_count ? parent_color : nd.color;
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, 5 + td.size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     edge_count++;
   }
 
+#if 0
   if (!parent_nodes.empty()) {
     auto it = parent_nodes.begin();
     cerr << "parent_nodes (" << parent_nodes.size() << "): " << *it;
@@ -387,6 +391,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
     }
     cerr << endl;
   }
+#endif
   
   while (!parent_nodes.empty()) {
     int n = parent_nodes.front();
@@ -395,7 +400,8 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[n] = true;
       auto & nd = nodes->getNodeData(n);
       auto & td = getNodeTertiaryData(n);
-      new_geometry.push_back({ nd.color.r, nd.color.g, nd.color.b, nd.color.a, nd.normal, nd.position, nd.age, td.size, nd.texture, nd.flags });
+      const graph_color_s & col = td.child_count ? parent_color : nd.color;
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, 5 + td.size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
@@ -512,8 +518,6 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 
     labels.push_back({ pos, x, y, pd.label_texture, flags });
   }
-
-  cerr << "updateLabelVBO: labels = " << labels.size() << endl;
   
   if (labels.empty()) return;
   
@@ -1421,7 +1425,7 @@ Graph::applyGravity(float gravity) {
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 10.0f;
 	}
-	applyGravityToNode(factor * k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
+	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
@@ -1433,8 +1437,8 @@ Graph::applyGravity(float gravity) {
 	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 10.0f;
-	}
-	applyGravityToNode(factor * k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
+	}	
+	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
     }
     while (!parent_nodes.empty()) {
@@ -1449,9 +1453,9 @@ Graph::applyGravity(float gravity) {
 	if (td.parent_node >= 0) {
 	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
-	  factor = 10.0f;
+	  factor = 10.0f;	 
 	}
-	applyGravityToNode(factor * k, pd, td, origin, isTemporal() ? td.coverage_weight : td.size);
+	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
     }
   }
@@ -1542,6 +1546,7 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
 
 void
 Graph::addChild(int parent, int child) {
+  assert(parent != child);
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
   assert(node_geometry3[child].parent_node == -1);
@@ -1551,6 +1556,12 @@ Graph::addChild(int parent, int child) {
   node_geometry3[child].parent_node = parent;
   node_geometry3[parent].child_count++;
   updateNodeSize(parent);
+  nodes->getNodeData(parent).label_texture = 0;
+  node_geometry3[parent].coverage = 0xffffffffffffffffULL;
+  node_geometry3[parent].coverage_weight = 1.0f;
+  version++;
+  assert(node_geometry3[child].parent_node == parent);
+  cerr << "added child " << child << " to " << parent << endl;
 }
 
 void
@@ -1576,5 +1587,7 @@ Graph::removeChild(int child) {
     node_geometry3[child].parent_node = node_geometry3[child].next_child = -1;
     node_geometry3[parent].child_count--;
     updateNodeSize(parent);    
+    nodes->getNodeData(parent).label_texture = 0;
+    version++;
   } 
 }
