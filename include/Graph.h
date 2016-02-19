@@ -144,6 +144,7 @@ class ConstEdgeIterator {
 #define GF_PER_NODE_COLORS	64
 #define GF_HAS_SUBGRAPHS	128
 #define GF_DOUBLE_BUFFERED_VBO	256
+#define GF_TEMPORAL_COVERAGE	512
 
 class VBO;
 class TextureAtlas;
@@ -406,6 +407,9 @@ class Graph : public MBRObject {
 
   bool hasDoubleBufferedVBO() const { return testFlags(GF_DOUBLE_BUFFERED_VBO); }
   Graph & setDoubleBufferedVBO(bool t) { return updateFlags(GF_DOUBLE_BUFFERED_VBO, t); }
+
+  bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
+  Graph & setHasTemporalCoverage(bool t) { return updateFlags(GF_TEMPORAL_COVERAGE, t); } 
 
   void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
   bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
