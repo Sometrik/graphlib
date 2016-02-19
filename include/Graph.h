@@ -19,7 +19,7 @@ class DisplayInfo;
 
 struct node_tertiary_data_s {
   int first_edge = -1;
-  float indegree = 0.0f, outdegree = 0.0f, size = 0.0f, coverage_weight = 0.0f;
+  float indegree = 0.0f, outdegree = 0.0f, coverage_weight = 0.0f;
   long long coverage = 0;
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
@@ -274,7 +274,6 @@ class Graph : public MBRObject {
   int addNode(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = nodes->add(type, age);
     if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
-    updateNodeSize(node_id);
     return node_id;
   }
 
@@ -572,12 +571,6 @@ class Graph : public MBRObject {
       
   void invalidateVisibleNodes();
 
-  void updateNodeSize(int n) {
-    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    auto & td = node_geometry3[n];
-    td.size = getNodeArray().getNodeSizeMethod().calculateSize(td, total_indegree, total_outdegree, nodes->size());
-  }
-
   void updateNodeCoverage(int n, long long coverage) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
     auto & nd = node_geometry3[n];
@@ -617,7 +610,10 @@ class Graph : public MBRObject {
   void applyGravity(float gravity);
   void applyDragAndAge(RenderMode mode, float friction);
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
-  
+
+  double getTotalOutdegree() const { return total_outdegree; }
+  double getTotalIndegree() const { return total_indegree; }
+
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
