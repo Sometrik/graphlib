@@ -33,7 +33,7 @@ class DirectedGraph : public Graph {
  private:
   std::unordered_set<int> seen_nodes;
   std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
-  std::unordered_map<int, unsigned int> onedegree_hubs;
+  std::unordered_map<int, int> onedegree_nodes;
   std::unordered_set<int> zerodegree_nodes;
   int current_pos = -1;
   unsigned int num_links = 0, num_hashtags = 0;
