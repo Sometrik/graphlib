@@ -44,6 +44,7 @@ struct node_data_s {
   short label_texture;
   unsigned short label_visibility_val;  
   std::string label;
+  int group_node;
   std::shared_ptr<Graph> nested_graph;
   
   bool getLabelVisibility() const { return flags & NODE_LABEL_VISIBLE ? true : false; }
@@ -96,7 +97,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", std::shared_ptr<Graph>() });
+    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", -1, std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -277,6 +278,13 @@ class NodeArray {
       zerodegree_node_id = add();
     }
     return zerodegree_node_id;
+  }
+  int getOneDegreeNode(int node_id) {
+    auto & nd = node_geometry[node_id];
+    if (nd.group_node == -1) {
+      nd.group_node = add();
+    }
+    return nd.group_node;
   }
   
  protected:
