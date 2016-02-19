@@ -21,6 +21,7 @@ DirectedGraph::createSimilar() const {
   graph->setLocationGraphValid(false);
   graph->setTemporal(isTemporal());
   graph->setPersonality(getPersonality());
+  graph->setHasTemporalCoverage(hasTemporalCoverage());
   graph->setHasTextures(hasTextures());
   graph->setDoubleBufferedVBO(hasDoubleBufferedVBO());
   graph->setLineWidth(getLineWidth());
@@ -157,14 +158,16 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  updateNodeSize(np.first);
 	  updateNodeSize(np.second);
 #endif
-	  auto & ed = getEdgeAttributes(it2->second);
-	  ed.coverage |= coverage;
-	  float new_weight = 0;
-	  for (int i = 0; i < 64; i++) {
-	    if (ed.coverage & (1 << i)) new_weight += 1.0f;
+	  if (hasTemporalCoverage()) {
+	    auto & ed = getEdgeAttributes(it2->second);
+	    ed.coverage |= coverage;
+	    float new_weight = 0;
+	    for (int i = 0; i < 64; i++) {
+	      if (ed.coverage & (1 << i)) new_weight += 1.0f;
+	    }
+	    new_weight /= 64.0f;
+	    updateEdgeWeight(it2->second, new_weight - ed.weight);
 	  }
-	  new_weight /= 64.0f;
-	  updateEdgeWeight(it2->second, new_weight - ed.weight);
 	} else {
 	  if (td1.indegree == 0 && td1.outdegree == 0) {
 	    bool has_zero = zerodegree_nodes.count(np.first) != 0;
@@ -184,7 +187,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	    removeChild(np.second);
 	    zerodegree_nodes.erase(np.second);
 	  }
-	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, coverage);
+	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, hasTemporalCoverage() ? coverage : 1.0f);
 	}
       }
     }  
