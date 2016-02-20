@@ -574,7 +574,7 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
 }
 
 std::shared_ptr<Graph>
-DXFLoader::openGraph(const char * filename) {
+DXFLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   ifstream stream(filename, ios::in);
   if (!stream) {
     cerr << "Cannot open " << filename << endl;
@@ -587,7 +587,7 @@ DXFLoader::openGraph(const char * filename) {
   map<string, int> waiting_faces;
 
   auto graph = std::make_shared<PlanarGraph>();
-  graph->setNodeArray(std::make_shared<NodeArray>());
+  graph->setNodeArray(initial_nodes);
   graph->getNodeArray().setFaceVisibility(true);
   graph->setHasSpatialData(true);
 

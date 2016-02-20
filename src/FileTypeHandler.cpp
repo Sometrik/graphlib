@@ -111,3 +111,8 @@ FileTypeHandler::createNodesForArc(const ArcData2D & arc, Graph & graph, map<str
     return pair<int, int>(node2, node1);
   }
 }
+
+std::shared_ptr<Graph>
+FileTypeHandler::openGraph(const std::string & filename) {
+  return openGraph(filename, std::make_shared<NodeArray>());
+}

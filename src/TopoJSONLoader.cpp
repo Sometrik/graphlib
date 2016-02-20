@@ -74,7 +74,7 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 	  assert(target_id != node_id);
 	  v.push_back(node_id);
 	  if (target_id == -1) continue;
-	  int arc_id = graph.addArcGeometry(arc); // should only be created once
+	  int arc_id = graph.getNodeArray().addArcGeometry(arc); // should only be created once
 	  int edge_id = rev ? graph.addEdge(target_id, node_id, -1, 1.0f, -arc_id) : graph.addEdge(node_id, target_id, -1, 1.0f, arc_id);
 	}
 #endif
@@ -102,7 +102,7 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 	    assert(target_id != face_id);
 	    v.push_back(face_id);
 	    if (target_id == -1) continue;
-	    int arc_id2 = graph.addArcGeometry(arc); // should only be created once
+	    int arc_id2 = graph.getNodeArray().addArcGeometry(arc); // should only be created once
 	    int edge_id = !rev ? graph.addEdge(arc_nodes.first, arc_nodes.second, face_id, 1.0f, arc_id2) : graph.addEdge(arc_nodes.first, arc_nodes.second, face_id, 1.0f, -arc_id2);
 	    // add target_id
 	    // ag.setArc(edge_id, arc);
@@ -141,7 +141,7 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 		v.push_back(face_id);
 	      }
 	      if (target_id == -1) continue;
-	      int arc_id2 = graph.addArcGeometry(arc); // create only once
+	      int arc_id2 = graph.getNodeArray().addArcGeometry(arc); // create only once
 	      int edge_id = rev ? graph.addEdge(arc_nodes.first, arc_nodes.second, face_id, 1.0f, -arc_id2) : graph.addEdge(arc_nodes.first, arc_nodes.second, face_id, 1.0f, arc_id2);
 	      // target_id, 
 	      // ag.setArc(edge_id, arc);
@@ -157,7 +157,7 @@ TopoJSONLoader::handleCollection(const string & parent_id, Graph & graph, map<st
 }
 
 std::shared_ptr<Graph>
-TopoJSONLoader::openGraph(const char * filename) {
+TopoJSONLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   FILE * in = fopen(filename, "rt");
   string json;
   char buffer[4096];
@@ -183,7 +183,7 @@ TopoJSONLoader::openGraph(const char * filename) {
   Json::Value arcs = root["arcs"];
 
   auto graph = std::make_shared<PlanarGraph>();
-  graph->setNodeArray(std::make_shared<NodeArray>());
+  graph->setNodeArray(initial_nodes);
   graph->setHasSpatialData(true);
   graph->setHasArcData(true);
   graph->getNodeArray().getTable().addTextColumn("id");

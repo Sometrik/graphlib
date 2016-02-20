@@ -19,7 +19,7 @@ ShapefileLoader::ShapefileLoader() : FileTypeHandler("ESRI Shapefile", false) {
 }
 
 std::shared_ptr<Graph>
-ShapefileLoader::openGraph(const char * filename) {
+ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   SHPHandle shp = SHPOpen(filename, "rb");
   if (!shp) {
     cerr << "failed to open shapefile\n";
@@ -50,7 +50,7 @@ ShapefileLoader::openGraph(const char * filename) {
     case SHPT_POINTM:
       if (!graph.get()) {
 	graph = std::make_shared<PlanarGraph>();
-	graph->setNodeArray(std::make_shared<NodeArray>());
+	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
       }
       assert(o->nVertices == 1);
@@ -71,7 +71,7 @@ ShapefileLoader::openGraph(const char * filename) {
 #if 0
       if (!graph.get()) {
 	graph = std::make_shared<PlanarGraph>();
-	graph->setNodeArray(std::make_shared<NodeArray>());
+	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
       }
       for (int j = 0; j < o->nVertices; j++) {
@@ -86,7 +86,7 @@ ShapefileLoader::openGraph(const char * filename) {
     case SHPT_ARCM:
       if (!graph.get()) {
 	graph = std::make_shared<PlanarGraph>();
-	graph->setNodeArray(std::make_shared<NodeArray>());
+	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
 	graph->getNodeArray().setNodeVisibility(false);
@@ -103,10 +103,10 @@ ShapefileLoader::openGraph(const char * filename) {
 	    arc.data.push_back(glm::dvec2(x, y));
 	  }
 
-	  int arc_id = graph->addArcGeometry(arc);
+	  int arc_id = graph->getNodeArray().addArcGeometry(arc);
 	  pair<int, int> n = createNodesForArc(arc, *graph, nodes);
 	  assert(arc_id);
-	  assert(arc_id >= 1 && arc_id <= graph->getArcGeometry().size());
+	  assert(arc_id >= 1 && arc_id <= graph->getNodeArray().getArcGeometry().size());
 	  int edge_id = graph->addEdge(n.first, n.second, hyperedge_id, 1.0f, arc_id);
 	  assert(graph->getEdgeAttributes(edge_id).arc == arc_id);
 	}
@@ -118,7 +118,7 @@ ShapefileLoader::openGraph(const char * filename) {
       if (!graph.get()) {
 	cerr << "creating planar graph for shapefile\n";
 	graph = std::make_shared<PlanarGraph>();
-	graph->setNodeArray(std::make_shared<NodeArray>());
+	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
 	graph->getNodeArray().setNodeVisibility(false);
@@ -255,13 +255,13 @@ ShapefileLoader::openGraph(const char * filename) {
 	  if (it != waiting_faces.end()) {
 	    pair_edge = it->second;
 	    auto & ed = graph->getEdgeAttributes(pair_edge);
-	    assert(ed.arc >= 1 && ed.arc <= graph->getArcGeometry().size());
+	    assert(ed.arc >= 1 && ed.arc <= graph->getNodeArray().getArcGeometry().size());
 	    arc_id = -ed.arc;
 	    waiting_faces.erase(it);
 	    connected_face_arcs++;
 	  } else {
-	    arc_id = graph->addArcGeometry(arcs[l]);
-	    assert(arc_id >= 1 && arc_id <= graph->getArcGeometry().size());
+	    arc_id = graph->getNodeArray().addArcGeometry(arcs[l]);
+	    assert(arc_id >= 1 && arc_id <= graph->getNodeArray().getArcGeometry().size());
 	  }
 
 	  assert(arc_id);

@@ -15,7 +15,7 @@ TextFileLoader::TextFileLoader() : FileTypeHandler("Text file", false) {
 }
 
 std::shared_ptr<Graph>
-TextFileLoader::openGraph(const char * filename) {
+TextFileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   auto graph = std::make_shared<DirectedGraph>();
   graph->setNodeArray(std::make_shared<NodeArray>());
 

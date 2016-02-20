@@ -7,7 +7,7 @@ class TextFileLoader : public FileTypeHandler {
  public:
   TextFileLoader();
   
-  std::shared_ptr<Graph> openGraph(const char * filename) override;
+  std::shared_ptr<Graph> openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) override;
 };
 
 #endif

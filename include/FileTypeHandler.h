@@ -8,15 +8,18 @@
 
 class ArcData2D;
 class Graph;
+class NodeArray;
 
 class FileTypeHandler {
  public:
   FileTypeHandler(const std::string & _description, bool can_write);
   virtual ~FileTypeHandler() { }
   
-  virtual std::shared_ptr<Graph> openGraph(const char * filename) = 0;
+  virtual std::shared_ptr<Graph> openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) = 0;
   
-  std::shared_ptr<Graph> openGraph(const std::string & filename) { return openGraph(filename.c_str()); }
+  std::shared_ptr<Graph> openGraph(const std::string & filename, const std::shared_ptr<NodeArray> & initial_nodes) { return openGraph(filename.c_str(), initial_nodes); }
+
+  std::shared_ptr<Graph> openGraph(const std::string & filename);
 
   virtual bool saveGraph(const Graph & graph, const std::string & filename) { return false; }
   
@@ -58,7 +61,7 @@ class DummyHandler : public FileTypeHandler {
  public:
  DummyHandler() : FileTypeHandler("", false) { }
   
-  std::shared_ptr<Graph> openGraph(const char * filename) override { return std::shared_ptr<Graph>(0); }
+  std::shared_ptr<Graph> openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) override { return std::shared_ptr<Graph>(0); }
 };
 
 #endif

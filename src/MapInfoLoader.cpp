@@ -36,8 +36,9 @@ MapInfoLoader::MapInfoLoader() : FileTypeHandler("MapInfo data interchange forma
 }
 
 std::shared_ptr<Graph>
-MapInfoLoader::openGraph(const char * filename) {
+MapInfoLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   auto graph = std::make_shared<PlanarGraph>();
+  graph->setNodeArray(initial_nodes);
   graph->setHasSpatialData(true);
   graph->setHasArcData(true);
 
@@ -195,7 +196,7 @@ MapInfoLoader::handlePoint(ifstream & in, Graph & graph, map<string, int> & node
   arc.data.push_back(glm::dvec2(x, y));
   
   int face_id = graph.addFace();
-  int arc_id = graph.addArcGeometry(arc);
+  int arc_id = graph.getNodeArray().addArcGeometry(arc);
   pair<int, int> n = createNodesForArc(arc, graph, nodes);
   assert(n.first == n.second);
   graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
@@ -216,7 +217,7 @@ MapInfoLoader::handleLine(ifstream & in, Graph & graph, map<string, int> & nodes
   arc.data.push_back(glm::dvec2(x2, y2));
 
   int face_id = graph.addFace();
-  int arc_id = graph.addArcGeometry(arc);
+  int arc_id = graph.getNodeArray().addArcGeometry(arc);
   pair<int, int> n = createNodesForArc(arc, graph, nodes);
   graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
     
@@ -236,7 +237,7 @@ MapInfoLoader::handlePolyline(ifstream & in, Graph & graph, map<string, int> & n
   }
   assert(arc.size() >= 2);
   int face_id = graph.addFace();
-  int arc_id = graph.addArcGeometry(arc);
+  int arc_id = graph.getNodeArray().addArcGeometry(arc);
   pair<int, int> n = createNodesForArc(arc, graph, nodes);
   graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
   

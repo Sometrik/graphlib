@@ -17,8 +17,9 @@ WavefrontObjLoader::WavefrontObjLoader() : FileTypeHandler("WaveFront object", f
 }
 
 std::shared_ptr<Graph>
-WavefrontObjLoader::openGraph(const char * filename) {
+WavefrontObjLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   auto graph = std::make_shared<PlanarGraph>();
+  graph->setNodeArray(initial_nodes);
   graph->setHasSpatialData(true);
   
   ifstream in(filename, ios::in);

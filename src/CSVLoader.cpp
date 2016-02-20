@@ -15,9 +15,9 @@ CSVLoader::CSVLoader() : FileTypeHandler("Comma separated values", false) {
 }
 
 std::shared_ptr<Graph>
-CSVLoader::openGraph(const char * filename) {
+CSVLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   auto graph = std::make_shared<DirectedGraph>();
-  graph->setNodeArray(std::make_shared<NodeArray>());
+  graph->setNodeArray(initial_nodes);
 
   ifstream in(filename, ios::in);
   if (!in) {

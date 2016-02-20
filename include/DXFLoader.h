@@ -18,7 +18,7 @@ class DXFLoader : public FileTypeHandler {
  public:
   DXFLoader();
   
-  std::shared_ptr<Graph> openGraph(const char * filename) override;
+  std::shared_ptr<Graph> openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) override;
   
  private:
   bool parseHeader(std::ifstream & stream);

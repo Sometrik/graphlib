@@ -18,7 +18,7 @@ GraphML::GraphML() : FileTypeHandler("GraphML", true) {
 }
 
 std::shared_ptr<Graph>
-GraphML::openGraph(const char * filename) {
+GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   RenderMode mode = RENDERMODE_3D;
 
   XMLDocument doc;
@@ -40,13 +40,14 @@ GraphML::openGraph(const char * filename) {
   std::shared_ptr<Graph> graph;
   if (directed) {
     graph = std::make_shared<DirectedGraph>();
-    graph->setNodeArray(std::make_shared<NodeArray>());
+    graph->setNodeArray(initial_nodes);
     graph->getNodeArray().setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_INDEGREE));
   } else {
     graph = std::make_shared<UndirectedGraph>();
-    graph->setNodeArray(std::make_shared<NodeArray>());
+    graph->setNodeArray(initial_nodes);
     graph->getNodeArray().setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_DEGREE));
   }
+  graph->setFlattenHierarchy(true);
 
   auto & node_table = graph->getNodeArray().getTable();
   auto & edge_table = graph->getFaceData();
