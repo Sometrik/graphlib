@@ -5,7 +5,6 @@
 
 #include "NodeType.h"
 #include "SizeMethod.h"
-#include "graph_color.h"
 #include "LabelStyle.h"
 #include "RenderMode.h"
 #include "LabelMethod.h"
@@ -31,12 +30,7 @@
 
 class Graph;
 
-namespace canvas {
-  class Color;
-};
-
 struct node_data_s {
-  graph_color_s color;
   glm::uint32 normal;
   glm::vec3 position;
   glm::vec3 prev_position;
@@ -99,7 +93,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY, float age = 0.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ { 200, 200, 200, 255 }, 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", -1, std::shared_ptr<Graph>() });
+    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", -1, std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -135,13 +129,15 @@ class NodeArray {
     // mbr.growToContain(p.first.x, p.first.y);
     version++;
   }
-  void setNormal(int i, const glm::vec4 & v);  
+  void setNormal(int i, const glm::vec4 & v);
+#if 0
   void setNodeColor2(int i, const graph_color_s & c) {
     node_geometry[i].color = c;
     version++;
   }
   void setNodeColor2(int i, const canvas::Color & c);
-
+#endif
+  
   void setNodeTexture(int i, int texture) {
     node_geometry[i].texture = texture;
     version++;
@@ -183,8 +179,6 @@ class NodeArray {
 
   const node_data_s & getNodeData(int i) const { return node_geometry[i]; }
   node_data_s & getNodeData(int i) { return node_geometry[i]; }
-  
-  const graph_color_s & getNodeColor(int i) const { return node_geometry[i].color; }
 
   bool updateLabelValues(int i, float visibility) {
     auto & nd = getNodeData(i);
@@ -217,7 +211,9 @@ class NodeArray {
     return v;
   }
 
+#if 0
   void setNodeColorByColumn(int column);
+#endif
 
   const glm::vec3 & getPosition(int i) const {
     return node_geometry[i].position;
@@ -244,7 +240,6 @@ class NodeArray {
   const glm::vec4 & getDefaultNodeColor() const { return node_color; }
   const glm::vec4 & getDefaultEdgeColor() const { return edge_color; }
   const glm::vec4 & getDefaultFaceColor() const { return face_color; }
-  // const glm::vec4 & getDefaultRegionColor() const { return region_color; }
   
   void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
   void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }

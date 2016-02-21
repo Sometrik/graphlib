@@ -79,6 +79,7 @@ static bool compareRows(const int & a, const int & b) {
   return sort_col->compare(a, b);
 }
 
+#if 0
 void
 NodeArray::setNodeColorByColumn(int column) {
   sort_col = &(nodes[column]);
@@ -109,6 +110,7 @@ NodeArray::setNodeColorByColumn(int column) {
   version++;
   // updateFlags(GF_PER_NODE_COLORS, true);
 }
+#endif
 
 void
 NodeArray::setNormal(int i, const glm::vec4 & v) {
