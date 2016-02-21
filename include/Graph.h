@@ -6,6 +6,7 @@
 #include "MBRObject.h"
 #include "RawStatistics.h"
 #include "NodeArray.h"
+#include "graph_color.h"
 
 #include <vector>
 #include <set>

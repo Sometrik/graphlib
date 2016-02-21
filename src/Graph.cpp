@@ -295,6 +295,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     // vector<unsigned int> node_mapping, indices;
     // node_mapping.resize(nodes->size());
     graph_color_s sel_color = { 100, 200, 255, 255 };
+    graph_color_s def_color = { 200, 200, 200, 255 };
     unsigned int vn = 0;
     bool flatten = doFlattenHierarchy();
     auto end = end_edges();
@@ -319,7 +320,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	} else {
 	  pos = g1.position;
 	}
-	auto color = edge_selected ? sel_color : g1.color;
+	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g1.age, 1.0f }; // g1.size
 	// i1 = node_mapping[it->tail] = vn + 1;
@@ -337,7 +338,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	} else {
 	  pos = g2.position;
 	}
-	auto color = edge_selected ? sel_color : g2.color;
+	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
 	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g2.age, 1.0f }; // g.size
@@ -366,6 +367,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
   unsigned int edge_count = 0;
   list<int> parent_nodes;
   graph_color_s parent_color = { 100, 200, 255, 0 };
+  graph_color_s def_color = { 200, 200, 200, 255 };
   auto & size_method = nodes->getNodeSizeMethod();
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -375,7 +377,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[it->tail] = true;
       auto & nd = nodes->getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      const graph_color_s & col = td.child_count ? parent_color : nd.color;
+      const graph_color_s & col = td.child_count ? parent_color : def_color;
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
@@ -384,7 +386,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[it->head] = true;
       auto & nd = nodes->getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      const graph_color_s & col = td.child_count ? parent_color : nd.color;
+      const graph_color_s & col = td.child_count ? parent_color : def_color;
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
@@ -399,7 +401,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       stored_nodes[n] = true;
       auto & nd = nodes->getNodeData(n);
       auto & td = getNodeTertiaryData(n);
-      const graph_color_s & col = td.child_count ? parent_color : nd.color;
+      const graph_color_s & col = td.child_count ? parent_color : def_color;
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
