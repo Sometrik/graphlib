@@ -7,8 +7,6 @@
 #include "RawStatistics.h"
 #include "NodeArray.h"
 
-#include <ArcData2D.h>
-
 #include <vector>
 #include <set>
 
@@ -44,8 +42,7 @@ struct face_data_s {
   time_t timestamp;
   float sentiment;
   short feed, lang;
-  long long app_id;
-  long long filter_id;
+  long long app_id, filter_id;
   std::string label;
   short label_texture, flags;
   unsigned short label_visibility_val;
@@ -145,6 +142,7 @@ class ConstEdgeIterator {
 #define GF_HAS_SUBGRAPHS	128
 #define GF_DOUBLE_BUFFERED_VBO	256
 #define GF_TEMPORAL_COVERAGE	512
+#define GF_FLATTEN_HIERARCHY	1024
 
 class VBO;
 class TextureAtlas;
@@ -410,6 +408,9 @@ class Graph : public MBRObject {
   bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
   Graph & setHasTemporalCoverage(bool t) { return updateFlags(GF_TEMPORAL_COVERAGE, t); } 
 
+  bool doFlattenHierarchy() const { return testFlags(GF_FLATTEN_HIERARCHY); }
+  Graph & setFlattenHierarchy(bool t) { return updateFlags(GF_FLATTEN_HIERARCHY, t); }
+
   void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
   bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
 
@@ -552,13 +553,6 @@ class Graph : public MBRObject {
   void setRadius(float r) { radius = r; }
   float getRadius() const { return radius; }
 
-  int addArcGeometry(const ArcData2D & data) {
-    int arc_id = 1 + int(arc_geometry.size());
-    arc_geometry.push_back(data);
-    return arc_id;
-  }
-  const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
-
   const node_tertiary_data_s & getNodeTertiaryData(int n) const {
     if (n >= 0 && n < node_geometry3.size()) {
       return node_geometry3[n];
@@ -614,6 +608,9 @@ class Graph : public MBRObject {
   double getTotalOutdegree() const { return total_outdegree; }
   double getTotalIndegree() const { return total_indegree; }
 
+  void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
+  int getDefaultSymbolId() const { return default_symbol_id; }
+
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -654,12 +651,12 @@ class Graph : public MBRObject {
   bool is_loaded = false;
   float line_width = 1.0f;
   float radius = 0.0f;
-  std::vector<ArcData2D> arc_geometry;
   float min_significance = 0.0f, min_scale = 0.0f;
   std::vector<node_tertiary_data_s> node_geometry3;
   double total_outdegree = 0, total_indegree = 0;
   node_tertiary_data_s null_geometry3;
-  
+  int default_symbol_id = 0;
+
   static int next_id;
 };
 
