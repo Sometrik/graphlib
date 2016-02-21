@@ -30,17 +30,10 @@ NodeArray::updateAppearance() {
 void
 NodeArray::updateAppearanceSlow(int node_id) {
   string label, id, uname, name;
-  int r = -1, g = -1, b = -1;
 
-  for (auto & cd : getTable().getColumns()) {
-    string n = StringUtils::toLower(cd.first);
-    if (n == "r") {
-      r = cd.second->getInt(node_id);
-    } else if (n == "g") {
-      g = cd.second->getInt(node_id);
-    } else if (n == "b") {
-      b = cd.second->getInt(node_id);
-    } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
+  if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
+    for (auto & cd : getTable().getColumns()) {
+      string n = StringUtils::toLower(cd.first);
       if (n == "label") {
 	label = cd.second->getText(node_id);
       } else if (n == "uname") {
@@ -64,12 +57,8 @@ NodeArray::updateAppearanceSlow(int node_id) {
 	label = id;
       }    
     }
-    cerr << "setting label for node " << node_id << ": " << label << endl;
+    // cerr << "setting label for node " << node_id << ": " << label << endl;
     setLabel(node_id, label);
-  }
-  if (r >= 0 && g >= 0 && b >= 0) {
-    canvas::Color c(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
-    setNodeColor2(node_id, c);
   }
 }
 
@@ -118,6 +107,7 @@ NodeArray::setNormal(int i, const glm::vec4 & v) {
   version++;
 }
 
+#if 0
 void
 NodeArray::setNodeColor2(int i, const canvas::Color & c) {
   int r = int(c.red * 0xff), g = int(c.green * 0xff), b = int(c.blue * 0xff), a = int(c.alpha * 0xff);
@@ -132,6 +122,7 @@ NodeArray::setNodeColor2(int i, const canvas::Color & c) {
   graph_color_s tmp = { (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a };
   setNodeColor2(i, tmp);
 }
+#endif
 
 void
 NodeArray::resume2() {
