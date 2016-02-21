@@ -181,7 +181,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      removeChild(np.first);
 	      zerodegree_nodes.erase(np.first);
 	    }
-	    if (np.first != np.second) {
+	    if (0 && np.first != np.second && !onedegree_nodes.count(np.first)) {	      
 	      int o = nodes.getOneDegreeNode(np.second);
 	      addChild(o, np.first);
 	      onedegree_nodes[np.first] = np.second;	      
@@ -193,20 +193,22 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      removeChild(np.second);
 	      zerodegree_nodes.erase(np.second);
 	    }
-	    int o = nodes.getOneDegreeNode(np.first);
-	    addChild(o, np.second);
-	    onedegree_nodes[np.first] = np.second;
+	    if (0 && !onedegree_nodes.count(np.second)) {
+	      int o = nodes.getOneDegreeNode(np.first);
+	      addChild(o, np.second);
+	      onedegree_nodes[np.second] = np.first;
+	    }
 	  }
 	  if (np.first != np.second) {
 	    auto it1 = onedegree_nodes.find(np.first);
 	    auto it2 = onedegree_nodes.find(np.second);
-	    if (it1 != onedegree_nodes.end() && (td1.indegree != 0 || td2.outdegree != 0)) {
+	    if (it1 != onedegree_nodes.end() && np.second != it1->second && (td1.indegree != 0 || td2.outdegree != 0)) {
 	      removeChild(np.first);
-	      onedegree_nodes.remove(it1);
+	      onedegree_nodes.erase(it1);
 	    }
-	    if (it2 != onedegree_nodes.end() && (td2.indegree != 0 || td2.outdegree != 0)) {
+	    if (it2 != onedegree_nodes.end() && np.first != it2->second && (td2.indegree != 0 || td2.outdegree != 0)) {
 	      removeChild(np.second);
-	      onedegree_nodes.remove(it2);	      
+	      onedegree_nodes.erase(it2);	      
 	    }
 	  }
 	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, hasTemporalCoverage() ? coverage : 1.0f);
