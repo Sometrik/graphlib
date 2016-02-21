@@ -130,7 +130,8 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
   vector<unsigned int> front_indices, back_indices;
 
   glm::vec3 normal(0.0f);
-
+  auto & arc_geometry = nodes->getArcGeometry();
+  
   if (hasArcData()) {
     vector<int> stored_arcs;
     stored_arcs.resize(arc_geometry.size());
@@ -220,7 +221,8 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 
   if (hasArcData()) {
     cerr << "loading arcs: this = " << typeid(*this).name() << endl;
-    unsigned int num_vertices = 0, num_indices = 0;    
+    unsigned int num_vertices = 0, num_indices = 0;
+    auto & arc_geometry = nodes->getArcGeometry();
     for (unsigned int i = 0; i < getEdgeCount(); i++) {
       auto & ed = getEdgeAttributes(i);
       assert(ed.arc);
@@ -294,11 +296,17 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     // node_mapping.resize(nodes->size());
     graph_color_s sel_color = { 100, 200, 255, 255 };
     unsigned int vn = 0;
+    bool flatten = doFlattenHierarchy();
     auto end = end_edges();
-    for (auto it = begin_edges(); it != end; ++it) {    
-      if (it->tail == it->head) continue;
-      auto & g1 = nodes->node_geometry[it->tail], & g2 = nodes->node_geometry[it->head];
-      // int i1 = node_mapping[it->tail], i2 = node_mapping[it->head];
+    for (auto it = begin_edges(); it != end; ++it) {
+      int tail = it->tail, head = it->head;
+      if (flatten) {
+	while (node_geometry3[tail].parent_node != -1) tail = node_geometry3[tail].parent_node;
+	while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;	
+      }
+      if (tail == head) continue;
+      auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
+      // int i1 = node_mapping[tail], i2 = node_mapping[head];
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (1) { // !i1) {
 	glm::vec3 pos;
@@ -420,12 +428,14 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
   glm::vec3 normal(1.0f, 0.0f, 0.0f);
   int idx = 0;
 
+  auto & size_method = nodes->getNodeSizeMethod();
+
   for (int i = 0; i < nodes->size(); i++) { 
     auto & pd = getNodeArray().getNodeData(i);
     auto & td = getNodeTertiaryData(i);
     
     int texture = pd.texture;
-    float size = td.size / node_scale;
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size()) / node_scale;
     
     glm::vec3 v = pd.position;
     glm::vec4 color(pd.color.r / 255.0f, pd.color.g / 255.0f, pd.color.b / 255.0f, pd.color.a / 255.0f);
@@ -556,11 +566,17 @@ Graph::relaxLinks() {
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   // cerr << "avg edge weight = " << avg_edge_weight << endl;
   float alpha = getNodeArray().getAlpha2();
+  auto & size_method = nodes->getNodeSizeMethod();
+  bool flatten = doFlattenHierarchy();
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
-    int s = it->tail, t = it->head;
-    if (s == t || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
-    auto & pd1 = nodes->getNodeData(s), & pd2 = nodes->getNodeData(t);
+    int tail = it->tail, head = it->head;
+    if (flatten) {
+      while (node_geometry3[tail].parent_node != -1) tail = node_geometry3[tail].parent_node;
+      while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;	
+    }
+    if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
+    auto & pd1 = nodes->getNodeData(tail), & pd2 = nodes->getNodeData(head);
     bool fixed1 = pd1.flags & NODE_FIXED_POSITION;
     bool fixed2 = pd2.flags & NODE_FIXED_POSITION;
     if (fixed1 && fixed2) continue;      
@@ -568,11 +584,12 @@ Graph::relaxLinks() {
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
-    auto & td1 = getNodeTertiaryData(s), & td2 = getNodeTertiaryData(t);
+    auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
-    float w1 = td1.size; // * td1.coverage_weight;
-    float w2 = td2.size; // * td2.coverage_weight;
+    
+    float w1 = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
+    float w2 = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
     float k;
     if (fixed1) {
       k = 1.0f;
@@ -601,11 +618,14 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
   int best_i = -1;
   float best_d = 0;
   glm::vec2 ppos(x, y);
+  auto & size_method = nodes->getNodeSizeMethod();
+    
   for (int i = 0; i < nodes->size(); i++) {
     auto & pd = nodes->getNodeData(i);
     auto & td = getNodeTertiaryData(i);
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
     glm::vec3 tmp1 = display.project(pd.position);
-    glm::vec3 tmp2 = display.project(pd.position + glm::vec3(td.size / 2.0f / node_scale, 0.0f, 0.0f));
+    glm::vec3 tmp2 = display.project(pd.position + glm::vec3(size / 2.0f / node_scale, 0.0f, 0.0f));
     glm::vec2 pos1(tmp1.x, tmp1.y);
     glm::vec2 pos2(tmp2.x, tmp2.y);
     glm::vec2 tmp3 = pos2 - pos1;
@@ -1110,6 +1130,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   vector<bool> processed_nodes;
   processed_nodes.resize(nodes->size());
   list<int> parent_nodes;
+  auto & size_method = nodes->getNodeSizeMethod();
     
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -1118,7 +1139,8 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       auto & pd = getNodeArray().getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
       if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
-	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), td.size + 10 * td.child_count, it->tail });
+	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, it->tail });
       }
       if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
     }
@@ -1128,7 +1150,8 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       auto & pd = getNodeArray().getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
       if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
-	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), td.size + 10 * td.child_count, it->head });
+	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, it->head });
       }
       if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
     }
@@ -1142,7 +1165,8 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       auto & pd = getNodeArray().getNodeData(id);
       auto & td = getNodeTertiaryData(id);
       if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
-	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), td.size + 10 * td.child_count, id });	
+	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, id });	
       }
       if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
     }
@@ -1150,7 +1174,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
 
   for (int i = 0; i < getFaceCount(); i++) {
     auto & fd = getFaceAttributes(i);
-    if ((!fd.label.empty() || getNodeArray().getDefaultSymbolId()) &&
+    if ((!fd.label.empty() || getDefaultSymbolId()) &&
 	(display.isPointVisible(fd.centroid) || fd.getLabelVisibility())) {
       glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
       all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, i });
@@ -1325,6 +1349,7 @@ Graph::getFinal(float scale) const {
 void
 Graph::updateAppearance() {
   if (node_geometry3.size() < nodes->size()) node_geometry3.resize(nodes->size());
+#if 0
   auto & method = getNodeArray().getNodeSizeMethod();
   if (method.getValue() == SizeMethod::SIZE_FROM_COLUMN) {
     table::Column & sc = getNodeArray().getTable()[method.getColumn()];
@@ -1345,6 +1370,7 @@ Graph::updateAppearance() {
     }    
     version++;
   }
+#endif
 
   auto & label_method = nodes->getLabelMethod();
   if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
@@ -1415,7 +1441,7 @@ Graph::applyGravity(float gravity) {
 	if (td.parent_node >= 0) {
 	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
-	  factor = 10.0f;
+	  factor = 50.0f;
 	}
 	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
@@ -1428,7 +1454,7 @@ Graph::applyGravity(float gravity) {
 	if (td.parent_node >= 0) {
 	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
-	  factor = 10.0f;
+	  factor = 50.0f;
 	}	
 	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
@@ -1445,7 +1471,7 @@ Graph::applyGravity(float gravity) {
 	if (td.parent_node >= 0) {
 	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
-	  factor = 10.0f;	 
+	  factor = 50.0f;	 
 	}
 	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
