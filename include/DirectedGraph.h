@@ -21,6 +21,8 @@ class DirectedGraph : public Graph {
   void reset() override {
     seen_nodes.clear();
     seen_edges.clear();
+    onedegree_nodes.clear();
+    zerodegree_nodes.clear();
     current_pos = -1;
     num_links = 0;
     num_hashtags = 0;
