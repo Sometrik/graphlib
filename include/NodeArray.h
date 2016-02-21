@@ -5,13 +5,15 @@
 
 #include "NodeType.h"
 #include "SizeMethod.h"
-#include "../system/Mutex.h"
 #include "graph_color.h"
 #include "LabelStyle.h"
 #include "RenderMode.h"
 #include "LabelMethod.h"
+#include "ArcData2D.h"
+#include "Table.h"
 
-#include <Table.h>
+#include "../system/Mutex.h"
+
 #include <glm/glm.hpp>
 #include <string>
 
@@ -234,9 +236,6 @@ class NodeArray {
   NodeIterator end_nodes() { return NodeIterator(&(node_geometry.back())) + 1; }
 #endif
   
-  void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
-  int getDefaultSymbolId() const { return default_symbol_id; }
-
   std::vector<node_data_s> node_geometry;
 
   void setLabelStyle(LabelStyle style) { label_style = style; }
@@ -286,7 +285,14 @@ class NodeArray {
     }
     return nd.group_node;
   }
-  
+
+  int addArcGeometry(const ArcData2D & data) {
+    int arc_id = 1 + int(arc_geometry.size());
+    arc_geometry.push_back(data);
+    return arc_id;
+  }
+  const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
+
  protected:
 
  private:
@@ -314,12 +320,12 @@ class NodeArray {
   SizeMethod size_method;
   LabelMethod label_method;
   LabelStyle label_style = LABEL_PLAIN;
-  int default_symbol_id = 0;
   float alpha = 0.0f;
   int srid = 0, version = 1;
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
   int zerodegree_node_id = -1;
+  std::vector<ArcData2D> arc_geometry;
   
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
