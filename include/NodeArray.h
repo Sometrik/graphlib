@@ -266,13 +266,20 @@ class NodeArray {
   int getSRID() const { return srid; }
   void setSRID(int _srid) { srid = _srid; }
 
-  bool hasZeroDegreeNode() const { return zerodegree_node_id != -1; }
+  // bool hasZeroDegreeNode() const { return zerodegree_node_id != -1; }
   int getZeroDegreeNode() {
     if (zerodegree_node_id == -1) {
       zerodegree_node_id = add();
       setRandomPosition(zerodegree_node_id);
     }
     return zerodegree_node_id;
+  }
+  int getPairsNode() {
+    if (pairs_node_id == -1) {
+      pairs_node_id = add();
+      setRandomPosition(pairs_node_id);
+    }
+    return pairs_node_id;
   }
   int getOneDegreeNode(int node_id) {
     auto & nd = node_geometry[node_id];
@@ -323,7 +330,7 @@ class NodeArray {
   int srid = 0, version = 1;
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
-  int zerodegree_node_id = -1;
+  int zerodegree_node_id = -1, pairs_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
   
   mutable int num_readers = 0;
