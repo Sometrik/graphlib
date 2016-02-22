@@ -32,7 +32,7 @@ DirectedGraph::createSimilar() const {
 
 bool
 DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
-  if (!(end_time > start_time)) {
+  if (hasTemporalCoverage() && !(end_time > start_time)) {
     cerr << "invalid time range for updateData: " << start_time << " - " << end_time << endl;
     return false;
   }
@@ -142,11 +142,13 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
 	}
 
-	assert(end_time > start_time);
 	long long coverage = 0;
-	int time_pos = 63LL * (t - start_time) / (end_time - start_time);
-	assert(time_pos >= 0 && time_pos < 64);
-	coverage |= 1 << time_pos;
+	if (hasTemporalCoverage()) {
+	  assert(end_time > start_time);
+	  int time_pos = 63LL * (t - start_time) / (end_time - start_time);
+	  assert(time_pos >= 0 && time_pos < 64);
+	  coverage |= 1 << time_pos;
+	}
 	
 	unordered_map<int, unordered_map<int, int> >::iterator it1;
 	unordered_map<int, int>::iterator it2;
@@ -181,7 +183,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      removeChild(np.first);
 	      zerodegree_nodes.erase(np.first);
 	    }
-	    if (0 && np.first != np.second && !onedegree_nodes.count(np.first)) {	      
+	    if (np.first != np.second && !onedegree_nodes.count(np.first)) {	      
 	      int o = nodes.getOneDegreeNode(np.second);
 	      addChild(o, np.first);
 	      onedegree_nodes[np.first] = np.second;	      
@@ -193,7 +195,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      removeChild(np.second);
 	      zerodegree_nodes.erase(np.second);
 	    }
-	    if (0 && !onedegree_nodes.count(np.second)) {
+	    if (!onedegree_nodes.count(np.second)) {
 	      int o = nodes.getOneDegreeNode(np.first);
 	      addChild(o, np.second);
 	      onedegree_nodes[np.second] = np.first;
