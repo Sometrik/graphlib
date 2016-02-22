@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iostream>
 #include <typeinfo>
+#include <unordered_set>
 
 #ifndef _WIN32
 #include "community/BinaryGraph.h"
@@ -213,6 +214,13 @@ Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
   }
 }
 
+struct pair_hash {
+  std::size_t operator()(const std::pair<int,int>& p) const {
+    std::hash<int> int_hasher;
+    return int_hasher(p.first) ^ int_hasher(p.second);
+  }
+};
+
 void
 Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
   if (!getEdgeCount()) {
@@ -298,12 +306,18 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     graph_color_s def_color = { 200, 200, 200, 255 };
     unsigned int vn = 0;
     bool flatten = doFlattenHierarchy();
+    unordered_set<pair<int, int>, pair_hash> processed_edges;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {
       int tail = it->tail, head = it->head;
       if (flatten) {
 	while (node_geometry3[tail].parent_node != -1) tail = node_geometry3[tail].parent_node;
-	while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;	
+	while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;
+	pair<int, int> edge_key(tail, head);
+	if (processed_edges.count(edge_key)) {
+	  continue;
+	}
+	processed_edges.insert(edge_key);
       }
       if (tail == head) continue;
       auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
@@ -570,12 +584,19 @@ Graph::relaxLinks() {
   float alpha = getNodeArray().getAlpha2();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = doFlattenHierarchy();
+  unordered_set<pair<int, int>, pair_hash> processed_edges;
+  
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int tail = it->tail, head = it->head;
     if (flatten) {
       while (node_geometry3[tail].parent_node != -1) tail = node_geometry3[tail].parent_node;
-      while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;	
+      while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;
+      pair<int, int> edge_key(tail, head);
+      if (processed_edges.count(edge_key)) {
+	continue;
+      }
+      processed_edges.insert(edge_key);
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     auto & pd1 = nodes->getNodeData(tail), & pd2 = nodes->getNodeData(head);
