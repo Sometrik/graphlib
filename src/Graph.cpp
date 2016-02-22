@@ -309,19 +309,10 @@ Graph::createEdgeVBO(VBO & vbo) const {
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {
       int tail = it->tail, head = it->head;
-      auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
-      glm::vec3 pos1 = g1.position, pos2 = g2.position;
-	
       if (flatten) {
 	int l1 = 0, l2 = 0;
-	for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) {
-	  pos1 += nodes->getNodeData(p).position;
-	  l1++;
-	}
-	for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) {
-	  pos2 += nodes->getNodeData(p).position;
-	  l2++;
-	}
+	for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) l1++;
+	for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) l2++;
 	while ( 1 ) {
 	  if (l1 > l2) {
 	    tail = node_geometry3[tail].parent_node;
@@ -344,20 +335,30 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	processed_edges.insert(edge_key);
       }
       if (tail == head) continue;
+      auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
+	
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (1) { // !i1) {
+	glm::vec3 pos = g1.position;
+	for (int p = getNodeTertiaryData(tail).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	  pos += nodes->getNodeData(p).position;
+	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
-	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos1, g1.age, 1.0f }; // g1.size
+	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g1.age, 1.0f }; // g1.size
 	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
       if (1) { // !i2) {
+	glm::vec3 pos = g2.position;
+	for (int p = getNodeTertiaryData(head).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	  pos += nodes->getNodeData(p).position;
+	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
-	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos2, g2.age, 1.0f }; // g.size
+	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g2.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
