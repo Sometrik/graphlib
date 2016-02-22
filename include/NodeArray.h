@@ -270,6 +270,7 @@ class NodeArray {
   int getZeroDegreeNode() {
     if (zerodegree_node_id == -1) {
       zerodegree_node_id = add();
+      setRandomPosition(zerodegree_node_id);
     }
     return zerodegree_node_id;
   }
@@ -277,6 +278,7 @@ class NodeArray {
     auto & nd = node_geometry[node_id];
     if (nd.group_node == -1) {
       nd.group_node = add();
+      setRandomPosition(nd.group_node);
     }
     return nd.group_node;
   }
@@ -288,6 +290,8 @@ class NodeArray {
   }
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
+  void setRandomPosition(int node_id);
+  
  protected:
 
  private:
