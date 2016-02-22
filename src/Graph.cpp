@@ -121,7 +121,7 @@ Graph::randomizeGeometry(bool use_2d) {
 }
 
 void
-Graph::createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const {
+Graph::createRegionVBO(VBO & vbo) const {
   if (!getFaceCount()) {
     return;
   }
@@ -221,7 +221,7 @@ struct pair_hash {
 };
 
 void
-Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
+Graph::createEdgeVBO(VBO & vbo) const {
   if (!getEdgeCount()) {
     return;
   }
@@ -346,13 +346,6 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
       if (tail == head) continue;
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (1) { // !i1) {
-	if (is_spherical) {
-	  double lat = pos1.y / 180.0 * M_PI, lon = pos2.x / 180.0 * M_PI;
-	  pos1 = glm::vec3( -earth_radius * cos(lat) * cos(lon),
-			    earth_radius * sin(lat),
-			    earth_radius * cos(lat) * sin(lon)
-			    );
-	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos1, g1.age, 1.0f }; // g1.size
@@ -361,13 +354,6 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	vn++;
       }
       if (1) { // !i2) {
-	if (is_spherical) {
-	  double lat = pos2.y / 180.0 * M_PI, lon = pos2.x / 180.0 * M_PI;
-	  pos2 = glm::vec3( -earth_radius * cos(lat) * cos(lon),
-			    earth_radius * sin(lat),
-			    earth_radius * cos(lat) * sin(lon)
-			    );
-	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
@@ -384,7 +370,7 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 }
 
 void
-Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius) const {
+Graph::createNodeVBOForSprites(VBO & vbo) const {
   if (!getEdgeCount()) {
     return;
   }
@@ -454,7 +440,7 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
 }
 
 void
-Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_scale, bool is_spherical, float earth_radius) const {
+Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {
   if (!nodes->size()) {
     return;
   }
@@ -484,13 +470,6 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
     
     float tx1 = (texture % 64) * 64.0f / atlas.getWidth(), tx2 = (texture % 64 + 1) * 64.0f / atlas.getHeight();
     float ty1 = int(texture / 64) * 64.0f / atlas.getWidth(), ty2 = (int(texture / 64) + 1) * 64.0f / atlas.getHeight();
-
-    if (is_spherical) {
-      double lat = v.y / 180.0 * M_PI, lon = v.x / 180.0 * M_PI;
-      v.x = -earth_radius * cos(lat) * cos(lon);
-      v.y = earth_radius * sin(lat);
-      v.z = earth_radius * cos(lat) * sin(lon);      
-    }
         
     *(current_data++) = { glm::vec2(tx1, ty1), color, normal, glm::vec3(v.x - size / 2, v.y + size / 2, v.z) };
     *(current_data++) = { glm::vec2(tx1, ty2), color, normal, glm::vec3(v.x - size / 2, v.y - size / 2, v.z) };

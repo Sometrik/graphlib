@@ -260,10 +260,10 @@ class Graph : public MBRObject {
   virtual void updateMBR(int edge) { }
   virtual void addUniversalRegion() { }
   
-  void createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const;
-  void createRegionVBO(VBO & vbo, bool spherical, float earth_radius) const;
-  void createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius) const;
-  void createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_scale, bool is_spherical, float earth_radius) const;
+  void createEdgeVBO(VBO & vbo) const;
+  void createRegionVBO(VBO & vbo) const;
+  void createNodeVBOForSprites(VBO & vbo) const;
+  void createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_scale) const;
   void createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const;
 
   virtual std::set<int> getAdjacentRegions() const { return std::set<int>(); }
