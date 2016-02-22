@@ -393,7 +393,11 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       auto & td = getNodeTertiaryData(it->tail);
       const graph_color_s & col = td.child_count ? parent_color : def_color;
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, size, nd.texture, nd.flags });
+      auto pos = nd.position;
+      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	pos += nodes->getNodeData(p).position;
+      }
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, pos, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!stored_nodes[it->head]) {
@@ -402,7 +406,11 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       auto & td = getNodeTertiaryData(it->head);
       const graph_color_s & col = td.child_count ? parent_color : def_color;
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, size, nd.texture, nd.flags });
+      auto pos = nd.position;
+      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	pos += nodes->getNodeData(p).position;
+      }
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, pos, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     edge_count++;
@@ -417,7 +425,11 @@ Graph::createNodeVBOForSprites(VBO & vbo, bool is_spherical, float earth_radius)
       auto & td = getNodeTertiaryData(n);
       const graph_color_s & col = td.child_count ? parent_color : def_color;
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, nd.position, nd.age, size, nd.texture, nd.flags });
+      auto pos = nd.position;
+      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	pos += nodes->getNodeData(p).position;
+      }
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, pos, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
@@ -608,6 +620,7 @@ Graph::relaxLinks() {
     float l = glm::length(d);
     if (l < EPSILON) continue;
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
+    assert(td1.parent_node == -1 && td2.parent_node == -1);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
     
@@ -1432,15 +1445,12 @@ Graph::updateAppearance() {
   nodes->updateAppearance();
 }
 
-static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, const glm::vec3 & origin, float weight) {
+static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, float weight) {
   if (!(pd.flags & NODE_FIXED_POSITION)) {
-    glm::vec3 pos = pd.position;
-    pos -= origin;
+    const glm::vec3 & pos = pd.position;
     float d = glm::length(pos);
     if (d > 0.001) {
-      pos -= pos * (k * sqrtf(d) / d) * weight;
-      pos += origin;
-      pd.position = pos;
+      pd.position -= pos * (k * sqrtf(d) / d * weight);
     }
   }
 }
@@ -1459,27 +1469,23 @@ Graph::applyGravity(float gravity) {
 	processed_nodes[it->tail] = true;
 	auto & pd = nodes->getNodeData(it->tail);
 	auto & td = getNodeTertiaryData(it->tail);
-	glm::vec3 origin;
 	float factor = 1.0f;
 	if (td.parent_node >= 0) {
-	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 50.0f;
 	}
-	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+	applyGravityToNode(factor * k, pd, td, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
 	auto & pd = nodes->getNodeData(it->head);
 	auto & td = getNodeTertiaryData(it->head);
-	glm::vec3 origin;
 	float factor = 1.0f;
 	if (td.parent_node >= 0) {
-	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 50.0f;
 	}	
-	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+	applyGravityToNode(factor * k, pd, td, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
     }
     while (!parent_nodes.empty()) {
@@ -1489,14 +1495,12 @@ Graph::applyGravity(float gravity) {
 	processed_nodes[n] = true;
 	auto & pd = nodes->getNodeData(n);
 	auto & td = getNodeTertiaryData(n);
-	glm::vec3 origin;
 	float factor = 1.0f;
 	if (td.parent_node >= 0) {
-	  origin = nodes->getNodeData(td.parent_node).position;
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 50.0f;	 
 	}
-	applyGravityToNode(factor * k, pd, td, origin, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+	applyGravityToNode(factor * k, pd, td, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
     }
   }
@@ -1597,6 +1601,7 @@ Graph::addChild(int parent, int child) {
   nodes->getNodeData(parent).label_texture = 0;
   node_geometry3[parent].coverage = 0xffffffffffffffffULL;
   node_geometry3[parent].coverage_weight = 1.0f;
+  nodes->getNodeData(child).position -= nodes->getNodeData(parent).position;
   version++;
   assert(node_geometry3[child].parent_node == parent);
   cerr << "added child " << child << " to " << parent << endl;
@@ -1625,6 +1630,7 @@ Graph::removeChild(int child) {
     node_geometry3[child].parent_node = node_geometry3[child].next_child = -1;
     node_geometry3[parent].child_count--;
     nodes->getNodeData(parent).label_texture = 0;
+    nodes->getNodeData(child).position += nodes->getNodeData(parent).position;
     version++;
-  } 
+  }        
 }
