@@ -39,7 +39,6 @@ Graph::~Graph() {
 
 Graph::Graph(const Graph & other)
   : nodes(other.nodes), // copy node array by reference
-    // edges(other.edges),
     faces(other.faces),
     face_attributes(other.face_attributes),
     edge_attributes(other.edge_attributes),
@@ -310,9 +309,34 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {
       int tail = it->tail, head = it->head;
+      auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
+      glm::vec3 pos1 = g1.position, pos2 = g2.position;
+	
       if (flatten) {
-	while (node_geometry3[tail].parent_node != -1) tail = node_geometry3[tail].parent_node;
-	while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;
+	int l1 = 0, l2 = 0;
+	for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) {
+	  pos1 += nodes->getNodeData(p).position;
+	  l1++;
+	}
+	for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) {
+	  pos2 += nodes->getNodeData(p).position;
+	  l2++;
+	}
+	while ( 1 ) {
+	  if (l1 > l2) {
+	    tail = node_geometry3[tail].parent_node;
+	    l1--;
+	  } else if (l2 > l1) {
+	    head = node_geometry3[head].parent_node;
+	    l2--;
+	  } else if (node_geometry3[tail].parent_node == node_geometry3[head].parent_node) {
+	    break;
+	  } else {
+	    l1--; l2--;
+	    tail = node_geometry3[tail].parent_node;
+	    head = node_geometry3[head].parent_node;
+	  }
+	}
 	pair<int, int> edge_key(tail, head);
 	if (processed_edges.count(edge_key)) {
 	  continue;
@@ -320,47 +344,37 @@ Graph::createEdgeVBO(VBO & vbo, bool is_spherical, float earth_radius) const {
 	processed_edges.insert(edge_key);
       }
       if (tail == head) continue;
-      auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
-      // int i1 = node_mapping[tail], i2 = node_mapping[head];
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (1) { // !i1) {
-	glm::vec3 pos;
 	if (is_spherical) {
-	  double lat = g1.position.y / 180.0 * M_PI, lon = g1.position.x / 180.0 * M_PI;
-	  pos = glm::vec3( -earth_radius * cos(lat) * cos(lon),
-			   earth_radius * sin(lat),
-			   earth_radius * cos(lat) * sin(lon)
-			   );
-	} else {
-	  pos = g1.position;
+	  double lat = pos1.y / 180.0 * M_PI, lon = pos2.x / 180.0 * M_PI;
+	  pos1 = glm::vec3( -earth_radius * cos(lat) * cos(lon),
+			    earth_radius * sin(lat),
+			    earth_radius * cos(lat) * sin(lon)
+			    );
 	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
-	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g1.age, 1.0f }; // g1.size
+	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos1, g1.age, 1.0f }; // g1.size
 	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
       if (1) { // !i2) {
-	glm::vec3 pos;
 	if (is_spherical) {
-	  double lat = g2.position.y / 180.0 * M_PI, lon = g2.position.x / 180.0 * M_PI;
-	  pos = glm::vec3( -earth_radius * cos(lat) * cos(lon),
-			   earth_radius * sin(lat),
-			   earth_radius * cos(lat) * sin(lon)
-			   );
-	} else {
-	  pos = g2.position;
+	  double lat = pos2.y / 180.0 * M_PI, lon = pos2.x / 180.0 * M_PI;
+	  pos2 = glm::vec3( -earth_radius * cos(lat) * cos(lon),
+			    earth_radius * sin(lat),
+			    earth_radius * cos(lat) * sin(lon)
+			    );
 	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
-	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos, g2.age, 1.0f }; // g.size
+	line_data_s s = { int((255 * (1-a)) + color.r * a), int((255 * (1-a)) + color.g * a), int((255 * (1-a)) + color.b * a), int((255 * (1-a)) + color.a * a), pos2, g2.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
-      // indices.push_back(i1 - 1);
-      // indices.push_back(i2 - 1);      
     }
     assert(vn <= 2 * ec);
     // cerr << "uploading edges: vn = " << vn << ", indices = " << indices.size() << endl;
@@ -527,10 +541,15 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
   
   for (unsigned int i = 0; i < nodes->size(); i++) {
     auto & pd = getNodeArray().getNodeData(i);
-    // auto & sd = getNodeArray().getNodeSecondaryData(i);
     if (!(pd.flags & NODE_LABEL_VISIBLE && pd.label_texture)) continue;
+
+    auto & td = getNodeTertiaryData(i);
     
-    auto & pos = pd.position;
+    auto pos = pd.position;
+    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      pos += nodes->getNodeData(p).position;
+    }
+
     int offset_x = 0, offset_y = 0;
     unsigned short flags = 0;
 
@@ -602,8 +621,24 @@ Graph::relaxLinks() {
   for (auto it = begin_edges(); it != end; ++it) {
     int tail = it->tail, head = it->head;
     if (flatten) {
-      while (node_geometry3[tail].parent_node != -1) tail = node_geometry3[tail].parent_node;
-      while (node_geometry3[head].parent_node != -1) head = node_geometry3[head].parent_node;
+      int l1 = 0, l2 = 0;
+      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) l1++;
+      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) l2++;
+      while ( 1 ) {
+	if (l1 > l2) {
+	  tail = node_geometry3[tail].parent_node;
+	  l1--;
+	} else if (l2 > l1) {
+	  head = node_geometry3[head].parent_node;
+	  l2--;
+	} else if (node_geometry3[tail].parent_node == node_geometry3[head].parent_node) {
+	  break;
+	} else {
+	  l1--; l2--;
+	  tail = node_geometry3[tail].parent_node;
+	  head = node_geometry3[head].parent_node;
+	}
+      }
       pair<int, int> edge_key(tail, head);
       if (processed_edges.count(edge_key)) {
 	continue;
@@ -620,7 +655,7 @@ Graph::relaxLinks() {
     float l = glm::length(d);
     if (l < EPSILON) continue;
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
-    assert(td1.parent_node == -1 && td2.parent_node == -1);
+    assert(td1.parent_node == td2.parent_node);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
     
@@ -1176,7 +1211,11 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       auto & td = getNodeTertiaryData(it->tail);
       if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, it->tail });
+	auto pos = pd.position;
+	for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	  pos += nodes->getNodeData(p).position;
+	}
+	all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, it->tail });
       }
       if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
     }
@@ -1187,7 +1226,11 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       auto & td = getNodeTertiaryData(it->head);
       if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, it->head });
+	auto pos = pd.position;
+	for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	  pos += nodes->getNodeData(p).position;
+	}
+	all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, it->head });
       }
       if (td.parent_node >= 0) parent_nodes.push_back(td.parent_node);
     }
