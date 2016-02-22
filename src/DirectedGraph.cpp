@@ -30,6 +30,28 @@ DirectedGraph::createSimilar() const {
   return graph;
 }
 
+void
+DirectedGraph::breakNodePair(int node_id) {
+  auto it = node_pairs.find(node_id);
+  if (it != node_pairs.end()) {
+    removeChild(node_id);
+    int other_id = it->second;
+    node_pairs.erase(it);
+    
+    auto it2 = node_pairs.find(other_id);
+    assert(it2 != node_pairs.end());
+    if (it2 != node_pairs.end()) {
+      removeChild(other_id);
+      node_pairs.erase(it2);
+
+      // if a pair is broken, we add the other node to first one's group
+      int o = getNodeArray().getOneDegreeNode(node_id);
+      addChild(o, other_id);
+      onedegree_nodes[other_id] = node_id;
+    }
+  }
+}
+
 bool
 DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
   if (hasTemporalCoverage() && !(end_time > start_time)) {
@@ -183,25 +205,55 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      removeChild(np.first);
 	      zerodegree_nodes.erase(np.first);
 	    }
-	    if (np.first != np.second && !onedegree_nodes.count(np.first)) {	      
-	      int o = nodes.getOneDegreeNode(np.second);
-	      addChild(o, np.first);
-	      onedegree_nodes[np.first] = np.second;	      
+	    if (np.first != np.second) {
+	      if (td2.indegree == 0 && td2.outdegree == 0) {
+		if (zerodegree_nodes.count(np.second) != 0) {
+		  removeChild(np.second);
+		  zerodegree_nodes.erase(np.second);
+		}
+		assert(node_pairs.find(np.first) == node_pairs.end());
+		assert(node_pairs.find(np.second) == node_pairs.end());
+		int o = nodes.getPairsNode();
+		cerr << "adding to pairs node\n";
+		addChild(o, np.first);
+		addChild(o, np.second);
+		node_pairs[np.first] = np.second;
+		node_pairs[np.second] = np.first;
+	      } else if (!onedegree_nodes.count(np.first)) {
+		assert(node_pairs.find(np.first) == node_pairs.end());
+		cerr << "adding to onedegree node (A)\n";
+		int o = nodes.getOneDegreeNode(np.second);
+		addChild(o, np.first);
+		onedegree_nodes[np.first] = np.second;
+	      }
 	    }
-	  }
-	  if (td2.indegree == 0 && td2.outdegree == 0 && np.first != np.second) {
-	    if (zerodegree_nodes.count(np.second) != 0) {
-	      cerr << "DEBUG: removing node " << np.second << " from zero degree node (B)\n";
-	      removeChild(np.second);
-	      zerodegree_nodes.erase(np.second);
-	    }
-	    if (!onedegree_nodes.count(np.second)) {
-	      int o = nodes.getOneDegreeNode(np.first);
-	      addChild(o, np.second);
-	      onedegree_nodes[np.second] = np.first;
-	    }
+	  } else {
+	    breakNodePair(np.first);
 	  }
 	  if (np.first != np.second) {
+	    if (td2.indegree == 0 && td2.outdegree == 0) {
+	      if (zerodegree_nodes.count(np.second) != 0) {
+		cerr << "DEBUG: removing node " << np.second << " from zero degree node (B)\n";
+		removeChild(np.second);
+		zerodegree_nodes.erase(np.second);
+	      }
+	      if (td1.indegree == 0 && td1.outdegree == 0) {
+		// pair was created
+	      } else if (!onedegree_nodes.count(np.second)) {
+		if (node_pairs.count(np.second)) {
+		  cerr << "ERROR!\n";
+		} else {
+		  cerr << "adding child " << np.second << " to onedegree node (B) [td1.i = " << td1.indegree << ", td1.o = " << td1.outdegree << "]\n";
+		  assert(node_pairs.find(np.second) == node_pairs.end());
+		  int o = nodes.getOneDegreeNode(np.first);
+		  addChild(o, np.second);
+		  onedegree_nodes[np.second] = np.first;
+		}
+	      }
+	    } else {
+	      breakNodePair(np.second);
+	    }
+
 	    auto it1 = onedegree_nodes.find(np.first);
 	    auto it2 = onedegree_nodes.find(np.second);
 	    if (it1 != onedegree_nodes.end() && np.second != it1->second && (td1.indegree != 0 || td2.outdegree != 0)) {
@@ -231,66 +283,3 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 
   return is_changed;
 }
-
-#if 0
-struct component_s {
-  component_s() { }
-  unsigned int size = 0;
-};
-
-Graph *
-DirectedGraph::simplify() const {
-  vector<component_s> components;
-  map<int, int> nodes_to_component;
-  
-  for (int v = 0; v < getNodeCount(); v++) {
-    int found_component = -1;
-    int edge = getNodeFirstEdge(v);
-    while (edge != -1) {
-      int succ = getEdgeTargetNode(edge);
-      auto it = nodes_to_component.find(succ);
-      if (it != nodes_to_component.end()) {
-	found_component = it->second;
-	break;
-      }	
-      edge = getNextNodeEdge(edge);
-    }
-    if (found_component == -1) {
-      found_component = components.size();
-      components.push_back(component_s());
-    }
-    nodes_to_component[v] = found_component;
-  }
-    
-  unsigned int singles_count = 0, pairs_count = 0;
-  
-  for (auto c : components) {
-    if (c.size == 1) {
-      singles_count++;
-    } else if (c.size == 2) {
-      pairs_count++;
-    }
-  }
-  
-  DirectedGraph * new_graph = new DirectedGraph();
-  int singles_node = -1, pairs_node = -1;
-  if (singles_count) {
-    singles_node = new_graph->addNode();
-  }
-  if (pairs_count) {
-    pairs_node = new_graph->addNode();
-  }
-  
-  for (int v = 0; v < getNodeCount(); v++) {
-    int component_id = nodes_to_component[v];
-    auto & c = components[component_id];
-    if (c.size == 1 || c.size == 2) {
-      
-    } else {
-      
-    }
-  }
-
-  return new_graph;
-}
-#endif

@@ -31,12 +31,15 @@ class DirectedGraph : public Graph {
     max_edge_weight = 0.0f;
     max_node_coverage_weight = 0.0f;
   }
+
+  void breakNodePair(int node_id);
   
  private:
   std::unordered_set<int> seen_nodes;
   std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
   std::unordered_map<int, int> onedegree_nodes;
   std::unordered_set<int> zerodegree_nodes;
+  std::unordered_map<int, int> node_pairs;
   int current_pos = -1;
   unsigned int num_links = 0, num_hashtags = 0;
   time_t min_time = 0, max_time = 0;
