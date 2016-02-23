@@ -7,7 +7,7 @@
 
 using namespace std;
 
-DirectedGraph::DirectedGraph(int _id) : Graph(1, _id) {
+DirectedGraph::DirectedGraph(int _id) : Graph(_id) {
 
 }
 
@@ -19,11 +19,10 @@ std::shared_ptr<Graph>
 DirectedGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new DirectedGraph(getId()));
   graph->setLocationGraphValid(false);
-  graph->setTemporal(isTemporal());
-  graph->setPersonality(getPersonality());
-  graph->setHasTemporalCoverage(hasTemporalCoverage());
-  graph->setHasTextures(hasTextures());
-  graph->setDoubleBufferedVBO(hasDoubleBufferedVBO());
+  graph->setNodeVisibility(getNodeVisibility());
+  graph->setEdgeVisibility(getEdgeVisibility());
+  graph->setFaceVisibility(getFaceVisibility());
+  graph->setLabelVisibility(getLabelVisibility());
   graph->setLineWidth(getLineWidth());
   graph->setNodeArray(nodes);
   
@@ -52,9 +51,18 @@ DirectedGraph::breakNodePair(int node_id) {
   }
 }
 
+void
+DirectedGraph::breakOneDegreeNode(int node_id) {
+  auto it = onedegree_nodes.find(node_id);
+  if (it != onedegree_nodes.end()) {
+    removeChild(node_id);
+    onedegree_nodes.erase(it);
+  }
+}
+
 bool
 DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
-  if (hasTemporalCoverage() && !(end_time > start_time)) {
+  if (getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {
     cerr << "invalid time range for updateData: " << start_time << " - " << end_time << endl;
     return false;
   }
@@ -165,7 +173,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	}
 
 	long long coverage = 0;
-	if (hasTemporalCoverage()) {
+	if (getNodeArray().hasTemporalCoverage()) {
 	  assert(end_time > start_time);
 	  int time_pos = 63LL * (t - start_time) / (end_time - start_time);
 	  assert(time_pos >= 0 && time_pos < 64);
@@ -182,7 +190,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  updateNodeSize(np.first);
 	  updateNodeSize(np.second);
 #endif
-	  if (hasTemporalCoverage()) {
+	  if (getNodeArray().hasTemporalCoverage()) {
 	    auto & ed = getEdgeAttributes(it2->second);
 	    ed.coverage |= coverage;
 	    float new_weight = 0;
@@ -220,8 +228,10 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 		node_pairs[np.first] = np.second;
 		node_pairs[np.second] = np.first;
 	      } else if (!onedegree_nodes.count(np.first)) {
-		assert(node_pairs.find(np.first) == node_pairs.end());
 		cerr << "adding to onedegree node (A)\n";
+		assert(node_pairs.find(np.first) == node_pairs.end());
+		breakOneDegreeNode(np.second);
+		breakNodePair(np.second);
 		int o = nodes.getOneDegreeNode(np.second);
 		addChild(o, np.first);
 		onedegree_nodes[np.first] = np.second;
@@ -245,6 +255,8 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 		} else {
 		  cerr << "adding child " << np.second << " to onedegree node (B) [td1.i = " << td1.indegree << ", td1.o = " << td1.outdegree << "]\n";
 		  assert(node_pairs.find(np.second) == node_pairs.end());
+		  breakOneDegreeNode(np.first);
+		  breakNodePair(np.first);
 		  int o = nodes.getOneDegreeNode(np.first);
 		  addChild(o, np.second);
 		  onedegree_nodes[np.second] = np.first;
@@ -265,7 +277,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      onedegree_nodes.erase(it2);	      
 	    }
 	  }
-	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, hasTemporalCoverage() ? coverage : 1.0f);
+	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
 	}
       }
     }  

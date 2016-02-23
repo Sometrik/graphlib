@@ -33,6 +33,7 @@ class DirectedGraph : public Graph {
   }
 
   void breakNodePair(int node_id);
+  void breakOneDegreeNode(int node_id);
   
  private:
   std::unordered_set<int> seen_nodes;
