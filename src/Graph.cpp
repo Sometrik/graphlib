@@ -97,21 +97,16 @@ Graph::setFaceColorByColumn(int column) {
 void
 Graph::randomizeGeometry(bool use_2d) {
   assert(!nodes->hasSpatialData());
-  mbr = Rect2d();
   unsigned int num_nodes = getNodeArray().size();
   for (unsigned int i = 0; i < num_nodes; i++) {
-    glm::vec3 v( 100.0 * ((float)rand() / RAND_MAX) - 50,
-		 100.0 * ((float)rand() / RAND_MAX) - 50,
-		 (use_2d ? 0 : 100.0 * ((float)rand() / RAND_MAX) - 50)
-		 );
-    getNodeArray().node_geometry[i].position = getNodeArray().node_geometry[i].prev_position = v;
-    mbr.growToContain(v.x, v.y);
-
+    getNodeArray().setRandomPosition(i);
+        
     auto & graph = getNodeArray().node_geometry[i].nested_graph;
     if (graph.get() && !graph->nodes->hasSpatialData()) {
       graph->randomizeGeometry(use_2d);       
     }
   }
+  mbr = Rect2d(-50, -50, +50, +50);
 }
 
 void
