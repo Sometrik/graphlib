@@ -4,7 +4,8 @@
 enum LabelStyle {
   LABEL_PLAIN = 1,
   LABEL_DARK_BOX,
-  LABEL_BIG
+  LABEL_BIG,
+  LABEL_GROUP_TITLE
 };
 
 #endif
