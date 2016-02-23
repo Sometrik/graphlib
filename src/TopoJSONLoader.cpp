@@ -184,8 +184,8 @@ TopoJSONLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray
 
   auto graph = std::make_shared<PlanarGraph>();
   graph->setNodeArray(initial_nodes);
-  graph->setHasSpatialData(true);
-  graph->setHasArcData(true);
+  graph->getNodeArray().setHasSpatialData(true);
+  graph->getNodeArray().setHasArcData(true);
   graph->getNodeArray().getTable().addTextColumn("id");
   
   assert(root_type == "Topology");

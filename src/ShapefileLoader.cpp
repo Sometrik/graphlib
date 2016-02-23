@@ -51,7 +51,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
       if (!graph.get()) {
 	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(initial_nodes);
-	graph->setHasSpatialData(true);
+	graph->getNodeArray().setHasSpatialData(true);
 	graph->setNodeVisibility(false);
 	graph->setEdgeVisibility(false);
 	graph->setFaceVisibility(false);
@@ -75,7 +75,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
       if (!graph.get()) {
 	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(initial_nodes);
-	graph->setHasSpatialData(true);
+	graph->getNodeArray().setHasSpatialData(true);
       }
       for (int j = 0; j < o->nVertices; j++) {
 	double x = o->padfX[j], y = o->padfY[j], z = o->padfZ[j];
@@ -90,8 +90,8 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
       if (!graph.get()) {
 	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(initial_nodes);
-	graph->setHasSpatialData(true);
-	graph->setHasArcData(true);
+	graph->getNodeArray().setHasSpatialData(true);
+	graph->getNodeArray().setHasArcData(true);
 	graph->setNodeVisibility(false);
 	graph->setEdgeVisibility(true);
 	graph->setFaceVisibility(false);
@@ -123,8 +123,8 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	cerr << "creating planar graph for shapefile\n";
 	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(initial_nodes);
-	graph->setHasSpatialData(true);
-	graph->setHasArcData(true);
+	graph->getNodeArray().setHasSpatialData(true);
+	graph->getNodeArray().setHasArcData(true);
 	graph->setNodeVisibility(false);
 	graph->setEdgeVisibility(false);
 	graph->setFaceVisibility(true);

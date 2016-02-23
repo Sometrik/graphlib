@@ -39,8 +39,8 @@ std::shared_ptr<Graph>
 MapInfoLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   auto graph = std::make_shared<PlanarGraph>();
   graph->setNodeArray(initial_nodes);
-  graph->setHasSpatialData(true);
-  graph->setHasArcData(true);
+  graph->getNodeArray().setHasSpatialData(true);
+  graph->getNodeArray().setHasArcData(true);
 
   ifstream in(filename, ios::in);
   if (!in) {
