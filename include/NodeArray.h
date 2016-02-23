@@ -301,34 +301,34 @@ class NodeArray {
   void setRandomPosition(int node_id);
 
   bool isTemporal() const { return testFlags(GF_TEMPORAL_GRAPH); }
-  Graph & setTemporal(bool t) { return updateFlags(GF_TEMPORAL_GRAPH, t); } 
+  void setTemporal(bool t) { updateFlags(GF_TEMPORAL_GRAPH, t); } 
   
   bool isComplexGraph() const { return testFlags(GF_COMPLEX); }
-  Graph & setComplexGraph(bool t) { return updateFlags(GF_COMPLEX, t); }
+  void setComplexGraph(bool t) { updateFlags(GF_COMPLEX, t); }
 
   bool hasSpatialData() const { return testFlags(GF_HAS_SPATIAL_DATA); }
-  Graph & setHasSpatialData(bool t) { return updateFlags(GF_HAS_SPATIAL_DATA, t); }
+  void setHasSpatialData(bool t) { updateFlags(GF_HAS_SPATIAL_DATA, t); }
 
   bool hasArcData() const { return testFlags(GF_HAS_ARC_DATA); }
-  Graph & setHasArcData(bool t) { return updateFlags(GF_HAS_ARC_DATA, t); }
+  void setHasArcData(bool t) { updateFlags(GF_HAS_ARC_DATA, t); }
 
   bool hasTextures() const { return testFlags(GF_HAS_TEXTURES); }
-  Graph & setHasTextures(bool t) { return updateFlags(GF_HAS_TEXTURES, t); }
+  void setHasTextures(bool t) { updateFlags(GF_HAS_TEXTURES, t); }
 
   bool hasDoubleBufferedVBO() const { return testFlags(GF_DOUBLE_BUFFERED_VBO); }
-  Graph & setDoubleBufferedVBO(bool t) { return updateFlags(GF_DOUBLE_BUFFERED_VBO, t); }
+  void setDoubleBufferedVBO(bool t) { updateFlags(GF_DOUBLE_BUFFERED_VBO, t); }
 
   bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
-  Graph & setHasTemporalCoverage(bool t) { return updateFlags(GF_TEMPORAL_COVERAGE, t); } 
+  void setHasTemporalCoverage(bool t) { updateFlags(GF_TEMPORAL_COVERAGE, t); } 
 
   bool doFlattenHierarchy() const { return testFlags(GF_FLATTEN_HIERARCHY); }
-  Graph & setFlattenHierarchy(bool t) { return updateFlags(GF_FLATTEN_HIERARCHY, t); }
+  void setFlattenHierarchy(bool t) { updateFlags(GF_FLATTEN_HIERARCHY, t); }
 
-  void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
   bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
+  void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
 
-  void setHasSubGraphs(bool t) { updateFlags(GF_HAS_SUBGRAPHS, t); }
   bool hasSubGraphs() const { return testFlags(GF_HAS_SUBGRAPHS); }
+  void setHasSubGraphs(bool t) { updateFlags(GF_HAS_SUBGRAPHS, t); }
 
  protected:
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
