@@ -144,18 +144,9 @@ class Graph : public MBRObject {
   friend class GraphRefR;
   friend class GraphRefW;
 
-  enum Personality {
-    NONE = 0,
-    SOCIAL_MEDIA,
-    TIME_SERIES
-  };
   enum GraphStyle {
     DEFAULT_STYLE = 1,
     PACKED_SPHERES
-  };
-  enum WeightMethod {
-    NO_WEIGHT = 0,
-    CENTRALITY
   };
   
   Graph(int _dimensions, int _id = 0);
@@ -170,8 +161,6 @@ class Graph : public MBRObject {
     if (attr.weight > max_edge_weight) max_edge_weight = attr.weight;
     total_edge_weight += d;
   }
-  void setPersonality(Personality _personality) { personality = _personality; }
-  Personality getPersonality() const { return personality; }
 
   std::vector<int> getLocationGraphs() const;
   std::vector<int> getNestedGraphIds() const;
@@ -610,7 +599,6 @@ class Graph : public MBRObject {
   std::vector<std::shared_ptr<Graph> > final_graphs;
   std::map<skey, int> face_cache;
   bool has_node_selection = false; 
-  Personality personality = NONE;
   RawStatistics statistics;
   std::string keywords;
   int server_search_id = 0;

@@ -81,6 +81,12 @@ struct node_data_s {
 
 class NodeArray {
  public:
+  enum Personality {
+    NONE = 0,
+    SOCIAL_MEDIA,
+    TIME_SERIES
+  };
+
   friend class Graph;
   NodeArray();
 
@@ -89,6 +95,9 @@ class NodeArray {
   
   table::Table & getTable() { return nodes; }
   const table::Table & getTable() const { return nodes; }
+
+  void setPersonality(Personality _personality) { personality = _personality; }
+  Personality getPersonality() const { return personality; }
 
   void setNodeSizeMethod(const SizeMethod & m) { size_method = m; }
   const SizeMethod & getNodeSizeMethod() const { return size_method; }
@@ -366,6 +375,7 @@ class NodeArray {
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
   unsigned int flags = 0;
+  Personality personality = NONE;
 
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
