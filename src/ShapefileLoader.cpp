@@ -52,6 +52,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
+	graph->getNodeArray().setNodeVisibility(false);
       }
       assert(o->nVertices == 1);
       {
