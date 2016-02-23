@@ -588,8 +588,8 @@ DXFLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
 
   auto graph = std::make_shared<PlanarGraph>();
   graph->setNodeArray(initial_nodes);
-  graph->getNodeArray().setFaceVisibility(true);
-  graph->setHasSpatialData(true);
+  graph->getNodeArray().setHasSpatialData(true);
+  graph->setFaceVisibility(true);
 
   string line1, line2;
   while (!stream.eof() && !stream.fail()) {
