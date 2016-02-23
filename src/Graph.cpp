@@ -26,9 +26,7 @@ using namespace std;
 
 int Graph::next_id = 1;
 
-Graph::Graph(int _dimensions, int _id) : dimensions(_dimensions),
-					 id(_id)
-{
+Graph::Graph(int _id) : id(_id) {
   if (!id) id = next_id++;
 }
 
@@ -42,12 +40,8 @@ Graph::Graph(const Graph & other)
     faces(other.faces),
     face_attributes(other.face_attributes),
     edge_attributes(other.edge_attributes),
-    node_color_column(other.node_color_column),
     version(other.version),
-    dimensions(other.dimensions),
-    flags(other.flags),
-    source_id(other.source_id),
-    personality(other.personality)
+    source_id(other.source_id)
 {
   id = next_id++;
 }
@@ -102,7 +96,7 @@ Graph::setFaceColorByColumn(int column) {
 
 void
 Graph::randomizeGeometry(bool use_2d) {
-  assert(!hasSpatialData());
+  assert(!nodes->hasSpatialData());
   mbr = Rect2d();
   unsigned int num_nodes = getNodeArray().size();
   for (unsigned int i = 0; i < num_nodes; i++) {
@@ -114,7 +108,7 @@ Graph::randomizeGeometry(bool use_2d) {
     mbr.growToContain(v.x, v.y);
 
     auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get() && !graph->hasSpatialData()) {
+    if (graph.get() && !graph->nodes->hasSpatialData()) {
       graph->randomizeGeometry(use_2d);       
     }
   }
@@ -132,7 +126,7 @@ Graph::createRegionVBO(VBO & vbo) const {
   glm::vec3 normal(0.0f);
   auto & arc_geometry = nodes->getArcGeometry();
   
-  if (hasArcData()) {
+  if (nodes->hasArcData()) {
     vector<int> stored_arcs;
     stored_arcs.resize(arc_geometry.size());
 		       
@@ -226,7 +220,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
     return;
   }
 
-  if (hasArcData()) {
+  if (nodes->hasArcData()) {
     cerr << "loading arcs: this = " << typeid(*this).name() << endl;
     unsigned int num_vertices = 0, num_indices = 0;
     auto & arc_geometry = nodes->getArcGeometry();
@@ -304,7 +298,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
     graph_color_s sel_color = { 100, 200, 255, 255 };
     graph_color_s def_color = { 200, 200, 200, 255 };
     unsigned int vn = 0;
-    bool flatten = doFlattenHierarchy();
+    bool flatten = nodes->doFlattenHierarchy();
     unordered_set<pair<int, int>, pair_hash> processed_edges;
     auto end = end_edges();
     for (auto it = begin_edges(); it != end; ++it) {
@@ -594,7 +588,7 @@ Graph::relaxLinks() {
   // cerr << "avg edge weight = " << avg_edge_weight << endl;
   float alpha = getNodeArray().getAlpha2();
   auto & size_method = nodes->getNodeSizeMethod();
-  bool flatten = doFlattenHierarchy();
+  bool flatten = nodes->doFlattenHierarchy();
   unordered_set<pair<int, int>, pair_hash> processed_edges;
   
   auto end = end_edges();
@@ -769,10 +763,10 @@ Graph::extractLocationGraph(Graph & target_graph) {
   target_graph.getNodeArray().setSRID(4326);
   target_graph.getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
   target_graph.updateAppearance();
-  target_graph.getNodeArray().setNodeVisibility(true);
-  target_graph.getNodeArray().setEdgeVisibility(true);
-  target_graph.getNodeArray().setFaceVisibility(false);
-  target_graph.getNodeArray().setLabelVisibility(true);  
+  target_graph.setNodeVisibility(true);
+  target_graph.setEdgeVisibility(true);
+  target_graph.setFaceVisibility(false);
+  target_graph.setLabelVisibility(true);  
 }
 
 static bool compareCameraDistance(const pair<int, float> & a, const pair<int, float> & b) {
@@ -1017,7 +1011,7 @@ Graph::getSuitableFinalGraphCount() const {
 
 bool
 Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
-  if (getPersonality() != Graph::SOCIAL_MEDIA || !isTemporal()) {
+  if (nodes->getPersonality() != NodeArray::SOCIAL_MEDIA || !nodes->isTemporal()) {
     return false;
   }
 
@@ -1301,7 +1295,7 @@ Graph *
 Graph::getGraphById2(int graph_id) {
   if (graph_id == getId()) {
     return this;
-  } else if (hasSubGraphs()) {
+  } else if (nodes->hasSubGraphs()) {
     for (int i = 0; i < nodes->size(); i++) {
       auto & graph = getNodeArray().node_geometry[i].nested_graph;
       if (graph.get()) {
@@ -1317,7 +1311,7 @@ const Graph *
 Graph::getGraphById2(int graph_id) const {
   if (graph_id == getId()) {
     return this;
-  } else if (hasSubGraphs()) {
+  } else if (nodes->hasSubGraphs()) {
     for (int i = 0; i < nodes->size(); i++) {
       auto & graph = getNodeArray().node_geometry[i].nested_graph;
       if (graph.get()) {
@@ -1507,7 +1501,7 @@ Graph::applyGravity(float gravity) {
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 50.0f;
 	}
-	applyGravityToNode(factor * k, pd, td, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
       if (!processed_nodes[it->head]) {
 	processed_nodes[it->head] = true;
@@ -1518,7 +1512,7 @@ Graph::applyGravity(float gravity) {
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 50.0f;
 	}	
-	applyGravityToNode(factor * k, pd, td, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
     }
     while (!parent_nodes.empty()) {
@@ -1533,7 +1527,7 @@ Graph::applyGravity(float gravity) {
 	  parent_nodes.push_back(td.parent_node);
 	  factor = 50.0f;	 
 	}
-	applyGravityToNode(factor * k, pd, td, hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
     }
   }
