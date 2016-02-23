@@ -149,7 +149,7 @@ class Graph : public MBRObject {
     PACKED_SPHERES
   };
   
-  Graph(int _dimensions, int _id = 0);
+  Graph(int _id = 0);
   Graph(const Graph & other);
   Graph & operator= (const Graph & other) = delete;
 
@@ -421,7 +421,6 @@ class Graph : public MBRObject {
   NodeArray & getNodeArray() { return *nodes; }
   const NodeArray & getNodeArray() const { return *nodes; }
       
-  int getDimensions() const { return dimensions; }
   int getVersion() const { return version + nodes->getVersion(); }
 
   void createClusters();
@@ -591,7 +590,6 @@ class Graph : public MBRObject {
   short source_id = 0;
 
   int id;
-  int dimensions;
   int highlighted_node = -1;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
