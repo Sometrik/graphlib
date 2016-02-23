@@ -89,6 +89,8 @@ class NodeArray {
 
   friend class Graph;
   NodeArray();
+  NodeArray(const NodeArray & other) = delete;
+  NodeArray & operator=(const NodeArray & other) = delete;
 
   size_t size() const { return nodes.size(); }
   bool empty() const { return nodes.empty(); }
