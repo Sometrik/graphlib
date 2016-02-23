@@ -52,7 +52,9 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	graph = std::make_shared<PlanarGraph>();
 	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
-	graph->getNodeArray().setNodeVisibility(false);
+	graph->setNodeVisibility(false);
+	graph->setEdgeVisibility(false);
+	graph->setFaceVisibility(false);
       }
       assert(o->nVertices == 1);
       {
@@ -90,8 +92,9 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
-	graph->getNodeArray().setNodeVisibility(false);
-	graph->getNodeArray().setFaceVisibility(false);
+	graph->setNodeVisibility(false);
+	graph->setEdgeVisibility(true);
+	graph->setFaceVisibility(false);
       }
       {
 	int hyperedge_id = graph->addFace();
@@ -122,9 +125,9 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	graph->setNodeArray(initial_nodes);
 	graph->setHasSpatialData(true);
 	graph->setHasArcData(true);
-	graph->getNodeArray().setNodeVisibility(false);
-	graph->getNodeArray().setEdgeVisibility(false);
-	// graph->addUniversalRegion();
+	graph->setNodeVisibility(false);
+	graph->setEdgeVisibility(false);
+	graph->setFaceVisibility(true);
       }
       has_polygons = true;
       for (int j = 0; j < o->nParts; j++) {
