@@ -385,39 +385,6 @@ class Graph : public MBRObject {
   void setKeywords(const std::string & k) { keywords = k; }
   const std::string & getKeywords() const { return keywords; }
   
-  bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
-  Graph & updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); return *this; }
-
-  bool isTemporal() const { return testFlags(GF_TEMPORAL_GRAPH); }
-  Graph & setTemporal(bool t) { return updateFlags(GF_TEMPORAL_GRAPH, t); } 
-  
-  bool isComplexGraph() const { return testFlags(GF_COMPLEX); }
-  Graph & setComplexGraph(bool t) { return updateFlags(GF_COMPLEX, t); }
-
-  bool hasSpatialData() const { return testFlags(GF_HAS_SPATIAL_DATA); }
-  Graph & setHasSpatialData(bool t) { return updateFlags(GF_HAS_SPATIAL_DATA, t); }
-
-  bool hasArcData() const { return testFlags(GF_HAS_ARC_DATA); }
-  Graph & setHasArcData(bool t) { return updateFlags(GF_HAS_ARC_DATA, t); }
-
-  bool hasTextures() const { return testFlags(GF_HAS_TEXTURES); }
-  Graph & setHasTextures(bool t) { return updateFlags(GF_HAS_TEXTURES, t); }
-
-  bool hasDoubleBufferedVBO() const { return testFlags(GF_DOUBLE_BUFFERED_VBO); }
-  Graph & setDoubleBufferedVBO(bool t) { return updateFlags(GF_DOUBLE_BUFFERED_VBO, t); }
-
-  bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
-  Graph & setHasTemporalCoverage(bool t) { return updateFlags(GF_TEMPORAL_COVERAGE, t); } 
-
-  bool doFlattenHierarchy() const { return testFlags(GF_FLATTEN_HIERARCHY); }
-  Graph & setFlattenHierarchy(bool t) { return updateFlags(GF_FLATTEN_HIERARCHY, t); }
-
-  void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
-  bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
-
-  void setHasSubGraphs(bool t) { updateFlags(GF_HAS_SUBGRAPHS, t); }
-  bool hasSubGraphs() const { return testFlags(GF_HAS_SUBGRAPHS); }
-
   virtual void randomizeGeometry(bool use_2d = false);
   void refreshLayouts();
   std::vector<std::shared_ptr<Graph> > getNestedGraphs();
@@ -561,6 +528,8 @@ class Graph : public MBRObject {
       return null_geometry3;
     }
   }
+
+  glm::vec3 getNodePosition(int node_id) const;
   
   skey getNodeKey(int node_id) const;
       
@@ -612,6 +581,16 @@ class Graph : public MBRObject {
   void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
   int getDefaultSymbolId() const { return default_symbol_id; }
 
+  void setNodeVisibility(bool t) { show_nodes = t; }
+  void setEdgeVisibility(bool t) { show_edges = t; }
+  void setFaceVisibility(bool t) { show_faces = t; }
+  void setLabelVisibility(bool t) { show_labels = t; }
+
+  bool getNodeVisibility() const { return show_nodes; }
+  bool getEdgeVisibility() const { return show_edges; }
+  bool getFaceVisibility() const { return show_faces; }
+  bool getLabelVisibility() const { return show_labels; }
+
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -636,8 +615,6 @@ class Graph : public MBRObject {
   int id;
   int dimensions;
   int highlighted_node = -1;
-  // highlighted_region = -1;
-  unsigned int flags = 0;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
   std::shared_ptr<Graph> location_graph;
@@ -646,7 +623,6 @@ class Graph : public MBRObject {
   bool has_node_selection = false; 
   Personality personality = NONE;
   RawStatistics statistics;
-  std::string node_color_column;
   std::string keywords;
   int server_search_id = 0;
   bool is_loaded = false;
@@ -657,6 +633,7 @@ class Graph : public MBRObject {
   double total_outdegree = 0, total_indegree = 0;
   node_tertiary_data_s null_geometry3;
   int default_symbol_id = 0;
+  bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
 
   static int next_id;
 };

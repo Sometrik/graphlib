@@ -1341,6 +1341,16 @@ Graph::getGraphForWriting(int graph_id) {
   return GraphRefW(graph); 
 }
 
+glm::vec3
+Graph::getNodePosition(int node_id) const {
+  auto & td = getNodeTertiaryData(node_id);
+  glm::vec3 pos = nodes->getNodeData(node_id).position;
+  for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+    pos += nodes->getNodeData(p).position;
+  }
+  return pos;
+}
+  
 skey
 Graph::getNodeKey(int node_id) const {
   const table::Column & source_id_column = getNodeArray().getTable()["source"];

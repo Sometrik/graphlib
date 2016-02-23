@@ -245,16 +245,6 @@ class NodeArray {
   void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
   void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
 
-  void setNodeVisibility(bool t) { show_nodes = t; }
-  void setEdgeVisibility(bool t) { show_edges = t; }
-  void setFaceVisibility(bool t) { show_faces = t; }
-  void setLabelVisibility(bool t) { show_labels = t; }
-
-  bool getNodeVisibility() const { return show_nodes; }
-  bool getEdgeVisibility() const { return show_edges; }
-  bool getFaceVisibility() const { return show_faces; }
-  bool getLabelVisibility() const { return show_labels; }
-
   void setAlpha3(float f) { alpha = f; }
   void updateAlpha() { alpha *= 0.99f; }
   float getAlpha2() const { return alpha; }
@@ -298,8 +288,40 @@ class NodeArray {
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
   void setRandomPosition(int node_id);
+
+  bool isTemporal() const { return testFlags(GF_TEMPORAL_GRAPH); }
+  Graph & setTemporal(bool t) { return updateFlags(GF_TEMPORAL_GRAPH, t); } 
   
+  bool isComplexGraph() const { return testFlags(GF_COMPLEX); }
+  Graph & setComplexGraph(bool t) { return updateFlags(GF_COMPLEX, t); }
+
+  bool hasSpatialData() const { return testFlags(GF_HAS_SPATIAL_DATA); }
+  Graph & setHasSpatialData(bool t) { return updateFlags(GF_HAS_SPATIAL_DATA, t); }
+
+  bool hasArcData() const { return testFlags(GF_HAS_ARC_DATA); }
+  Graph & setHasArcData(bool t) { return updateFlags(GF_HAS_ARC_DATA, t); }
+
+  bool hasTextures() const { return testFlags(GF_HAS_TEXTURES); }
+  Graph & setHasTextures(bool t) { return updateFlags(GF_HAS_TEXTURES, t); }
+
+  bool hasDoubleBufferedVBO() const { return testFlags(GF_DOUBLE_BUFFERED_VBO); }
+  Graph & setDoubleBufferedVBO(bool t) { return updateFlags(GF_DOUBLE_BUFFERED_VBO, t); }
+
+  bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
+  Graph & setHasTemporalCoverage(bool t) { return updateFlags(GF_TEMPORAL_COVERAGE, t); } 
+
+  bool doFlattenHierarchy() const { return testFlags(GF_FLATTEN_HIERARCHY); }
+  Graph & setFlattenHierarchy(bool t) { return updateFlags(GF_FLATTEN_HIERARCHY, t); }
+
+  void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
+  bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
+
+  void setHasSubGraphs(bool t) { updateFlags(GF_HAS_SUBGRAPHS, t); }
+  bool hasSubGraphs() const { return testFlags(GF_HAS_SUBGRAPHS); }
+
  protected:
+  bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
+  void updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); }
 
  private:
   void lockReader() const {
@@ -328,11 +350,12 @@ class NodeArray {
   LabelStyle label_style = LABEL_PLAIN;
   float alpha = 0.0f;
   int srid = 0, version = 1;
-  bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
   int zerodegree_node_id = -1, pairs_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
-  
+  std::string node_color_column;
+  unsigned int flags = 0;
+
   mutable int num_readers = 0;
   mutable Mutex mutex, writer_mutex;
 };
