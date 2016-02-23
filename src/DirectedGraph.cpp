@@ -224,10 +224,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	    }
 	    if (np.first != np.second) {
 	      if (td2.indegree == 0 && td2.outdegree == 0) {
-		if (zerodegree_nodes.count(np.second) != 0) {
-		  removeChild(np.second);
-		  zerodegree_nodes.erase(np.second);
-		}
+		breakZeroDegreeNode(np.second);
 		assert(node_pairs.find(np.first) == node_pairs.end());
 		assert(node_pairs.find(np.second) == node_pairs.end());
 		int o = nodes.getPairsNode();
@@ -251,11 +248,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  }
 	  if (np.first != np.second) {
 	    if (td2.indegree == 0 && td2.outdegree == 0) {
-	      if (zerodegree_nodes.count(np.second) != 0) {
-		cerr << "DEBUG: removing node " << np.second << " from zero degree node (B)\n";
-		removeChild(np.second);
-		zerodegree_nodes.erase(np.second);
-	      }
+	      breakZeroDegreeNode(np.second);	      
 	      if (td1.indegree == 0 && td1.outdegree == 0) {
 		// pair was created
 	      } else if (!onedegree_nodes.count(np.second)) {
@@ -275,15 +268,11 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      breakNodePair(np.second);
 	    }
 
-	    auto it1 = onedegree_nodes.find(np.first);
-	    auto it2 = onedegree_nodes.find(np.second);
-	    if (it1 != onedegree_nodes.end() && np.second != it1->second && (td1.indegree != 0 || td2.outdegree != 0)) {
-	      removeChild(np.first);
-	      onedegree_nodes.erase(it1);
+	    if (td1.indegree != 0 || td1.outdegree != 0) {
+	      breakOneDegreeNode(np.first);
 	    }
-	    if (it2 != onedegree_nodes.end() && np.first != it2->second && (td2.indegree != 0 || td2.outdegree != 0)) {
-	      removeChild(np.second);
-	      onedegree_nodes.erase(it2);	      
+	    if (td2.indegree != 0 || td2.outdegree != 0) {
+	      breakOneDegreeNode(np.second);
 	    }
 	  }
 	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
