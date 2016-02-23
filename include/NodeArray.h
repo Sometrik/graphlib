@@ -16,6 +16,17 @@
 #include <glm/glm.hpp>
 #include <string>
 
+#define GF_TEMPORAL_GRAPH	1
+#define GF_HAS_SPATIAL_DATA	4
+#define GF_HAS_ARC_DATA		8
+#define GF_COMPLEX		16
+#define GF_HAS_TEXTURES		32
+#define GF_PER_NODE_COLORS	64
+#define GF_HAS_SUBGRAPHS	128
+#define GF_DOUBLE_BUFFERED_VBO	256
+#define GF_TEMPORAL_COVERAGE	512
+#define GF_FLATTEN_HIERARCHY	1024
+
 #define DEFAULT_PROFILE	0
 #define PENDING_PROFILE	1
 #define BOT_PROFILE	2
