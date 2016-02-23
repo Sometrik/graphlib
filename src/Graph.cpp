@@ -381,7 +381,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
   vector<node_vbo_s> new_geometry;
   unsigned int edge_count = 0;
   list<int> parent_nodes;
-  graph_color_s parent_color = { 100, 200, 255, 0 };
+  graph_color_s parent_color = { 50, 50, 255, 0 };
   graph_color_s def_color = { 200, 200, 200, 255 };
   auto & size_method = nodes->getNodeSizeMethod();
   auto end = end_edges();
