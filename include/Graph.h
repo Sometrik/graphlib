@@ -568,6 +568,14 @@ class Graph : public MBRObject {
   bool getFaceVisibility() const { return show_faces; }
   bool getLabelVisibility() const { return show_labels; }
 
+  const glm::vec4 & getDefaultNodeColor() const { return node_color; }
+  const glm::vec4 & getDefaultEdgeColor() const { return edge_color; }
+  const glm::vec4 & getDefaultFaceColor() const { return face_color; }
+  
+  void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
+  void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
+  void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
+
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -609,7 +617,8 @@ class Graph : public MBRObject {
   node_tertiary_data_s null_geometry3;
   int default_symbol_id = 0;
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
-
+  glm::vec4 node_color, edge_color, face_color;
+  
   static int next_id;
 };
 

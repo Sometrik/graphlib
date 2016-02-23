@@ -259,14 +259,6 @@ class NodeArray {
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
   
-  const glm::vec4 & getDefaultNodeColor() const { return node_color; }
-  const glm::vec4 & getDefaultEdgeColor() const { return edge_color; }
-  const glm::vec4 & getDefaultFaceColor() const { return face_color; }
-  
-  void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
-  void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
-  void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
-
   void setAlpha3(float f) { alpha = f; }
   void updateAlpha() { alpha *= 0.99f; }
   float getAlpha2() const { return alpha; }
@@ -372,7 +364,6 @@ class NodeArray {
   LabelStyle label_style = LABEL_PLAIN;
   float alpha = 0.0f;
   int srid = 0, version = 1;
-  glm::vec4 node_color, edge_color, face_color;
   int zerodegree_node_id = -1, pairs_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
