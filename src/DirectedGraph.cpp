@@ -60,6 +60,15 @@ DirectedGraph::breakOneDegreeNode(int node_id) {
   }
 }
 
+void
+DirectedGraph::breakZeroDegreeNode(int node_id) {
+  auto it = zerodegree_nodes.find(node_id);
+  if (it != zerodegree_nodes.end()) {
+    removeChild(node_id);
+    zerodegree_nodes.erase(it);
+  }
+}
+
 bool
 DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
   if (getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {

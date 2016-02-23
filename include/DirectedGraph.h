@@ -32,8 +32,10 @@ class DirectedGraph : public Graph {
     max_node_coverage_weight = 0.0f;
   }
 
+ protected:
   void breakNodePair(int node_id);
   void breakOneDegreeNode(int node_id);
+  void breakZeroDegreeNode(int node_id);
   
  private:
   std::unordered_set<int> seen_nodes;
