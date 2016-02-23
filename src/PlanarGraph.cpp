@@ -4,7 +4,7 @@
 
 using namespace std;
 
-PlanarGraph::PlanarGraph(int _id) : Graph(2, _id) {
+PlanarGraph::PlanarGraph(int _id) : Graph(_id) {
   
 }
 
@@ -16,9 +16,11 @@ std::shared_ptr<Graph>
 PlanarGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new PlanarGraph(getId()));
   graph->setLocationGraphValid(false);
-  graph->setTemporal(isTemporal());
-  graph->setPersonality(getPersonality());
-  graph->setHasTextures(hasTextures());
+  graph->setNodeVisibility(getNodeVisibility());
+  graph->setEdgeVisibility(getEdgeVisibility());
+  graph->setFaceVisibility(getFaceVisibility());
+  graph->setLabelVisibility(getLabelVisibility());
+  graph->setLineWidth(getLineWidth());
   graph->setNodeArray(nodes);
   
   return graph;
@@ -39,7 +41,7 @@ PlanarGraph::mapFacesToNodes(Graph & target) {
     target.setNodeColor2(i, getRegionColor(region));
   }
   unsigned int added_edge_count = 0;
-  bool has_arcs = hasArcData();
+  bool has_arcs = getNodeArray().hasArcData();
   for (unsigned int i = 0; i < getFaceCount(); i++) {
     int edge = getFaceFirstEdge(i);
     glm::vec3 center;
@@ -93,7 +95,7 @@ PlanarGraph::mapRegionsToNodes(Graph & target) {
     target.setNodeColor2(i, getRegionColor(region));
   }
   unsigned int added_edge_count = 0;
-  bool has_arcs = hasArcData();
+  bool has_arcs = getNodeArray().hasArcData();
   for (unsigned int i = 0; i < getFaceCount(); i++) {
     int edge = getFaceFirstEdge(i);
     glm::vec3 center;
@@ -143,7 +145,7 @@ PlanarGraph::calculateRegionAreas() {
   auto & areas = regions.addDoubleColumn("Area");
   auto & g = dynamic_cast<ColumnArc &>(edges["_geometry"]);
 
-  bool has_arcs = hasArcData();
+  bool has_arcs = getNodeArray().hasArcData();
   assert(has_arcs);
 
   for (unsigned int region = 0; region < getRegionCount(); region++) {
@@ -212,7 +214,7 @@ PlanarGraph::colorizeRegions() {
 
 void
 PlanarGraph::updateMBR(int edge) {
-  if (hasArcData()) {
+  if (getNodeArray().hasArcData()) {
 #if 0
     auto & g = dynamic_cast<ColumnArc&>(getEdgeData()["_geometry"]);
     auto & arc = g.getArc(edge);
