@@ -139,9 +139,9 @@ NodeArray::setLabelTexture(const skey & key, int texture) {
 
 void
 NodeArray::setRandomPosition(int node_id) {
-  glm::vec3 v1( 10.0 * rand() / RAND_MAX - 5,
-		10.0 * rand() / RAND_MAX - 5,
-		10.0 * rand() / RAND_MAX - 5
+  glm::vec3 v1( 100.0 * rand() / RAND_MAX - 50,
+		100.0 * rand() / RAND_MAX - 50,
+		0 // 100.0 * rand() / RAND_MAX - 50
 		);
   setPosition(node_id, v1);
 }
