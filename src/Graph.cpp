@@ -26,7 +26,12 @@ using namespace std;
 
 int Graph::next_id = 1;
 
-Graph::Graph(int _id) : id(_id) {
+Graph::Graph(int _id)
+  : id(_id),
+    node_color(0.0f, 0.0f, 0.0f, 0.0f),
+    edge_color(0.0f, 0.0f, 0.0f, 0.0f),
+    face_color(0.0f, 0.0f, 0.0f, 0.0f)
+{
   if (!id) id = next_id++;
 }
 
@@ -129,7 +134,7 @@ Graph::createRegionVBO(VBO & vbo) const {
     for (unsigned int face = 0; face < getFaceCount(); face++) {   
       auto this_color = getFaceColor(face);
       glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
-      if (!color.w || 1) color = nodes->getDefaultFaceColor();
+      if (!color.w || 1) color = getDefaultFaceColor();
       if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
       
       list<list<int> > part_arcs;
@@ -197,7 +202,6 @@ Graph::createRegionVBO(VBO & vbo) const {
     cerr << "done uploading\n";
     
   } else {
-    return;
     assert(0);
   }
 }
@@ -241,10 +245,10 @@ Graph::createEdgeVBO(VBO & vbo) const {
 
 #if 0
     glm::vec4 color(0.0f);
-    if (!color.w || 1) color = nodes->getDefaultEdgeColor();
+    if (!color.w || 1) color = getDefaultEdgeColor();
     if (!color.w) color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 #else
-    glm::vec4 color = nodes->getDefaultEdgeColor();
+    glm::vec4 color = getDefaultEdgeColor();
 #endif
 
     // premultiply
