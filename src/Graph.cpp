@@ -119,6 +119,8 @@ Graph::createRegionVBO(VBO & vbo) const {
   if (!getFaceCount()) {
     return;
   }
+
+  assert(getFaceVisibility());
   
   vector<arc_data_2d_s> new_geometry;
   vector<unsigned int> front_indices, back_indices;
@@ -202,6 +204,7 @@ Graph::createRegionVBO(VBO & vbo) const {
     cerr << "done uploading\n";
     
   } else {
+    return;
     assert(0);
   }
 }
