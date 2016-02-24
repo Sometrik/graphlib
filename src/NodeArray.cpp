@@ -11,13 +11,7 @@
 
 using namespace std;
 
-NodeArray::NodeArray()
-  : size_method(SizeMethod::CONSTANT, 1.0f),
-    node_color(0.0f, 0.0f, 0.0f, 0.0f),
-    edge_color(0.0f, 0.0f, 0.0f, 0.0f),
-    face_color(0.0f, 0.0f, 0.0f, 0.0f)
-{
-  
+NodeArray::NodeArray() : size_method(SizeMethod::CONSTANT, 1.0f) {
 }
 
 void
