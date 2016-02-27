@@ -590,6 +590,7 @@ DXFLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
   graph->setNodeArray(initial_nodes);
   graph->getNodeArray().setHasSpatialData(true);
   graph->setFaceVisibility(true);
+  graph->setDefaultFaceColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
 
   string line1, line2;
   while (!stream.eof() && !stream.fail()) {
@@ -624,8 +625,9 @@ DXFLoader::process3DFace(Graph & graph, map<string, int> & nodes, map<string, in
   DXFColor c = fromACIColor(face.color);
   // int region_id = graph.addRegion();
   int face_id = graph.addFace();
-  graph.setFaceColor(face_id, { c.red, c.green, c.blue });
-  graph.setFaceNormal(face_id, face.normal);
+  auto & fd = graph.getFaceAttributes(face_id);
+  fd.color = { c.red, c.green, c.blue };
+  // fd.normal = face.normal;
   vector<int> face_nodes;      
   for (auto & v : face.v) {
     face_nodes.push_back(createNode3D(graph, nodes, v.x, v.y, v.z));	
