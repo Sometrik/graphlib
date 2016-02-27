@@ -35,7 +35,7 @@ edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face,
 };
 
 struct face_data_s {
-  glm::vec3 normal;
+  // glm::vec3 normal;
   glm::vec2 centroid;
   graph_color_s color;
   Rect2d mbr;
@@ -195,7 +195,6 @@ class Graph : public MBRObject {
   }
   void setEdgeFace(int edge, int face) {
     auto & ed = getEdgeAttributes(edge);
-    assert(ed.face <= 0); // ??? universal?
     ed.face = face;
     if (face != -1) {
       ed.next_face_edge = getFaceFirstEdge(face);
@@ -347,17 +346,9 @@ class Graph : public MBRObject {
         
   bool hasNodeSelection() const { return has_node_selection; }
   void selectNodes(int node_id = -1, int depth = 0);
-
-  const graph_color_s & getFaceColor(int i) const { return face_attributes[i].color; }
-  void setFaceColor(int i, const graph_color_s & c) { face_attributes[i].color = c; }
-  void setFaceNormal(int i, const glm::vec3 & n) { face_attributes[i].normal = n; }
-  void setFaceCentroid(int i, const glm::vec2 & c) { face_attributes[i].centroid = c; }
   
-  // int getHighlightedRegion() const { return highlighted_region; }
-  // void highlightRegion(int i) { highlighted_region = i; }
   void clearHighlight() {
     highlighted_node = -1;
-    // highlighted_region = -1;
   }
 
   void setKeywords(const std::string & k) { keywords = k; }
@@ -393,7 +384,7 @@ class Graph : public MBRObject {
 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-    face_attributes.push_back({ glm::vec3(1, 0, 0), glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
+    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
     faces.addRow();
     return face_id;
   }
