@@ -9,6 +9,7 @@
 #include <cstring>
 #include <cassert>
 #include <shapefil.h>
+#include <iostream>
 
 using namespace std;
 using namespace table;
@@ -23,7 +24,10 @@ public:
   }
 
   void open(const std::string & fn) {
-    h = DBFOpen(fn.c_str(), "rb");  
+    h = DBFOpen(fn.c_str(), "rb");
+    if (!h) {
+      cerr << "failed to open DBF " << fn << endl;
+    }
   }
   
   int readIntegerAttribute(int rec, int field) { return DBFReadIntegerAttribute(h, rec, field); }
@@ -50,8 +54,8 @@ public:
   }
   bool readBoolAttribute(int rec, int field) { return DBFReadLogicalAttribute(h, rec, field); }
   bool isNull(int rec, int field) { return DBFIsAttributeNULL(h, rec, field); }
-  unsigned int getRecordCount() { return DBFGetRecordCount(h); }
-  unsigned int getFieldCount() { return DBFGetFieldCount(h); }
+  unsigned int getRecordCount() { return h ? DBFGetRecordCount(h) : 0; }
+  unsigned int getFieldCount() { return h ? DBFGetFieldCount(h) : 0; }
   string getFieldName(int field) {
     char fieldname[255];
     DBFFieldType type = DBFGetFieldInfo(h, field, fieldname, 0, 0);
