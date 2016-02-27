@@ -192,14 +192,9 @@ Graph::createRegionVBO(VBO & vbo) const {
     }
     
     back_indices.insert(back_indices.begin(), front_indices.begin(), front_indices.end());
-    
-    cerr << "uploading, i = " << back_indices.size() << ", g = " << new_geometry.size() << endl;
-    
+       
     vbo.upload(VBO::ARCS_2D, &(new_geometry.front()), new_geometry.size() * sizeof(arc_data_2d_s));
-    vbo.uploadIndices(&(back_indices.front()), back_indices.size() * sizeof(unsigned int));
-
-    cerr << "done uploading\n";
-    
+    vbo.uploadIndices(&(back_indices.front()), back_indices.size() * sizeof(unsigned int));    
   } else {
     cerr << "creating simple region VBO, faces = " << getFaceCount() << "\n";
 
@@ -254,7 +249,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
   }
 
   if (nodes->hasArcData()) {
-    cerr << "loading arcs: this = " << typeid(*this).name() << endl;
+    cerr << "loading arcs" << endl;
     unsigned int num_vertices = 0, num_indices = 0;
     auto & arc_geometry = nodes->getArcGeometry();
     for (unsigned int i = 0; i < getEdgeCount(); i++) {
@@ -272,7 +267,6 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	num_indices += (arc.data.size() - 1) * 2;
       }
     }
-    cerr << "edges = " << getEdgeCount() << " edge vertices = " << num_vertices << ", indices = " << num_indices << endl;
 
     std::unique_ptr<arc_data_2d_s[]> new_geometry(new arc_data_2d_s[num_vertices]);
     std::unique_ptr<unsigned int[]> indices(new unsigned int[num_indices]);
@@ -317,8 +311,6 @@ Graph::createEdgeVBO(VBO & vbo) const {
 
     assert(in <= num_indices);
     assert(vn <= num_vertices);
-
-    cerr << "uploading, vbo = " << &vbo << ", edges = " << getEdgeCount() << ", in = " << in << ", vn = " << vn << "\n";
     
     vbo.upload(VBO::ARCS_2D, new_geometry.get(), vn * sizeof(arc_data_2d_s));
     vbo.uploadIndices(indices.get(), in * sizeof(unsigned int));
