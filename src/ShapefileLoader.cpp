@@ -286,7 +286,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
       area *= 0.5;
       centroid_x /= (6.0*area);
       centroid_y /= (6.0*area);
-      graph->setFaceCentroid(face_id, glm::vec2(centroid_x, centroid_y));
+      graph->getFaceAttributes(face_id).centroid = glm::vec2(centroid_x, centroid_y);
 	
       SHPDestroyObject(o);
     }
