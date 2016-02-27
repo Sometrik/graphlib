@@ -121,26 +121,23 @@ Graph::createRegionVBO(VBO & vbo) const {
   }
 
   assert(getFaceVisibility());
-  
-  vector<arc_data_2d_s> new_geometry;
-  vector<unsigned int> front_indices, back_indices;
-
-  glm::vec3 normal(0.0f);
-  auto & arc_geometry = nodes->getArcGeometry();
-  
+    
   if (nodes->hasArcData()) {
+    vector<arc_data_2d_s> new_geometry;
+    vector<unsigned int> front_indices, back_indices;
+
+    auto & arc_geometry = nodes->getArcGeometry();
     vector<int> stored_arcs;
     stored_arcs.resize(arc_geometry.size());
 		       
     cerr << "creating complex region VBO, faces = " << getFaceCount() << "\n";
     for (unsigned int face = 0; face < getFaceCount(); face++) {   
-      auto this_color = getFaceColor(face);
+      auto & this_color = getFaceAttributes(face).color;
       glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
       if (!color.w || 1) color = getDefaultFaceColor();
       if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
       
       list<list<int> > part_arcs;
-      // part_arcs.push_back(list<int>());
       int edge = getFaceFirstEdge(face);
       int prev_node = -1;
       while (edge != -1) {
@@ -204,8 +201,42 @@ Graph::createRegionVBO(VBO & vbo) const {
     cerr << "done uploading\n";
     
   } else {
-    return;
-    assert(0);
+    cerr << "creating simple region VBO, faces = " << getFaceCount() << "\n";
+
+    vector<arc_data_3d_s> new_geometry;
+    vector<unsigned int> indices;
+    glm::vec3 normal;
+
+    for (unsigned int face = 0; face < getFaceCount(); face++) {   
+      auto & this_color = getFaceAttributes(face).color;
+      glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
+      if (!color.w) color = getDefaultFaceColor();
+      if (!color.w) color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+      int first_index = new_geometry.size();
+      int edge = getFaceFirstEdge(face);
+      int vi = 0;
+      while (edge != -1) {
+	auto & ed = getEdgeAttributes(edge);
+	auto & nd = nodes->getNodeData(ed.tail);
+	if (vi >= 2) {
+	  indices.push_back(first_index);
+	  indices.push_back(first_index + vi - 1);
+	  indices.push_back(first_index + vi);
+	}
+	new_geometry.push_back({ (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), nd.position, normal });
+	vi++;
+	edge = getNextFaceEdge(edge);
+      }
+    }
+
+    if (!new_geometry.empty() && !indices.empty()) {
+      vbo.upload(VBO::ARCS_3D, &(new_geometry.front()), new_geometry.size() * sizeof(arc_data_3d_s));
+      vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
+    } else {
+      cerr << "skipping VBO for Graph " << getId() << "\n";
+      assert(0);
+    }
   }
 }
 
@@ -1466,7 +1497,7 @@ Graph::updateAppearance() {
 	  }    
 	}
       }
-      cerr << "setting label for face " << i << ": " << label << endl;
+      if (!label.empty()) cerr << "setting label for face " << i << ": " << label << endl;
       getFaceAttributes(i).setLabel(label);
     }
   }
