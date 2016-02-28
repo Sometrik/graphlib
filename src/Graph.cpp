@@ -230,7 +230,6 @@ Graph::createRegionVBO(VBO & vbo) const {
       vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
     } else {
       cerr << "skipping VBO for Graph " << getId() << "\n";
-      assert(0);
     }
   }
 }
@@ -417,7 +416,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, pos, nd.age, size, nd.texture, nd.flags });
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!stored_nodes[it->head]) {
@@ -430,7 +429,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, pos, nd.age, size, nd.texture, nd.flags });
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     edge_count++;
@@ -449,7 +448,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, nd.normal, pos, nd.age, size, nd.texture, nd.flags });
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
@@ -459,56 +458,90 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
   vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
 }
 
+static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & nd, const node_tertiary_data_s & td, float size, std::vector<node_billboard_vbo_s> & new_geometry, std::vector<unsigned int> & indices) {
+  static graph_color_s parent_color = { 50, 50, 255, 0 };
+  static graph_color_s def_color = { 200, 200, 200, 255 };
+  const graph_color_s & col = td.child_count ? parent_color : def_color;
+
+  unsigned int base = indices.size();
+  float hs = size / 2.0f;
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, -hs)), nd.age, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, +hs)), nd.age, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, +hs)), nd.age, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, -hs)), nd.age, nd.texture, nd.flags });
+
+  indices.push_back(base + 0);
+  indices.push_back(base + 1);
+  indices.push_back(base + 3);
+  indices.push_back(base + 1);
+  indices.push_back(base + 2);
+  indices.push_back(base + 3);
+}
+
 void
 Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {
   if (!nodes->size()) {
     return;
   }
 
-  assert(0);
+  std::vector<node_billboard_vbo_s> new_geometry;
+  std::vector<unsigned int> indices;
 
-  std::unique_ptr<vbo_data2_s[]> data(new vbo_data2_s[4 * nodes->size()]);
-  std::unique_ptr<unsigned int[]> indices(new unsigned int[6 * nodes->size()]);
-  
-  vbo_data2_s * current_data = data.get();
-  unsigned int * current_index = indices.get();
-
-  glm::vec3 normal(1.0f, 0.0f, 0.0f);
-  int idx = 0;
-
+  vector<bool> stored_nodes;
+  stored_nodes.resize(nodes->size());
+  list<int> parent_nodes;
   auto & size_method = nodes->getNodeSizeMethod();
 
-  for (int i = 0; i < nodes->size(); i++) { 
-    auto & pd = getNodeArray().getNodeData(i);
-    auto & td = getNodeTertiaryData(i);
-    
-    int texture = pd.texture;
-    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size()) / node_scale;
-    
-    glm::vec3 v = pd.position;
-    glm::vec4 color = { 200, 200, 200, 255 }; // (pd.color.r / 255.0f, pd.color.g / 255.0f, pd.color.b / 255.0f, pd.color.a / 255.0f);
-    
-    float tx1 = (texture % 64) * 64.0f / atlas.getWidth(), tx2 = (texture % 64 + 1) * 64.0f / atlas.getHeight();
-    float ty1 = int(texture / 64) * 64.0f / atlas.getWidth(), ty2 = (int(texture / 64) + 1) * 64.0f / atlas.getHeight();
-        
-    *(current_data++) = { glm::vec2(tx1, ty1), color, normal, glm::vec3(v.x - size / 2, v.y + size / 2, v.z) };
-    *(current_data++) = { glm::vec2(tx1, ty2), color, normal, glm::vec3(v.x - size / 2, v.y - size / 2, v.z) };
-    *(current_data++) = { glm::vec2(tx2, ty2), color, normal, glm::vec3(v.x + size / 2, v.y - size / 2, v.z) };
-    *(current_data++) = { glm::vec2(tx2, ty1), color, normal, glm::vec3(v.x + size / 2, v.y + size / 2, v.z) };
-
-    *current_index++ = idx + 0;
-    *current_index++ = idx + 1;
-    *current_index++ = idx + 3;
-    *current_index++ = idx + 1;
-    *current_index++ = idx + 2;
-    *current_index++ = idx + 3;
-
-    idx += 4;
+  auto end = end_edges();
+  for (auto it = begin_edges(); it != end; ++it) {
+    assert(it->tail >= 0 && it->tail < nodes->size());
+    assert(it->head >= 0 && it->head < nodes->size());
+    if (!stored_nodes[it->tail]) {
+      stored_nodes[it->tail] = true;
+      auto & nd = nodes->getNodeData(it->tail);
+      auto & td = getNodeTertiaryData(it->tail);
+      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+      auto pos = nd.position;
+      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	pos += nodes->getNodeData(p).position;
+      }
+      storeNodePosition(pos, nd, td, size, new_geometry, indices);      
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
+    }
+    if (!stored_nodes[it->head]) {
+      stored_nodes[it->head] = true;
+      auto & nd = nodes->getNodeData(it->head);
+      auto & td = getNodeTertiaryData(it->head);
+      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+      auto pos = nd.position;
+      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	pos += nodes->getNodeData(p).position;
+      }
+      storeNodePosition(pos, nd, td, size, new_geometry, indices);      
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
+    }
   }
 
+  while (!parent_nodes.empty()) {
+    int n = parent_nodes.front();
+    parent_nodes.pop_front();
+    if (!stored_nodes[n]) {
+      stored_nodes[n] = true;
+      auto & nd = nodes->getNodeData(n);
+      auto & td = getNodeTertiaryData(n);
+      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+      auto pos = nd.position;
+      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+	pos += nodes->getNodeData(p).position;
+      }
+      storeNodePosition(pos, nd, td, size, new_geometry, indices);      
+      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
+    }
+  }
+    
   vbo.setDrawType(VBO::TRIANGLES);
-  vbo.uploadIndices(indices.get(), nodes->size() * 6 * sizeof(unsigned int));
-  vbo.upload(VBO::T2F_C4F_N3F_V3F, data.get(), nodes->size() * 4 * sizeof(vbo_data2_s));
+  vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
+  vbo.upload(VBO::NODE_BILLBOARDS, &(new_geometry.front()), new_geometry.size() * sizeof(node_billboard_vbo_s));
 }
 
 #define LABEL_FLAG_CENTER	1
