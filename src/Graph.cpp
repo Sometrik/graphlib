@@ -458,17 +458,22 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
   vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
 }
 
-static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & nd, const node_tertiary_data_s & td, float size, std::vector<node_billboard_vbo_s> & new_geometry, std::vector<unsigned int> & indices) {
+static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & nd, const node_tertiary_data_s & td, float size, std::vector<node_billboard_vbo_s> & new_geometry, std::vector<unsigned int> & indices, const TextureAtlas & atlas) {
   static graph_color_s parent_color = { 50, 50, 255, 0 };
   static graph_color_s def_color = { 200, 200, 200, 255 };
   const graph_color_s & col = td.child_count ? parent_color : def_color;
 
-  unsigned int base = indices.size();
+  int images_per_row = atlas.getWidth() / atlas.getBlockSize();
+  int atlas_col = nd.texture % image_per_row, atlas_row = nd.texture / images_per_row;
+  float tx1 = atlas_col * atlas.getBlockSize() / atlas.getWidth(), tx2 = (atlas_col + 1) * atlas.getBlockSize() / atlas.getHeight();
+  float ty1 = atlas_row * atlas.getBlockSize() / atlas.getWidth(), ty2 = (atlas_row + 1) * atlas.getBlockSize() / atlas.getHeight();
+
+  unsigned int base = new_geometry.size();
   float hs = size / 2.0f;
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, -hs)), nd.age, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, +hs)), nd.age, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, +hs)), nd.age, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, -hs)), nd.age, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, -hs)), glm::packHalf2x16(glm::vec2(tx1, ty1)), nd.age });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, +hs)), glm::packHalf2x16(glm::vec2(tx1, ty2)), nd.age });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, +hs)), glm::packHalf2x16(glm::vec2(tx2, ty2)), nd.age });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, -hs)), glm::packHalf2x16(glm::vec2(tx2, ty1)), nd.age });
 
   indices.push_back(base + 0);
   indices.push_back(base + 1);
