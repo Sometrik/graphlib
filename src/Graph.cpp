@@ -464,16 +464,15 @@ static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & 
   const graph_color_s & col = td.child_count ? parent_color : def_color;
 
   int images_per_row = atlas.getWidth() / atlas.getBlockSize();
-  int atlas_col = nd.texture % image_per_row, atlas_row = nd.texture / images_per_row;
+  int atlas_col = nd.texture % images_per_row, atlas_row = nd.texture / images_per_row;
   float tx1 = atlas_col * atlas.getBlockSize() / atlas.getWidth(), tx2 = (atlas_col + 1) * atlas.getBlockSize() / atlas.getHeight();
   float ty1 = atlas_row * atlas.getBlockSize() / atlas.getWidth(), ty2 = (atlas_row + 1) * atlas.getBlockSize() / atlas.getHeight();
 
   unsigned int base = new_geometry.size();
-  float hs = size / 2.0f;
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, -hs)), glm::packHalf2x16(glm::vec2(tx1, ty1)), nd.age });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-hs, +hs)), glm::packHalf2x16(glm::vec2(tx1, ty2)), nd.age });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, +hs)), glm::packHalf2x16(glm::vec2(tx2, ty2)), nd.age });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+hs, -hs)), glm::packHalf2x16(glm::vec2(tx2, ty1)), nd.age });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-1, -1)), glm::packHalf2x16(glm::vec2(tx1, ty1)), nd.age, size, 0.0f });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-1, +1)), glm::packHalf2x16(glm::vec2(tx1, ty2)), nd.age, size, 0.0f });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+1, +1)), glm::packHalf2x16(glm::vec2(tx2, ty2)), nd.age, size, 0.0f });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+1, -1)), glm::packHalf2x16(glm::vec2(tx2, ty1)), nd.age, size, 0.0f });
 
   indices.push_back(base + 0);
   indices.push_back(base + 1);
@@ -510,7 +509,7 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      storeNodePosition(pos, nd, td, size, new_geometry, indices);      
+      storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!stored_nodes[it->head]) {
@@ -522,7 +521,7 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      storeNodePosition(pos, nd, td, size, new_geometry, indices);      
+      storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
@@ -539,7 +538,7 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      storeNodePosition(pos, nd, td, size, new_geometry, indices);      
+      storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
