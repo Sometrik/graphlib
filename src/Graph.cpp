@@ -462,12 +462,13 @@ static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & 
   static graph_color_s parent_color = { 50, 50, 255, 0 };
   static graph_color_s def_color = { 200, 200, 200, 255 };
   const graph_color_s & col = td.child_count ? parent_color : def_color;
-
+  float scaling = td.child_count ? 0.0 : 1.0;
+  
   unsigned int base = new_geometry.size();
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
 
   indices.push_back(base + 0);
   indices.push_back(base + 1);
@@ -1240,7 +1241,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       processed_nodes[it->tail] = true;      
       auto & pd = getNodeArray().getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+      if ((!pd.label.empty() || td.child_count) && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
 	auto pos = pd.position;
 	for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
@@ -1255,7 +1256,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       processed_nodes[it->head] = true;     
       auto & pd = getNodeArray().getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+      if ((!pd.label.empty() || td.child_count) && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
 	auto pos = pd.position;
 	for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
@@ -1274,7 +1275,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       processed_nodes[id] = true;
       auto & pd = getNodeArray().getNodeData(id);
       auto & td = getNodeTertiaryData(id);
-      if (!pd.label.empty() && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+      if ((!pd.label.empty() || td.child_count) && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
 	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, id });	
       }
@@ -1556,7 +1557,7 @@ Graph::applyGravity(float gravity) {
 	float factor = 1.0f;
 	if (td.parent_node >= 0) {
 	  parent_nodes.push_back(td.parent_node);
-	  factor = 50.0f;
+	  factor = 96.0f;
 	}
 	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
@@ -1567,7 +1568,7 @@ Graph::applyGravity(float gravity) {
 	float factor = 1.0f;
 	if (td.parent_node >= 0) {
 	  parent_nodes.push_back(td.parent_node);
-	  factor = 50.0f;
+	  factor = 96.0f;
 	}	
 	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
       }
