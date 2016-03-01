@@ -22,6 +22,7 @@ struct node_tertiary_data_s {
   long long coverage = 0;
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
+  float age = 0.0;
 };
 
 struct edge_data_s {
@@ -126,6 +127,7 @@ class Graph : public MBRObject {
 
   void addChild(int parent, int child);
   void removeChild(int child);
+  void removeAllChildren();
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
@@ -200,8 +202,8 @@ class Graph : public MBRObject {
 
   bool hasEdge(int n1, int n2) const;
 
-  int addNode(NodeType type = NODE_ANY, float age = 0.0f) {
-    int node_id = nodes->add(type, age);
+  int addNode(NodeType type = NODE_ANY) {
+    int node_id = nodes->add(type);
     if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
     return node_id;
   }

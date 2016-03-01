@@ -486,11 +486,24 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
 
   std::vector<node_billboard_vbo_s> new_geometry;
   std::vector<unsigned int> indices;
+  auto & size_method = nodes->getNodeSizeMethod();
 
+#if 1
+  auto end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & nd = nodes->getNodeData(*it);
+    auto & td = getNodeTertiaryData(*it);
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+    auto pos = nd.position;
+    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      pos += nodes->getNodeData(p).position;
+    }
+    storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
+  }
+#else
   vector<bool> stored_nodes;
   stored_nodes.resize(nodes->size());
   list<int> parent_nodes;
-  auto & size_method = nodes->getNodeSizeMethod();
 
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -538,7 +551,8 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
-    
+#endif
+  
   vbo.setDrawType(VBO::TRIANGLES);
   vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
   vbo.upload(VBO::NODE_BILLBOARDS, &(new_geometry.front()), new_geometry.size() * sizeof(node_billboard_vbo_s));
@@ -1075,6 +1089,9 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
 
   unsigned int count = getSuitableFinalGraphCount();
   if (final_graphs.size() != count) {
+    if (!final_graphs.empty()) {
+      final_graphs.front().removeAllChildren();
+    }
     final_graphs.clear();
     cerr << "CREATING FINALs!\n";
     if (count == 5) {
@@ -1718,4 +1735,20 @@ Graph::removeChild(int child) {
     nodes->getNodeData(child).position += nodes->getNodeData(parent).position;
     version++;
   }        
+}
+
+void
+Graph::removeAllChildren() {
+  for (int i = 0; i < nodes->size(); i++) {
+    auto & nd = nodes->getNodeData(i);
+    auto & td = node_geometry3[i];
+    if (td.child_count) {
+      td.child_count = 0;
+      td.first_child = -1;
+    }
+    if (td.parent_node != -1) {
+      nd.position = getNodePosition(i);
+      td.parent_node = -1;
+    }
+  }
 }
