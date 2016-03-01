@@ -81,53 +81,62 @@ struct face_data_s {
 
 class EdgeIterator {
  public:
- EdgeIterator() : ptr(0), stride(0) { }
-  EdgeIterator( edge_data_s * _ptr, size_t _stride )
-    : ptr((unsigned char*)_ptr), stride(_stride) { }
+ EdgeIterator() : ptr(0) { }
+  EdgeIterator(edge_data_s * _ptr) : ptr(_ptr) { }
 
   bool isValid() const { return ptr != 0; }
 
-  edge_data_s & operator*() { return *(edge_data_s*)ptr; }
-  edge_data_s * operator->() { return (edge_data_s*)ptr; }
-  edge_data_s * get() { return (edge_data_s*)ptr; }
+  edge_data_s & operator*() { return *ptr; }
+  edge_data_s * operator->() { return ptr; }
+  edge_data_s * get() { return ptr; }
 
-  EdgeIterator & operator++() { ptr += stride; return *this; }
-  EdgeIterator & operator--() { ptr -= stride; return *this; }
+  EdgeIterator & operator++() { ptr++; return *this; }
+  EdgeIterator & operator--() { ptr--; return *this; }
   
   bool operator==(const EdgeIterator & other) const { return this->ptr == other.ptr; }
   bool operator!=(const EdgeIterator & other) const { return this->ptr != other.ptr; }
 
-  void clear() { ptr = 0; stride = 0; }
+  void clear() { ptr = 0; }
 
  private:
-  unsigned char * ptr;
-  size_t stride;
+  edge_data_s *  ptr;
 };
 
 class ConstEdgeIterator {
  public:
- ConstEdgeIterator() : ptr(0), stride(0) { }
- ConstEdgeIterator( const edge_data_s * _ptr, size_t _stride )
-    : ptr((const unsigned char*)_ptr), stride(_stride) { }
+ ConstEdgeIterator() : ptr(0) { }
+ ConstEdgeIterator( const edge_data_s * _ptr ) : ptr(_ptr) { }
 
   bool isValid() const { return ptr != 0; }
 
-  const edge_data_s & operator*() const { return *(edge_data_s*)ptr; }
-  const edge_data_s * operator->() const { return (edge_data_s*)ptr; }
-  const edge_data_s * get() const { return (edge_data_s*)ptr; }
+  const edge_data_s & operator*() const { return *ptr; }
+  const edge_data_s * operator->() const { return ptr; }
+  const edge_data_s * get() const { return ptr; }
 
-  ConstEdgeIterator & operator++() { ptr += stride; return *this; }
-  ConstEdgeIterator & operator--() { ptr -= stride; return *this; }
+  ConstEdgeIterator & operator++() { ptr++; return *this; }
+  ConstEdgeIterator & operator--() { ptr++; return *this; }
   
   bool operator==(const ConstEdgeIterator & other) const { return this->ptr == other.ptr; }
   bool operator!=(const ConstEdgeIterator & other) const { return this->ptr != other.ptr; }
 
-  void clear() { ptr = 0; stride = 0; }
+  void clear() { ptr = 0; }
 
  private:
-  const unsigned char * ptr;
-  size_t stride;
+  const edge_data_s * ptr;
 };
+
+#if 0
+class VisibleNodeIterator {
+ public:
+  VisibleNodeIterator() { }
+
+ private:
+  enum Stage { LINKED_NODES = 1, PARENT_NODES, END };
+
+  Stage stage = LINKED_NODES;
+  
+};
+#endif
 
 #include <string>
 #include <vector>
@@ -462,18 +471,25 @@ class Graph : public MBRObject {
 
   edge_data_s & getEdgeAttributes(int i) { return edge_attributes[i]; }
   const edge_data_s & getEdgeAttributes(int i) const { return edge_attributes[i]; }
-  EdgeIterator begin_edges() { return EdgeIterator(&(edge_attributes.front()), sizeof(edge_data_s)); }
+  EdgeIterator begin_edges() { return EdgeIterator(&(edge_attributes.front())); }
   EdgeIterator end_edges() {
-    EdgeIterator it(&(edge_attributes.back()), sizeof(edge_data_s));
+    EdgeIterator it(&(edge_attributes.back()));
     ++it;
     return it;
   }
-  ConstEdgeIterator begin_edges() const { return ConstEdgeIterator(&(edge_attributes.front()), sizeof(edge_data_s)); }
+  ConstEdgeIterator begin_edges() const { return ConstEdgeIterator(&(edge_attributes.front())); }
   ConstEdgeIterator end_edges() const {
-    ConstEdgeIterator it(&(edge_attributes.back()), sizeof(edge_data_s));
+    ConstEdgeIterator it(&(edge_attributes.back()));
     ++it;
     return it;
   }
+
+#if 0
+  ConstVisibleNodeIterator begin_visible_nodes() const { return ConstVisibleNodeIterator(); }
+  ConstVisibleNodeIterator end_visible_nodes() const {
+    
+  }
+#endif
   
   int getGraphNodeId(int graph_id) const;
   bool updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
