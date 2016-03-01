@@ -23,7 +23,8 @@ NodeArray::updateAppearance() {
 
 void
 NodeArray::updateAppearanceSlow(int node_id) {
-  string label, id, uname, name;
+  string label, uname, name;
+  long long id = 0;
 
   if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
     for (auto & cd : getTable().getColumns()) {
@@ -35,7 +36,7 @@ NodeArray::updateAppearanceSlow(int node_id) {
       } else if (n == "name") {
 	name = cd.second->getText(node_id);
       } else if (n == "id") {
-	id = cd.second->getText(node_id);
+	id = cd.second->getInt64(node_id);
       }
     }
   }
@@ -47,9 +48,9 @@ NodeArray::updateAppearanceSlow(int node_id) {
 	label = uname;
       } else if (!name.empty()) {
 	label = name;
-      } else if (!id.empty()) {
-	label = id;
-      }    
+      } else if (id) {
+	label = to_string(id);
+      }
     }
     // cerr << "setting label for node " << node_id << ": " << label << endl;
     setLabel(node_id, label);
@@ -133,9 +134,9 @@ NodeArray::setLabelTexture(const skey & key, int texture) {
 
 void
 NodeArray::setRandomPosition(int node_id) {
-  glm::vec3 v1( 100.0 * rand() / RAND_MAX - 50,
-		100.0 * rand() / RAND_MAX - 50,
-		0 // 100.0 * rand() / RAND_MAX - 50
+  glm::vec3 v1( 256.0 * rand() / RAND_MAX - 50,
+		256.0 * rand() / RAND_MAX - 50,
+		0 // 256.0 * rand() / RAND_MAX - 50
 		);
   setPosition(node_id, v1);
 }
