@@ -463,16 +463,11 @@ static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & 
   static graph_color_s def_color = { 200, 200, 200, 255 };
   const graph_color_s & col = td.child_count ? parent_color : def_color;
 
-  int images_per_row = atlas.getWidth() / atlas.getBlockSize();
-  int atlas_col = nd.texture % images_per_row, atlas_row = nd.texture / images_per_row;
-  float tx1 = atlas_col * atlas.getBlockSize() / atlas.getWidth(), tx2 = (atlas_col + 1) * atlas.getBlockSize() / atlas.getHeight();
-  float ty1 = atlas_row * atlas.getBlockSize() / atlas.getWidth(), ty2 = (atlas_row + 1) * atlas.getBlockSize() / atlas.getHeight();
-
   unsigned int base = new_geometry.size();
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-1, -1)), glm::packHalf2x16(glm::vec2(tx1, ty1)), nd.age, size, 0.0f });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(-1, +1)), glm::packHalf2x16(glm::vec2(tx1, ty2)), nd.age, size, 0.0f });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+1, +1)), glm::packHalf2x16(glm::vec2(tx2, ty2)), nd.age, size, 0.0f });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, glm::packHalf2x16(glm::vec2(+1, -1)), glm::packHalf2x16(glm::vec2(tx2, ty1)), nd.age, size, 0.0f });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
+  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, 0.0f, nd.texture, nd.flags });
 
   indices.push_back(base + 0);
   indices.push_back(base + 1);
