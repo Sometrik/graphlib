@@ -45,7 +45,6 @@ struct node_data_s {
   glm::uint32 normal;
   glm::vec3 position;
   glm::vec3 prev_position;
-  float age;
   short texture, flags;
   NodeType type;
   short label_texture;
@@ -113,9 +112,9 @@ class NodeArray {
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
-  int add(NodeType type = NODE_ANY, float age = 0.0f) {
+  int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), age, 0, NODE_SELECTED, type, 0, 0, "", -1, std::shared_ptr<Graph>() });
+    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, NODE_SELECTED, type, 0, 0, "", -1, std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
