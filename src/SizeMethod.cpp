@@ -19,7 +19,7 @@ SizeMethod::calculateSize(const node_tertiary_data_s & data, double total_indegr
 	a = 0;
       }
       
-      return 9.0f + 6.0f * (log(1.0 + a) / log(3.0) + sqrtf(50 * data.child_count));
+      return 5.0f + 5.0f * (log(1.0 + a) / log(2.0)) + 5.0f * sqrtf(25 * data.child_count);
     }
   case SIZE_FROM_INDEGREE:
     {
@@ -31,16 +31,16 @@ SizeMethod::calculateSize(const node_tertiary_data_s & data, double total_indegr
       } else {
 	a = 0;
       }
-      return 9.0f + 6.0f * (log(1.0 + a) / log(1.4) + sqrtf(50 * data.child_count));
+      return 4.0f + log(1.0 + a) / log(1.3) + 5.0f * sqrtf(25 * data.child_count);
     }
   case SIZE_FROM_NODE_COUNT:
     {
 #if 0
       auto & subgraph = data.nested_graph;
       float a = subgraph.get() ? subgraph->getNodeCount() : 0;
-      return 9.0f + 6.0f * log(1.0 + a) / log(1.4);
+      return 5.0f + 5.0f * log(1.0 + a) / log(1.4);
 #else
-      return 9.0f;
+      return 5.0f;
 #endif
     }
   default:
