@@ -23,6 +23,7 @@ class DirectedGraph : public Graph {
     seen_edges.clear();
     onedegree_nodes.clear();
     zerodegree_nodes.clear();
+    node_pairs.clear();
     current_pos = -1;
     num_links = 0;
     num_hashtags = 0;
