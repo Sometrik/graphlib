@@ -357,18 +357,20 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	
       bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
       if (1) { // !i1) {
+	auto & td = getNodeTertiaryData(tail);
 	glm::vec3 pos = g1.position;
 	for (int p = getNodeTertiaryData(tail).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	  pos += nodes->getNodeData(p).position;
 	}
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
-	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos, g1.age, 1.0f }; // g1.size
+	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos, td.age, 1.0f }; // g1.size
 	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
       if (1) { // !i2) {
+	auto & td = getNodeTertiaryData(tail);
 	glm::vec3 pos = g2.position;
 	for (int p = getNodeTertiaryData(head).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	  pos += nodes->getNodeData(p).position;
@@ -376,7 +378,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
-	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos, g2.age, 1.0f }; // g.size
+	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos, td.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
@@ -416,7 +418,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, nd.texture, nd.flags });
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     if (!stored_nodes[it->head]) {
@@ -429,7 +431,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, nd.texture, nd.flags });
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
     edge_count++;
@@ -448,7 +450,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos += nodes->getNodeData(p).position;
       }
-      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, nd.texture, nd.flags });
+      new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, nd.flags });
       if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
     }
   }
@@ -456,26 +458,6 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
   // cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
   
   vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
-}
-
-static inline void storeNodePosition(const glm::vec3 & pos, const node_data_s & nd, const node_tertiary_data_s & td, float size, std::vector<node_billboard_vbo_s> & new_geometry, std::vector<unsigned int> & indices, const TextureAtlas & atlas) {
-  static graph_color_s parent_color = { 50, 50, 255, 0 };
-  static graph_color_s def_color = { 200, 200, 200, 255 };
-  const graph_color_s & col = td.child_count ? parent_color : def_color;
-  float scaling = td.child_count ? 0.0 : 1.0;
-  
-  unsigned int base = new_geometry.size();
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
-  new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, nd.age, size, scaling, nd.texture, nd.flags });
-
-  indices.push_back(base + 0);
-  indices.push_back(base + 1);
-  indices.push_back(base + 3);
-  indices.push_back(base + 1);
-  indices.push_back(base + 2);
-  indices.push_back(base + 3);
 }
 
 void
@@ -488,7 +470,9 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
   std::vector<unsigned int> indices;
   auto & size_method = nodes->getNodeSizeMethod();
 
-#if 1
+  static graph_color_s parent_color = { 50, 50, 255, 0 };
+  static graph_color_s def_color = { 200, 200, 200, 255 };
+
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & nd = nodes->getNodeData(*it);
@@ -498,60 +482,23 @@ Graph::createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_s
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
       pos += nodes->getNodeData(p).position;
     }
-    storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
-  }
-#else
-  vector<bool> stored_nodes;
-  stored_nodes.resize(nodes->size());
-  list<int> parent_nodes;
 
-  auto end = end_edges();
-  for (auto it = begin_edges(); it != end; ++it) {
-    assert(it->tail >= 0 && it->tail < nodes->size());
-    assert(it->head >= 0 && it->head < nodes->size());
-    if (!stored_nodes[it->tail]) {
-      stored_nodes[it->tail] = true;
-      auto & nd = nodes->getNodeData(it->tail);
-      auto & td = getNodeTertiaryData(it->tail);
-      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      auto pos = nd.position;
-      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-	pos += nodes->getNodeData(p).position;
-      }
-      storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
-      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
-    }
-    if (!stored_nodes[it->head]) {
-      stored_nodes[it->head] = true;
-      auto & nd = nodes->getNodeData(it->head);
-      auto & td = getNodeTertiaryData(it->head);
-      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      auto pos = nd.position;
-      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-	pos += nodes->getNodeData(p).position;
-      }
-      storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
-      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
-    }
-  }
+    const graph_color_s & col = td.child_count ? parent_color : def_color;
+    float scaling = td.child_count ? 0.0 : 1.0;
+  
+    unsigned int base = new_geometry.size();
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
 
-  while (!parent_nodes.empty()) {
-    int n = parent_nodes.front();
-    parent_nodes.pop_front();
-    if (!stored_nodes[n]) {
-      stored_nodes[n] = true;
-      auto & nd = nodes->getNodeData(n);
-      auto & td = getNodeTertiaryData(n);
-      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      auto pos = nd.position;
-      for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-	pos += nodes->getNodeData(p).position;
-      }
-      storeNodePosition(pos, nd, td, size, new_geometry, indices, atlas);
-      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
-    }
+    indices.push_back(base + 0);
+    indices.push_back(base + 1);
+    indices.push_back(base + 3);
+    indices.push_back(base + 1);
+    indices.push_back(base + 2);
+    indices.push_back(base + 3);
   }
-#endif
   
   vbo.setDrawType(VBO::TRIANGLES);
   vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
@@ -1090,7 +1037,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   unsigned int count = getSuitableFinalGraphCount();
   if (final_graphs.size() != count) {
     if (!final_graphs.empty()) {
-      final_graphs.front().removeAllChildren();
+      final_graphs.front()->removeAllChildren();
     }
     final_graphs.clear();
     cerr << "CREATING FINALs!\n";
@@ -1130,7 +1077,6 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     
     for (int j = 0; j < nodes->size(); j++) {
       auto & pd = getNodeArray().getNodeData(j);
-      pd.age = -2.0f;
       pd.flags = NODE_SELECTED;
       pd.label_visibility_val = 0;
     }
@@ -1258,7 +1204,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       processed_nodes[it->tail] = true;      
       auto & pd = getNodeArray().getNodeData(it->tail);
       auto & td = getNodeTertiaryData(it->tail);
-      if ((!pd.label.empty() || td.child_count) && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+      if ((!pd.label.empty() || td.child_count) && td.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
 	auto pos = pd.position;
 	for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
@@ -1273,7 +1219,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       processed_nodes[it->head] = true;     
       auto & pd = getNodeArray().getNodeData(it->head);
       auto & td = getNodeTertiaryData(it->head);
-      if ((!pd.label.empty() || td.child_count) && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+      if ((!pd.label.empty() || td.child_count) && td.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
 	auto pos = pd.position;
 	for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
@@ -1292,7 +1238,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
       processed_nodes[id] = true;
       auto & pd = getNodeArray().getNodeData(id);
       auto & td = getNodeTertiaryData(id);
-      if ((!pd.label.empty() || td.child_count) && pd.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+      if ((!pd.label.empty() || td.child_count) && td.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
 	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
 	all_labels.push_back({ label_data_s::NODE, pd.position, glm::vec2(), size, id });	
       }
@@ -1608,51 +1554,24 @@ Graph::applyGravity(float gravity) {
   }
 }
 
-static inline void applyDragAndAgeToNode(RenderMode mode, float friction, node_data_s & pd) {
-  glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
-  glm::vec3 new_pos = pos - (ppos - pos) * friction;
-  if (mode == RENDERMODE_2D) {
-    new_pos.z = 0;
-  }
-  pd.prev_position = pos;
-  pd.position = new_pos;
-  pd.age += 1.0f / 50.0f;
-}
-
 void
 Graph::applyDragAndAge(RenderMode mode, float friction) {
-  vector<bool> processed_nodes;
-  processed_nodes.resize(nodes->size());
-  list<int> parent_nodes;
+  auto end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & pd = nodes->getNodeData(*it);
+    auto & td = node_geometry3[*it];
+      
+    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
+    
+    glm::vec3 new_pos = pos - (ppos - pos) * friction;
+    if (mode == RENDERMODE_2D) {
+      new_pos.z = 0;
+    }
+    pd.prev_position = pos;
+    pd.position = new_pos;
+    td.age += 1.0f / 50.0f;
+  }
   
-  auto end = end_edges();
-  for (auto it = begin_edges(); it != end; ++it) {
-    if (!processed_nodes[it->tail]) {
-      processed_nodes[it->tail] = true;
-      applyDragAndAgeToNode(mode, friction, nodes->getNodeData(it->tail));
-      auto & td = getNodeTertiaryData(it->tail);
-      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
-    }
-    if (!processed_nodes[it->head]) {
-      processed_nodes[it->head] = true;
-      applyDragAndAgeToNode(mode, friction, nodes->getNodeData(it->head));
-      auto & td = getNodeTertiaryData(it->head);
-      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
-    }
-  }
-
-  while (!parent_nodes.empty()) {
-    int n = parent_nodes.front();
-    parent_nodes.pop_front();
-    if (!processed_nodes[n]) {
-      processed_nodes[n] = true;
-      applyDragAndAgeToNode(mode, friction, nodes->getNodeData(n));
-      auto & td = getNodeTertiaryData(n);
-      if (td.parent_node != -1) parent_nodes.push_back(td.parent_node);
-    }
-  }
-
   version++;
 }
 
