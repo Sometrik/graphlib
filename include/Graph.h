@@ -129,6 +129,13 @@ class Graph : public MBRObject {
   void removeChild(int child);
   void removeAllChildren();
 
+  bool isNodeVisible(int node) const;
+
+  void setNodeAge(int node, float age) {
+    if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
+    node_geometry3[node].age = age;
+  }
+
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
   virtual void updateLocationGraph(int graph_id) { }
@@ -430,7 +437,7 @@ class Graph : public MBRObject {
     return it;
   }
 
-  ConstVisibleNodeIterator begin_visible_nodes() const { return ConstVisibleNodeIterator(&(edge_attributes.front()), &(edge_attributes.back()) + 1, &(node_geometry3.front()), nodes->size()); }
+  ConstVisibleNodeIterator begin_visible_nodes() const { return ConstVisibleNodeIterator(&(edge_attributes.front()), &(edge_attributes.back()) + 1, &(node_geometry3.front()), &(node_geometry3.back()) + 1, nodes->size()); }
   ConstVisibleNodeIterator end_visible_nodes() const { return ConstVisibleNodeIterator(); }
   
   int getGraphNodeId(int graph_id) const;
@@ -495,8 +502,6 @@ class Graph : public MBRObject {
   void setMinSignificance(float s) { min_significance = s; }
   void setMinScale(float s) { min_scale = s; }
 
-  std::vector<int> createSortedNodeIndices(const glm::vec3 & camera_pos) const;
-
   void applyGravity(float gravity);
   void applyDragAndAge(RenderMode mode, float friction);
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
@@ -525,6 +530,8 @@ class Graph : public MBRObject {
   void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
   void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
 
+  void setInitialNodeAge(float t) { initial_node_age = t; }
+  
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
@@ -567,6 +574,7 @@ class Graph : public MBRObject {
   int default_symbol_id = 0;
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
+  float initial_node_age = 0.0f;
   
   static int next_id;
 };
