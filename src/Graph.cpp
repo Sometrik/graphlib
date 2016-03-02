@@ -532,17 +532,14 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
     glm::vec4 color1 = black, color2 = white;
     if (td.child_count) {
       color1 = glm::vec4(0.0, 0.5, 1.0, 1.0);
+      flags |= LABEL_FLAG_CENTER;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float node_size = 0.0f;
       offset_y -= 0.8 * (3.0 + 2.0 * node_size);
       flags |= LABEL_FLAG_CENTER;
     }
         
-    float x = 0, y = 0;    
-    x += offset_x;
-    y += offset_y;
-
-    labels.push_back({ pos, x, y, pd.label_texture, flags, color1, color2 });
+    labels.push_back({ pos, offset_x, offset_y, pd.label_texture, flags, color1, color2 });
   }
   
   if (labels.empty()) return;
