@@ -531,6 +531,7 @@ class Graph : public MBRObject {
   void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
 
   void setInitialNodeAge(float t) { initial_node_age = t; }
+  float getInitialNodeAge() const { return initial_node_age; }
   
  protected:
   unsigned int getSuitableFinalGraphCount() const;
