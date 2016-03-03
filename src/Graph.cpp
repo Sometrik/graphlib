@@ -524,7 +524,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       pos += nodes->getNodeData(p).position;
     }
 
-    int offset_x = 0, offset_y = 0;
+    float offset_x = 0, offset_y = 0;
     unsigned short flags = 0;
 
     flags |= LABEL_FLAG_MIDDLE;
@@ -1041,6 +1041,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
       addFinalGraph(g4);
     } else {
       auto g1 = createSimilar();
+      assert(g1.get());
       addFinalGraph(g1);
     }
     statistics.clear();
@@ -1066,7 +1067,9 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
   bool changed = false;
   for (unsigned int i = 0; i < final_graphs.size(); i++) {
     auto & g = final_graphs[i];
+    assert(g.get());
     Graph * base_graph = final_graphs[0].get();
+    assert(base_graph);
     if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
       g->updateAppearance();
       g->incVersion();
