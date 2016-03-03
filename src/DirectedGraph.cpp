@@ -152,8 +152,8 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
       long long first_user_soid = soid.getInt64(np.first);
       long long target_user_soid = soid.getInt64(np.second);
       
-      auto & td1 = base_graph->getNodeTertiaryData(np.first);
-      auto & td2 = base_graph->getNodeTertiaryData(np.second);
+      auto td1 = base_graph->getNodeTertiaryData(np.first); // data is copied, since the backing array might change
+      auto td2 = base_graph->getNodeTertiaryData(np.second);
       
       if (!is_first_level) {
 	if (td1.indegree < getMinSignificance()) {
@@ -177,20 +177,18 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
       
       if (is_first_level && !seen_nodes.count(np.second)) {
 	seen_nodes.insert(np.second);
-	if (target_type == NODE_HASHTAG) {
-	  stats.addHashtag(name_column.getText(np.second));
-	  num_hashtags++;
-	} else if (target_type == NODE_URL) {
-	  stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
-	  num_links++;
-	} else {
-	  UserType ut = UserType(user_type.getInt(np.second));
-	  if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
-	  // stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
-	}
+	UserType ut = UserType(user_type.getInt(np.second));
+	if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
+	// stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
       }
 
-      if (target_type != NODE_URL && target_type != NODE_HASHTAG) {
+      if (target_type == NODE_HASHTAG) {
+	stats.addHashtag(name_column.getText(np.second));
+	num_hashtags++;
+      } else if (target_type == NODE_URL) {
+	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
+	num_links++;
+      } else {
 	if (is_first_level && target_type == NODE_ANY) {
 	  stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
 	}
