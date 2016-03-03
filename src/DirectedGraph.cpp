@@ -36,6 +36,11 @@ DirectedGraph::breakNodePair(int node_id) {
     removeChild(node_id);
     int other_id = it->second;
     node_pairs.erase(it);
+
+    auto it_b = onedegree_nodes.find(node_id);
+    if (it_b != onedegree_nodes.end()) {
+      onedegree_nodes.erase(it_b);
+    }
     
     auto it2 = node_pairs.find(other_id);
     assert(it2 != node_pairs.end());
@@ -43,16 +48,23 @@ DirectedGraph::breakNodePair(int node_id) {
       removeChild(other_id);
       node_pairs.erase(it2);
 
-      // if a pair is broken, we add the other node to first one's group
-      int o = getNodeArray().getOneDegreeNode(node_id);
-      addChild(o, other_id);
-      onedegree_nodes[other_id] = node_id;
+      auto it2_b = onedegree_nodes.find(other_id);
+      if (it2_b != onedegree_nodes.end()) {
+	onedegree_nodes.erase(it2_b);
+      } else {
+	// if a pair is broken, we add the other node to first one's group
+	int o = getNodeArray().getOneDegreeNode(node_id);
+	addChild(o, other_id);
+	onedegree_nodes[other_id] = node_id;
+      }
     }
   }
 }
 
 void
 DirectedGraph::breakOneDegreeNode(int node_id) {
+  breakNodePair(node_id);
+  
   auto it = onedegree_nodes.find(node_id);
   if (it != onedegree_nodes.end()) {
     removeChild(node_id);
@@ -268,11 +280,20 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      breakNodePair(np.second);
 	    }
 
-	    if (td1.indegree != 0 || td1.outdegree != 0) {
-	      breakOneDegreeNode(np.first);
-	    }
-	    if (td2.indegree != 0 || td2.outdegree != 0) {
-	      breakOneDegreeNode(np.second);
+	    auto od1 = onedegree_nodes.find(np.first), od2 = onedegree_nodes.find(np.second);
+	    auto pd1 = node_pairs.find(np.first), pd2 = node_pairs.find(np.second);
+	    bool have_same_base = od1 != onedegree_nodes.end() && od2 != onedegree_nodes.end() && od1->second == od2->second && ((pd1 == node_pairs.end() && pd2 == node_pairs.end()) || (pd1 != node_pairs.end() && pd2 != node_pairs.end() && pd1->second == np.second && pd2->second == np.first));
+	    
+	    if (have_same_base) {
+	      node_pairs[np.first] = np.second;
+	      node_pairs[np.second] = np.first;
+	    } else {
+	      if (td1.indegree != 0 || td1.outdegree != 0) {
+		breakOneDegreeNode(np.first);
+	      }
+	      if (td2.indegree != 0 || td2.outdegree != 0) {
+		breakOneDegreeNode(np.second);
+	      }
 	    }
 	  }
 	  seen_edges[np.first][np.second] = addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
