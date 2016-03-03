@@ -88,6 +88,8 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
     return false;
   }
   
+  assert(base_graph);
+  
   auto & sid = source_graph.getNodeArray().getTable()["source"];
   auto & soid = source_graph.getNodeArray().getTable()["id"];
   auto & user_type = source_graph.getNodeArray().getTable()["type"];
