@@ -34,6 +34,7 @@
 #define NODE_SELECTED		1
 #define NODE_LABEL_VISIBLE	2
 #define NODE_FIXED_POSITION	4
+#define NODE_IS_OPEN		8
 
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
@@ -76,6 +77,18 @@ struct node_data_s {
       return false;
     }
   }
+
+  void setNodeFixedPosition(int i, bool t) {
+    if (t) flags |= NODE_FIXED_POSITION;
+    else flags &= ~NODE_FIXED_POSITION;
+    // doesn't affect anything directly, so no need to update version
+  }
+  
+  void toggleNode(bool t) {
+    if (t) flags |= NODE_IS_OPEN;
+    else flags &= ~NODE_IS_OPEN;
+  }
+
 };
 
 class NodeArray {
@@ -187,15 +200,6 @@ class NodeArray {
     node_geometry.clear();
     node_cache.clear();
     nodes.clear();
-  }
-
-  void setNodeFixedPosition(int i, bool t) {
-    if (t) {
-      node_geometry[i].flags |= NODE_FIXED_POSITION;
-    } else {
-      node_geometry[i].flags &= ~NODE_FIXED_POSITION;
-    }
-    // doesn't affect anything directly, so no need to update version
   }
 
   const node_data_s & getNodeData(int i) const { return node_geometry[i]; }
