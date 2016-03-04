@@ -471,18 +471,10 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
     auto & nd = nodes->getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-    bool visible = true;
     auto pos = nd.position;
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      auto & ptd = nodes->getNodeData(p);
-      if (!ptd.isOpen()) {
-	visible = false;
-	break;
-      }
       pos += ptd.position;
     }
-
-    if (!visible) continue;
     
     const graph_color_s & col = td.child_count ? parent_color : def_color;
     float scaling = td.child_count ? 0.0 : 1.0;
@@ -636,21 +628,8 @@ Graph::relaxLinks() {
     int tail = it->tail, head = it->head;
     if (flatten) {
       int l1 = 0, l2 = 0;
-      bool is_visible = true;
-      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) {
-	if (!nodes->getNodeData(p).isOpen()) {
-	  is_visible = false;
-	}
-	l1++;
-      }
-      if (!is_visible) continue;
-      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) {
-	if (!nodes->getNodeData(p).isOpen()) {
-	  is_visible = false;
-	}
-	l2++;
-      }
-      if (!is_visible) continue;
+      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) l1++;
+      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) l2++;
       while ( 1 ) {
 	if (l1 > l2) {
 	  tail = node_geometry3[tail].parent_node;
