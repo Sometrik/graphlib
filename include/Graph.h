@@ -551,6 +551,7 @@ class Graph : public MBRObject {
     return "";
   }
 
+  const std::unordered_map<int, std::shared_ptr<Graph> > & getNestedGraphs() const { return nested_graphs; }
   void updateAppearance();
     
   float getMinSignificance() const { return min_significance; }
