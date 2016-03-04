@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <set>
+#include <unordered_map>
 
 #define FACE_LABEL_VISIBLE	1
 
@@ -398,10 +399,8 @@ class Graph : public MBRObject {
   void clearTextures(int clear_flags = CLEAR_ALL) {
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
     nodes->clearTextures(clear_flags);
-    for (int i = 0; i < nodes->size(); i++) {
-      if (getNodeArray().node_geometry[i].nested_graph.get()) {
-	getNodeArray().node_geometry[i].nested_graph->clearTextures(clear_flags);
-      }
+    for (auto & gd : nested_graphs) {
+      gd.second->clearTextures(clear_flags);
     }
     if (clear_flags & CLEAR_LABELS) {
       for (int i = 0; i < getFaceCount(); i++) {
@@ -525,10 +524,10 @@ class Graph : public MBRObject {
   GraphRefW getGraphForWriting(int graph_id);
 
   std::string getGraphName(int graph_id) const {
-    for (int i = 0; i < nodes->size(); i++) {
-      auto & graph = getNodeArray().node_geometry[i].nested_graph;
-      if (graph.get() && graph->getId() == graph_id) {
-	return nodes->getTable()["name"].getText(i);
+    for (auto & gd : nested_graphs) {
+      auto & graph = gd.second;
+      if (graph->getId() == graph_id) {
+	return nodes->getTable()["name"].getText(gd.first);
       }
     }   
     return "";
@@ -616,6 +615,7 @@ class Graph : public MBRObject {
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
   float initial_node_age = 0.0f;
+  std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
   
   static int next_id;
 };

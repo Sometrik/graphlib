@@ -105,9 +105,10 @@ Graph::randomizeGeometry(bool use_2d) {
   unsigned int num_nodes = getNodeArray().size();
   for (unsigned int i = 0; i < num_nodes; i++) {
     getNodeArray().setRandomPosition(i);
-        
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get() && !graph->nodes->hasSpatialData()) {
+  }
+  for (auto & gd : nested_graphs) {
+    auto & graph = gd.second;
+    if (!graph->nodes->hasSpatialData()) {
       graph->randomizeGeometry(use_2d);       
     }
   }
@@ -866,9 +867,8 @@ Graph::selectNodes(int input_node, int depth) {
 std::vector<int>
 Graph::getNestedGraphIds() const {
   std::vector<int> v;
-  for (int i = 0; i < nodes->size(); i++) {
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get()) v.push_back(graph->getId());
+  for (auto & gd : nested_graphs) {
+    v.push_back(gd.second->getId());
   }
   return v;
 }
@@ -876,9 +876,9 @@ Graph::getNestedGraphIds() const {
 std::vector<int>
 Graph::getLocationGraphs() const {
   std::vector<int> v;
-  for (int i = 0; i < nodes->size(); i++) {
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get() && graph->getLocation().get()) v.push_back(graph->getId());
+  for (auto & gd : nested_graphs) {
+    auto & graph = gd.second;
+    if (graph->getLocation().get()) v.push_back(graph->getId());
   }
   return v;
 }
@@ -890,29 +890,24 @@ Graph::refreshLayouts() {
   for (auto & g : final_graphs) {
     g->getNodeArray().resume2();
   }
-  for (int i = 0; i < nodes->size(); i++) {
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get()) graph->refreshLayouts();
+  for (auto & gd : nested_graphs) {
+    gd.second->refreshLayouts();
   }
 }
 
 std::vector<std::shared_ptr<Graph> >
 Graph::getNestedGraphs() {
   std::vector<std::shared_ptr<Graph> > v;
-  for (int i = 0; i < nodes->size(); i++) {
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get()) {
-      v.push_back(graph);
-    }
+  for (auto & gd : nested_graphs) {
+    v.push_back(gd.second);
   }
   return v;
 }
 
 int
 Graph::getGraphNodeId(int graph_id) const {
-  for (int i = 0; i < nodes->size(); i++) {
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get() && graph->getId() == graph_id) return i;
+  for (auto & gd : nested_graphs) {
+    if (gd.second->getId() == graph_id) return gd.first;
   }
   return -1;
 }
@@ -1283,13 +1278,10 @@ Graph *
 Graph::getGraphById2(int graph_id) {
   if (graph_id == getId()) {
     return this;
-  } else if (nodes->hasSubGraphs()) {
-    for (int i = 0; i < nodes->size(); i++) {
-      auto & graph = getNodeArray().node_geometry[i].nested_graph;
-      if (graph.get()) {
-	Graph * r = graph->getGraphById2(graph_id);
-	if (r) return r;
-      }
+  } else {
+    for (auto & gd : nested_graphs) {
+      Graph * r = gd.second->getGraphById2(graph_id);
+      if (r) return r;
     }
   }
   return 0;
@@ -1299,13 +1291,10 @@ const Graph *
 Graph::getGraphById2(int graph_id) const {
   if (graph_id == getId()) {
     return this;
-  } else if (nodes->hasSubGraphs()) {
-    for (int i = 0; i < nodes->size(); i++) {
-      auto & graph = getNodeArray().node_geometry[i].nested_graph;
-      if (graph.get()) {
-	const Graph * r = graph->getGraphById2(graph_id);
-	if (r) return r;
-      }
+  } else {
+    for (auto & gd : nested_graphs) {
+      const Graph * r = gd.second->getGraphById2(graph_id);
+      if (r) return r;
     }
   }
   return 0;
@@ -1354,11 +1343,8 @@ Graph::getNodeKey(int node_id) const {
 void
 Graph::invalidateVisibleNodes() {
   final_graphs.clear();
-  for (int i = 0; i < nodes->size(); i++) {
-    auto & graph = getNodeArray().node_geometry[i].nested_graph;
-    if (graph.get()) {
-      graph->invalidateVisibleNodes();      
-    }
+  for (auto & gd : nested_graphs) {
+    gd.second->invalidateVisibleNodes();      
   }
 }
 
@@ -1410,8 +1396,8 @@ Graph::updateAppearance() {
     version++;
   } else if (method.getValue() == SizeMethod::SIZE_FROM_NODE_COUNT) {
     for (unsigned int i = 0; i < nodes->size(); i++) {
-      auto & nested_graph = getNodeArray().node_geometry[i].nested_graph;
-      float a = nested_graph.get() ? nested_graph->nodes->size() : 0;
+      auto it = nested_graphs.find(i);
+      float a = it != nested_graphs.end() ? it->second->nodes->size() : 0;
       node_geometry3[i].size = 2 * (1 + log(1 + a) / log(2));
     }
     version++;
