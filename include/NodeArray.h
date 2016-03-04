@@ -31,11 +31,6 @@
 #define PENDING_PROFILE	1
 #define BOT_PROFILE	2
 
-#define NODE_SELECTED		1
-#define NODE_LABEL_VISIBLE	2
-#define NODE_FIXED_POSITION	4
-#define NODE_IS_OPEN		8
-
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
 #define CLEAR_ALL	(CLEAR_LABELS | CLEAR_NODES)
@@ -46,10 +41,9 @@ struct node_data_s {
   glm::uint32 normal;
   glm::vec3 position;
   glm::vec3 prev_position;
-  short texture, flags;
+  short texture, label_texture;
+  unsigned short label_visibility_val;
   NodeType type;
-  short label_texture;
-  unsigned short label_visibility_val;  
   std::string label;
   int group_node;
   std::shared_ptr<Graph> nested_graph;
@@ -63,36 +57,6 @@ struct node_data_s {
     else if (f2 > 65535) f2 = 65535;
     label_visibility_val = (unsigned short)f2;
   }
-
-  bool setLabelVisibility(bool t) {
-    bool orig_t = flags | NODE_LABEL_VISIBLE ? true : false;
-    if (t != orig_t || 1) {
-      if (t) {
-	flags |= NODE_LABEL_VISIBLE;
-      } else {
-	flags &= ~NODE_LABEL_VISIBLE;
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  void setNodeFixedPosition(int i, bool t) {
-    if (t) flags |= NODE_FIXED_POSITION;
-    else flags &= ~NODE_FIXED_POSITION;
-    // doesn't affect anything directly, so no need to update version
-  }
-  
-  void toggleNode(bool t) {
-    if (t) flags |= NODE_IS_OPEN;
-    else flags &= ~NODE_IS_OPEN;
-  }
-
-  bool isOpen() const { return flags & NODE_IS_OPEN; }  
-  bool isFixed() const { return flags & NODE_FIXED_POSITION; }
-  bool isSelected() const { return flags & NODE_SELECTED; }
-  bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
 };
 
 class NodeArray {
@@ -131,7 +95,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, NODE_SELECTED, type, 0, 0, "", -1, std::shared_ptr<Graph>() });
+    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, 0, 0, type, "", -1, std::shared_ptr<Graph>() });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();

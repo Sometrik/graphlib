@@ -13,6 +13,11 @@
 
 #define FACE_LABEL_VISIBLE	1
 
+#define NODE_SELECTED		1
+#define NODE_LABEL_VISIBLE	2
+#define NODE_FIXED_POSITION	4
+#define NODE_IS_OPEN		8
+
 class Graph;
 class DisplayInfo;
 
@@ -23,6 +28,37 @@ struct node_tertiary_data_s {
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
   float age = 0.0;
+  unsigned short flags = NODE_SELECTED;
+
+  bool setLabelVisibility(bool t) {
+    bool orig_t = flags | NODE_LABEL_VISIBLE ? true : false;
+    if (t != orig_t || 1) {
+      if (t) {
+	flags |= NODE_LABEL_VISIBLE;
+      } else {
+	flags &= ~NODE_LABEL_VISIBLE;
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void setNodeFixedPosition(int i, bool t) {
+    if (t) flags |= NODE_FIXED_POSITION;
+    else flags &= ~NODE_FIXED_POSITION;
+    // doesn't affect anything directly, so no need to update version
+  }
+  
+  void toggleNode(bool t) {
+    if (t) flags |= NODE_IS_OPEN;
+    else flags &= ~NODE_IS_OPEN;
+  }
+
+  bool isOpen() const { return flags & NODE_IS_OPEN; }  
+  bool isFixed() const { return flags & NODE_FIXED_POSITION; }
+  bool isSelected() const { return flags & NODE_SELECTED; }
+  bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
 };
 
 struct edge_data_s {
