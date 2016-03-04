@@ -1438,61 +1438,27 @@ Graph::updateAppearance() {
 }
 
 static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, float weight) {
-  if (!pd.isFixed()) {
-    const glm::vec3 & pos = pd.position;
-    float d = glm::length(pos);
-    if (d > 0.001) {
-      pd.position -= pos * (k * sqrtf(d) / d * weight);
-    }
-  }
 }
 
 void
 Graph::applyGravity(float gravity) {
   float k = nodes->getAlpha2() * gravity;
-  if (k > EPSILON) {
-    vector<bool> processed_nodes;
-    processed_nodes.resize(nodes->size());
-    list<int> parent_nodes;
-
-    auto end = end_edges();
-    for (auto it = begin_edges(); it != end; ++it) {
-      if (!processed_nodes[it->tail]) {
-	processed_nodes[it->tail] = true;
-	auto & pd = nodes->getNodeData(it->tail);
-	auto & td = getNodeTertiaryData(it->tail);
-	float factor = 1.0f;
-	if (td.parent_node >= 0) {
-	  parent_nodes.push_back(td.parent_node);
-	  factor = 96.0f;
-	}
-	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+  if (k < EPSILON) return;
+  
+  auto end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & pd = nodes->getNodeData(*it);
+    auto & td = getNodeTertiaryData(*it);
+    if (!td.isFixed()) {
+      float factor = 1.0f;
+      if (td.parent_node >= 0) {
+	factor = 96.0f;
       }
-      if (!processed_nodes[it->head]) {
-	processed_nodes[it->head] = true;
-	auto & pd = nodes->getNodeData(it->head);
-	auto & td = getNodeTertiaryData(it->head);
-	float factor = 1.0f;
-	if (td.parent_node >= 0) {
-	  parent_nodes.push_back(td.parent_node);
-	  factor = 96.0f;
-	}	
-	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
-      }
-    }
-    while (!parent_nodes.empty()) {
-      int n = parent_nodes.front();
-      parent_nodes.pop_front();
-      if (!processed_nodes[n]) {
-	processed_nodes[n] = true;
-	auto & pd = nodes->getNodeData(n);
-	auto & td = getNodeTertiaryData(n);
-	float factor = 1.0f;
-	if (td.parent_node >= 0) {
-	  parent_nodes.push_back(td.parent_node);
-	  factor = 50.0f;	 
-	}
-	applyGravityToNode(factor * k, pd, td, nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f);
+      float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
+      const glm::vec3 & pos = pd.position;
+      float d = glm::length(pos);
+      if (d > 0.001) {
+	pd.position -= pos * (factor * k * sqrtf(d) / d * weight);
       }
     }
   }
