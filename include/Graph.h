@@ -30,21 +30,8 @@ struct node_tertiary_data_s {
   unsigned int child_count = 0;
   float age = 0.0;
   unsigned short flags = NODE_SELECTED;
-
-  bool setLabelVisibility(bool t) {
-    bool orig_t = flags | NODE_LABEL_VISIBLE ? true : false;
-    if (t != orig_t || 1) {
-      if (t) {
-	flags |= NODE_LABEL_VISIBLE;
-      } else {
-	flags &= ~NODE_LABEL_VISIBLE;
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
-
+  unsigned short label_visibility_val = 0;
+  
   void setNodeFixedPosition(int i, bool t) {
     if (t) flags |= NODE_FIXED_POSITION;
     else flags &= ~NODE_FIXED_POSITION;
@@ -60,6 +47,25 @@ struct node_tertiary_data_s {
   bool isFixed() const { return flags & NODE_FIXED_POSITION; }
   bool isSelected() const { return flags & NODE_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
+
+  bool setLabelVisibility(bool t) {
+    if ((t && !isLabelVisible()) || (!t && isLabelVisible()) || 1) {
+      if (t) flags |= NODE_LABEL_VISIBLE;
+      else flags &= ~NODE_LABEL_VISIBLE;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
+
+  void setLabelVisibilityValue(float f) {
+    int f2 = int(f * 65535);
+    if (f2 < 0) f2 = 0;
+    else if (f2 > 65535) f2 = 65535;
+    label_visibility_val = (unsigned short)f2;
+  }
 };
 
 struct edge_data_s {
@@ -492,6 +498,18 @@ class Graph : public MBRObject {
 
   void setRadius(float r) { radius = r; }
   float getRadius() const { return radius; }
+
+  bool updateNodeLabelValues(int n, float visibility) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    auto & td = node_geometry3[n];
+    float vv = td.getLabelVisibilityValue() + visibility;
+    if (vv < 0) vv = 0;
+    else if (vv > 1) vv = 1;
+    td.setLabelVisibilityValue(vv);
+    if (vv >= 0.75) return td.setLabelVisibility(true);
+    else if (vv <= 0.25) return td.setLabelVisibility(false);
+    else return false;
+  }
 
   const node_tertiary_data_s & getNodeTertiaryData(int n) const {
     if (n >= 0 && n < node_geometry3.size()) {

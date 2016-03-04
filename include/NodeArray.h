@@ -41,20 +41,9 @@ struct node_data_s {
   glm::vec3 position;
   glm::vec3 prev_position;
   short texture, label_texture;
-  unsigned short label_visibility_val;
   NodeType type;
   std::string label;
   int group_node;
-  
-  bool getLabelVisibility() const { return flags & NODE_LABEL_VISIBLE ? true : false; }
-  float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
-
-  void setLabelVisibilityValue(float f) {
-    int f2 = int(f * 65535);
-    if (f2 < 0) f2 = 0;
-    else if (f2 > 65535) f2 = 65535;
-    label_visibility_val = (unsigned short)f2;
-  }
 };
 
 class NodeArray {
@@ -93,7 +82,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, 0, 0, type, "", -1 });
+    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, 0, type, "", -1 });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -153,8 +142,6 @@ class NodeArray {
     for (auto & nd : node_geometry) {
       if (clear_flags & CLEAR_LABELS) {
 	nd.label_texture = 0;
-	nd.label_visibility_val = 0;
-	nd.flags &= ~NODE_LABEL_VISIBLE;
       }
       if (clear_flags & CLEAR_NODES) {
 	nd.texture = DEFAULT_PROFILE;
@@ -170,17 +157,6 @@ class NodeArray {
 
   const node_data_s & getNodeData(int i) const { return node_geometry[i]; }
   node_data_s & getNodeData(int i) { return node_geometry[i]; }
-
-  bool updateLabelValues(int i, float visibility) {
-    auto & nd = getNodeData(i);
-    float vv = nd.getLabelVisibilityValue() + visibility;
-    if (vv < 0) vv = 0;
-    else if (vv > 1) vv = 1;
-    nd.setLabelVisibilityValue(vv);
-    if (vv >= 0.75) return nd.setLabelVisibility(true);
-    else if (vv <= 0.25) return nd.setLabelVisibility(false);
-    else return false;
-  }
 
   void setLabel(int i, const std::string & text) {
     auto & nd = node_geometry[i];
