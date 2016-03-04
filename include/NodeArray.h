@@ -46,7 +46,6 @@ struct node_data_s {
   NodeType type;
   std::string label;
   int group_node;
-  std::shared_ptr<Graph> nested_graph;
   
   bool getLabelVisibility() const { return flags & NODE_LABEL_VISIBLE ? true : false; }
   float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
@@ -95,7 +94,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, 0, 0, type, "", -1, std::shared_ptr<Graph>() });
+    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, 0, 0, type, "", -1 });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -190,10 +189,6 @@ class NodeArray {
       nd.label = text;
       nd.label_texture = 0;
     }
-  }
-
-  void setNestedGraph(int i, std::shared_ptr<Graph> graph) {
-    node_geometry[i].nested_graph = graph;
   }
 
   std::vector<int> addNodes(size_t n) {
