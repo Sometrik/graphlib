@@ -895,15 +895,6 @@ Graph::refreshLayouts() {
   }
 }
 
-std::vector<std::shared_ptr<Graph> >
-Graph::getNestedGraphs() {
-  std::vector<std::shared_ptr<Graph> > v;
-  for (auto & gd : nested_graphs) {
-    v.push_back(gd.second);
-  }
-  return v;
-}
-
 int
 Graph::getGraphNodeId(int graph_id) const {
   for (auto & gd : nested_graphs) {

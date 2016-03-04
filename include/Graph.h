@@ -365,7 +365,6 @@ class Graph : public MBRObject {
   
   virtual void randomizeGeometry(bool use_2d = false);
   void refreshLayouts();
-  std::vector<std::shared_ptr<Graph> > getNestedGraphs();
 
   void setId(int _id) { id = _id; }
   int getId() const { return id; }
