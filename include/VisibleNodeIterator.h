@@ -46,16 +46,30 @@ class ConstVisibleNodeIterator {
 	int n = edge_ptr->tail;
 	if (!processed_nodes[n]) {
 	  processed_nodes[n] = true;
-	  if (node_ptr + n < node_end && node_ptr[n].parent_node != -1) parent_nodes.push_back(node_ptr[n].parent_node);
-	  current_node = n;
+	  bool visible = true;
+	  if (node_ptr + n < node_end) {
+	    int p = node_ptr[n].parent_node;
+	    if (p != -1) {
+	      if (node_ptr[p].isOpen()) parent_nodes.push_back(p);
+	      else visible = false;	      
+	    }
+	  }
+	  if (visible) current_node = n;
 	}
 	stage = EDGE_HEAD;
       } else if (stage == EDGE_HEAD) {
 	int n = edge_ptr->head;
 	if (!processed_nodes[n]) {
 	  processed_nodes[n] = true;
-	  if (node_ptr + n < node_end && node_ptr[n].parent_node != -1) parent_nodes.push_back(node_ptr[n].parent_node);
-	  current_node = n;
+	  bool visible = true;
+	  if (node_ptr + n < node_end) {
+	    int p = node_ptr[n].parent_node;
+	    if (p != -1) {
+	      if (node_ptr[p].isOpen()) parent_nodes.push_back(p);
+	      else visible = false;
+	    }
+	  }
+	  if (visible) current_node = n;
 	}
 	edge_ptr++;
 	if (edge_ptr != edge_end) {
