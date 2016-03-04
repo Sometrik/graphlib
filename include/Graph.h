@@ -450,6 +450,7 @@ class Graph : public MBRObject {
     faces.clear();    
     face_attributes.clear();
     edge_attributes.clear();
+    // do not clear nested graphs, unless we clear nodes also
 
     highlighted_node = -1;
     has_node_selection = false;
@@ -550,6 +551,10 @@ class Graph : public MBRObject {
     return "";
   }
 
+  void setNestedGraph(int node_id, const std::shared_ptr<Graph> & graph) {
+    nested_graphs[node_id] = graph;
+  }
+  
   const std::unordered_map<int, std::shared_ptr<Graph> > & getNestedGraphs() const { return nested_graphs; }
   void updateAppearance();
     
