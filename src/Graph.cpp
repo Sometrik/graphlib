@@ -358,7 +358,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
       if (tail == head) continue;
       auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
 	
-      bool edge_selected = (g1.flags & NODE_SELECTED) || (g2.flags & NODE_SELECTED);
+      bool edge_selected = g1.isSelected() || g2.isSelected();
       glm::vec3 pos1 = g1.position, pos2 = g2.position;
       for (int p = getNodeTertiaryData(tail).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos1 += nodes->getNodeData(p).position;
@@ -470,9 +470,15 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
     auto & nd = nodes->getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+    bool visible = true;
     auto pos = nd.position;
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      pos += nodes->getNodeData(p).position;
+      auto & ptd = nodes->getNodeData(p);
+      if (!ptd.isOpen()) {
+	visible = false;
+	break;
+      }
+      pos += ptd.position;
     }
 
     const graph_color_s & col = td.child_count ? parent_color : def_color;
@@ -530,7 +536,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
   auto nodes_end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != nodes_end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
-    if (!(pd.flags & NODE_LABEL_VISIBLE && pd.label_texture)) continue;
+    if (!(pd.isLabelVisible() && pd.label_texture)) continue;
 
     auto & td = getNodeTertiaryData(*it);
     
@@ -621,8 +627,21 @@ Graph::relaxLinks() {
     int tail = it->tail, head = it->head;
     if (flatten) {
       int l1 = 0, l2 = 0;
-      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) l1++;
-      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) l2++;
+      bool is_visible = true;
+      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) {
+	if (!nodes->getNodeData(p).isOpen()) {
+	  is_visible = false;
+	}
+	l1++;
+      }
+      if (!is_visible) continue;
+      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) {
+	if (!nodes->getNodeData(p).isOpen()) {
+	  is_visible = false;
+	}
+	l2++;
+      }
+      if (!is_visible) continue;
       while ( 1 ) {
 	if (l1 > l2) {
 	  tail = node_geometry3[tail].parent_node;
@@ -631,6 +650,7 @@ Graph::relaxLinks() {
 	  head = node_geometry3[head].parent_node;
 	  l2--;
 	} else if (node_geometry3[tail].parent_node == node_geometry3[head].parent_node) {
+	  
 	  break;
 	} else {
 	  l1--; l2--;
@@ -646,8 +666,8 @@ Graph::relaxLinks() {
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     auto & pd1 = nodes->getNodeData(tail), & pd2 = nodes->getNodeData(head);
-    bool fixed1 = pd1.flags & NODE_FIXED_POSITION;
-    bool fixed2 = pd2.flags & NODE_FIXED_POSITION;
+    bool fixed1 = pd1.isFixed();
+    bool fixed2 = pd2.isFixed();
     if (fixed1 && fixed2) continue;      
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
@@ -1208,7 +1228,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   for (int i = 0; i < getFaceCount(); i++) {
     auto & fd = getFaceAttributes(i);
     if ((!fd.label.empty() || getDefaultSymbolId()) &&
-	(display.isPointVisible(fd.centroid) || fd.getLabelVisibility())) {
+	(display.isPointVisible(fd.centroid) || fd.isLabelVisible())) {
       glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
       all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, i });
     }
@@ -1453,7 +1473,7 @@ Graph::updateAppearance() {
 }
 
 static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, float weight) {
-  if (!(pd.flags & NODE_FIXED_POSITION)) {
+  if (!pd.isFixed()) {
     const glm::vec3 & pos = pd.position;
     float d = glm::length(pos);
     if (d > 0.001) {
