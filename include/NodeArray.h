@@ -37,7 +37,6 @@
 class Graph;
 
 struct node_data_s {
-  glm::uint32 normal;
   glm::vec3 position;
   glm::vec3 prev_position;
   short texture, label_texture;
@@ -82,7 +81,7 @@ class NodeArray {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ 0, glm::vec3(), glm::vec3(), 0, 0, type, "", -1 });
+    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, "", -1 });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -118,7 +117,6 @@ class NodeArray {
     // mbr.growToContain(p.first.x, p.first.y);
     version++;
   }
-  void setNormal(int i, const glm::vec4 & v);
 #if 0
   void setNodeColor2(int i, const graph_color_s & c) {
     node_geometry[i].color = c;

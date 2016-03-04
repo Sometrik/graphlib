@@ -96,12 +96,6 @@ NodeArray::setNodeColorByColumn(int column) {
 }
 #endif
 
-void
-NodeArray::setNormal(int i, const glm::vec4 & v) {
-  node_geometry[i].normal = glm::packSnorm3x10_1x2(v);
-  version++;
-}
-
 #if 0
 void
 NodeArray::setNodeColor2(int i, const canvas::Color & c) {
