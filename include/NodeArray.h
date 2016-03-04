@@ -22,10 +22,9 @@
 #define GF_COMPLEX		16
 #define GF_HAS_TEXTURES		32
 #define GF_PER_NODE_COLORS	64
-#define GF_HAS_SUBGRAPHS	128
-#define GF_DOUBLE_BUFFERED_VBO	256
-#define GF_TEMPORAL_COVERAGE	512
-#define GF_FLATTEN_HIERARCHY	1024
+#define GF_DOUBLE_BUFFERED_VBO	128
+#define GF_TEMPORAL_COVERAGE	256
+#define GF_FLATTEN_HIERARCHY	512
 
 #define DEFAULT_PROFILE	0
 #define PENDING_PROFILE	1
@@ -295,9 +294,6 @@ class NodeArray {
 
   bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
   void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
-
-  bool hasSubGraphs() const { return testFlags(GF_HAS_SUBGRAPHS); }
-  void setHasSubGraphs(bool t) { updateFlags(GF_HAS_SUBGRAPHS, t); }
 
  protected:
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
