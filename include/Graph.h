@@ -69,7 +69,7 @@ struct face_data_s {
       return false;
     }
   }
-  bool getLabelVisibility() const { return (flags & FACE_LABEL_VISIBLE) != 0; }
+  bool isLabelVisible() const { return flags & FACE_LABEL_VISIBLE; }
   float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
   void setLabel(const std::string & text) {
     if (label != text) {
