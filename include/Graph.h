@@ -31,7 +31,7 @@ edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face,
 : weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc), coverage(_coverage) { }
   
   float weight;
-  int tail, head, next_node_edge, face, next_face_edge, arc, pair_edge = -1;
+  int tail, head, next_node_edge, face, next_face_edge, arc, pair_edge = -1, parent_edge = -1;
   long long coverage;
 };
 
@@ -170,6 +170,10 @@ class Graph : public MBRObject {
     getEdgeAttributes(e1).pair_edge = e2;
     getEdgeAttributes(e2).pair_edge = e1;
   }
+
+  void setParentEdge(int child, int parent) {
+    getEdgeAttributes(child).parent_edge = parent;
+  }
   
   int getNextFaceEdge(int edge) const {
     return edge_attributes[edge].next_face_edge;
@@ -202,7 +206,7 @@ class Graph : public MBRObject {
   void createEdgeVBO(VBO & vbo) const;
   void createRegionVBO(VBO & vbo) const;
   void createNodeVBOForSprites(VBO & vbo) const;
-  void createNodeVBOForQuads(VBO & vbo, const TextureAtlas & atlas, float node_scale) const;
+  void createNodeVBOForQuads(VBO & vbo) const;
   void createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const;
 
   virtual std::set<int> getAdjacentRegions() const { return std::set<int>(); }
