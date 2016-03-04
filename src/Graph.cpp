@@ -481,6 +481,8 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
       pos += ptd.position;
     }
 
+    if (!visible) continue;
+    
     const graph_color_s & col = td.child_count ? parent_color : def_color;
     float scaling = td.child_count ? 0.0 : 1.0;
   
