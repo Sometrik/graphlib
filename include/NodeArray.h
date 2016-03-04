@@ -89,6 +89,10 @@ struct node_data_s {
     else flags &= ~NODE_IS_OPEN;
   }
 
+  bool isOpen() const { return flags & NODE_IS_OPEN; }  
+  bool isFixed() const { return flags & NODE_FIXED_POSITION; }
+  bool isSelected() const { return flags & NODE_SELECTED; }
+  bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
 };
 
 class NodeArray {
