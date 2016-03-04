@@ -67,7 +67,7 @@ FileTypeHandler::createNode2D(Graph & graph, map<string, int> & nodes, double x,
 }
 
 int
-FileTypeHandler::createNode3D(Graph & graph, map<string, int> & nodes, double x, double y, double z, float nx, float ny, float nz) {
+FileTypeHandler::createNode3D(Graph & graph, map<string, int> & nodes, double x, double y, double z) {
   ostringstream key;
   key << x << "/" << y << "/" << z;
   map<string, int>::iterator it = nodes.find(key.str());
@@ -76,7 +76,6 @@ FileTypeHandler::createNode3D(Graph & graph, map<string, int> & nodes, double x,
   } else {
     int node_id = nodes[key.str()] = graph.addNode();
     graph.getNodeArray().setPosition(node_id, glm::vec3(x, y, z));
-    graph.getNodeArray().setNormal(node_id, glm::vec4(nx, ny, nz, 1.0f));
     return node_id;  
   }
 }
