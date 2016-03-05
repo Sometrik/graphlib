@@ -635,21 +635,8 @@ Graph::relaxLinks() {
     int tail = it->tail, head = it->head;
     if (flatten) {
       int l1 = 0, l2 = 0;
-      bool visible = true;
-      for (int p = node_geometry3[tail].parent_node; p != -1; ) {
-	l1++;
-	auto & ptd = node_geometry3[p];
-	if (!ptd.isOpen()) visible = false;
-	p = ptd.parent_node;
-      }
-      if (!visible) continue;
-      for (int p = node_geometry3[head].parent_node; p != -1; ) {
-	l2++;
-	auto & ptd = node_geometry3[p];
-	if (!ptd.isOpen()) visible = false;
-	p = ptd.parent_node;
-      }
-      if (!visible) continue;
+      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node ) l1++;
+      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node ) l2++;      
       while ( 1 ) {
 	if (l1 > l2) {
 	  tail = node_geometry3[tail].parent_node;
@@ -673,12 +660,26 @@ Graph::relaxLinks() {
       processed_edges[head * num_nodes + tail] = true;
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
+    bool visible = true;
+    auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
+    bool closed = false;
+    for (int p = td1.parent_node; p != -1; ) {
+      auto & ptd = node_geometry3[p];
+      closed |= !ptd.isOpen();
+      p = ptd.parent_node;
+    }
+    if (closed) continue;
+    for (int p = td2.parent_node; p != -1; ) {
+      auto & ptd = node_geometry3[p];
+      closed |= !ptd.isOpen();
+      p = ptd.parent_node;
+    }
+    if (closed) continue;
     auto & pd1 = nodes->getNodeData(tail), & pd2 = nodes->getNodeData(head);
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
-    auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
     bool fixed1 = td1.isFixed();
     bool fixed2 = td2.isFixed();
     if (fixed1 && fixed2) continue;      
