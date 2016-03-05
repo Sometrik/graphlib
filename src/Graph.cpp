@@ -308,7 +308,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
     assert(in <= num_indices);
     assert(vn <= num_vertices);
 
-    if (!new_geometry.empty()) {
+    if (!vn) {
       vbo.upload(VBO::ARCS_2D, new_geometry.get(), vn * sizeof(arc_data_2d_s));
       vbo.uploadIndices(indices.get(), in * sizeof(unsigned int));
     } else {
@@ -358,13 +358,14 @@ Graph::createEdgeVBO(VBO & vbo) const {
       }
       if (tail == head) continue;
       auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
+      auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
 	
-      bool edge_selected = g1.isSelected() || g2.isSelected();
+      bool edge_selected = td1.isSelected() || td2.isSelected();
       glm::vec3 pos1 = g1.position, pos2 = g2.position;
-      for (int p = getNodeTertiaryData(tail).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      for (int p = td1.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos1 += nodes->getNodeData(p).position;
       }
-      for (int p = getNodeTertiaryData(head).parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      for (int p = td2.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
 	pos2 += nodes->getNodeData(p).position;
       }
       glm::vec3 v = pos2 - pos1;
@@ -372,29 +373,27 @@ Graph::createEdgeVBO(VBO & vbo) const {
       if (l > 0.0001) v *= 1.0f / l;
 	
       if (1) { // !i1) {
-	auto & td = getNodeTertiaryData(tail);
-	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+	float size = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
 
 	pos1 += v * size;
 
 	auto color = edge_selected ? sel_color : def_color;
 	
 	float a = powf(it->weight / max_edge_weight, 0.9);
-	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos1, td.age, 1.0f }; // g1.size
+	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos1, td1.age, 1.0f }; // g1.size
 	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
       if (1) { // !i2) {
-	auto & td = getNodeTertiaryData(tail);
-	float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+	float size = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
 
 	pos2 -= v * (size / l);
 
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
-	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos2, td.age, 1.0f }; // g.size
+	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos2, td2.age, 1.0f }; // g.size
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
@@ -432,7 +431,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
       pos += nodes->getNodeData(p).position;
     }
-    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, nd.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, td.flags });
   }
   
   // cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
@@ -474,17 +473,17 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
     auto pos = nd.position;
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      pos += ptd.position;
+      pos += nodes->getNodeData(p).position;      
     }
     
     const graph_color_s & col = td.child_count ? parent_color : def_color;
     float scaling = td.child_count ? 0.0 : 1.0;
   
     unsigned int base = new_geometry.size();
-    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
-    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
-    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
-    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, nd.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, td.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, td.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, td.flags });
+    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, scaling, nd.texture, td.flags });
 
     indices.push_back(base + 0);
     indices.push_back(base + 1);
@@ -536,9 +535,8 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
   auto nodes_end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != nodes_end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
-    if (!(pd.isLabelVisible() && pd.label_texture)) continue;
-
     auto & td = getNodeTertiaryData(*it);
+    if (!(td.isLabelVisible() && pd.label_texture)) continue;
     
     auto pos = pd.position;
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
@@ -655,14 +653,14 @@ Graph::relaxLinks() {
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     auto & pd1 = nodes->getNodeData(tail), & pd2 = nodes->getNodeData(head);
-    bool fixed1 = pd1.isFixed();
-    bool fixed2 = pd2.isFixed();
-    if (fixed1 && fixed2) continue;      
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
     if (l < EPSILON) continue;
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
+    bool fixed1 = td1.isFixed();
+    bool fixed2 = td2.isFixed();
+    if (fixed1 && fixed2) continue;      
     assert(td1.parent_node == td2.parent_node);
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
@@ -816,13 +814,13 @@ void
 Graph::selectNodes(int input_node, int depth) {
   if (input_node == -1) {
     has_node_selection = false;
-    for (int n = 0; n < nodes->size(); n++) {
-      getNodeArray().node_geometry[n].flags |= NODE_SELECTED;
+    for (int n = 0; n < node_geometry3.size(); n++) {
+      node_geometry3[n].flags |= NODE_SELECTED;
     }
   } else {
     has_node_selection = true;
-    for (int n = 0; n < nodes->size(); n++) {
-      getNodeArray().node_geometry[n].flags &= ~NODE_SELECTED;
+    for (int n = 0; n < node_geometry3.size(); n++) {
+      node_geometry3[n].flags &= ~NODE_SELECTED;
     }
     
     if (input_node >= 0) { // can be -2 to select none
@@ -845,8 +843,9 @@ Graph::selectNodes(int input_node, int depth) {
 	
 	if (!seen_nodes.count(node_id)) {
 	  seen_nodes.insert(node_id);
-	  
-	  getNodeArray().node_geometry[node_id].flags |= NODE_SELECTED;
+
+	  if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
+	  node_geometry3[node_id].flags |= NODE_SELECTED;
 	  
 	  if (node_depth < depth) {
 	    map<int, set<int> >::iterator node_edges = all_edges.find(node_id);
@@ -1062,12 +1061,6 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     }
     
     statistics.clear();
-    
-    for (int j = 0; j < nodes->size(); j++) {
-      auto & pd = getNodeArray().getNodeData(j);
-      pd.flags = NODE_SELECTED;
-      pd.label_visibility_val = 0;
-    }
   }
     
   statistics.setSentimentRange(start_sentiment, end_sentiment);
@@ -1189,7 +1182,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
-    if ((!pd.label.empty() || td.child_count) && td.age >= 0 && (display.isPointVisible(pd.position) || pd.getLabelVisibility())) {
+    if ((!pd.label.empty() || td.child_count) && td.age >= 0 && (display.isPointVisible(pd.position) || td.isLabelVisible())) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       auto pos = pd.position;
       for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
@@ -1213,9 +1206,10 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
   if (all_labels.size() <= 10) {
     for (vector<label_data_s>::iterator it = all_labels.begin(); it != all_labels.end(); it++) {
       if (it->type == label_data_s::NODE) {
-	auto & nd = getNodeArray().getNodeData(it->index);
-	nd.setLabelVisibilityValue(1);
-	changed |= nd.setLabelVisibility(true);
+	if (node_geometry3.size() <= it->index) node_geometry3.resize(it->index + 1);
+	auto & td = node_geometry3[it->index];
+	td.setLabelVisibilityValue(1);
+	changed |= td.setLabelVisibility(true);
       } else {
 	auto & fd = getFaceAttributes(it->index);
 	fd.setLabelVisibilityValue(1);
@@ -1249,7 +1243,7 @@ Graph::updateLabelVisibility(const DisplayInfo & display, bool reset) {
 	drawn_labels.push_back(ld);
       }
       if (ld.type == label_data_s::NODE) {
-	changed |= getNodeArray().updateLabelValues(ld.index, fits ? 1.00f : -1.00f);
+	changed |= updateNodeLabelValues(ld.index, fits ? 1.00f : -1.00f);
       } else {
 	changed |= updateFaceLabelValues(ld.index, fits ? 1.00f : -1.00f);
       }
