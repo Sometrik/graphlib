@@ -362,12 +362,20 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	
       bool edge_selected = td1.isSelected() || td2.isSelected();
       glm::vec3 pos1 = g1.position, pos2 = g2.position;
-      for (int p = td1.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      bool visible1 = true, visible2 = true;
+      for (int p = td1.parent_node; p != -1; ) {
 	pos1 += nodes->getNodeData(p).position;
+	auto & ptd = getNodeTertiaryData(p);
+	if (!ptd.isOpen()) visible1 = false;
+	p = ptd.parent_node;
       }
-      for (int p = td2.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      for (int p = td2.parent_node; p != -1; ) {
 	pos2 += nodes->getNodeData(p).position;
+	auto & ptd = getNodeTertiaryData(p);
+	if (!ptd.isOpen()) visible2 = false;
+	p = ptd.parent_node;
       }
+      if (!visible1 && !visible2) continue;
       glm::vec3 v = pos2 - pos1;
       float l = glm::length(v);
       if (l > 0.0001) v *= 1.0f / l;
@@ -627,8 +635,21 @@ Graph::relaxLinks() {
     int tail = it->tail, head = it->head;
     if (flatten) {
       int l1 = 0, l2 = 0;
-      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) l1++;
-      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) l2++;
+      bool visible = true;
+      for (int p = node_geometry3[tail].parent_node; p != -1; ) {
+	l1++;
+	auto & ptd = node_geometry3[p];
+	if (!ptd.isOpen()) visible = false;
+	p = ptd.parent_node;
+      }
+      if (!visible) continue;
+      for (int p = node_geometry3[head].parent_node; p != -1; ) {
+	l2++;
+	auto & ptd = node_geometry3[p];
+	if (!ptd.isOpen()) visible = false;
+	p = ptd.parent_node;
+      }
+      if (!visible) continue;
       while ( 1 ) {
 	if (l1 > l2) {
 	  tail = node_geometry3[tail].parent_node;
