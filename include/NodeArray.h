@@ -181,6 +181,7 @@ class NodeArray {
   }
   
   std::vector<node_data_s> & getGeometry() { return node_geometry; }
+  const std::vector<node_data_s> & getGeometry() const { return node_geometry; }
 
 #if 0
   NodeIterator begin_nodes() { return NodeIterator(&(node_geometry.front())); }
