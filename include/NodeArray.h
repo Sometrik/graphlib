@@ -176,12 +176,6 @@ class NodeArray {
   void setNodeColorByColumn(int column);
 #endif
 
-  const glm::vec3 & getPosition(int i) const {
-    return node_geometry[i].position;
-  }
-  const glm::vec3 & getPrevPosition(int i) const {
-    return node_geometry[i].prev_position;
-  }
   const std::pair<glm::vec3, glm::vec3> getPositions(int i) const {
     return std::pair<glm::vec3, glm::vec3>(node_geometry[i].position, node_geometry[i].prev_position);
   }
@@ -193,8 +187,6 @@ class NodeArray {
   NodeIterator end_nodes() { return NodeIterator(&(node_geometry.back())) + 1; }
 #endif
   
-  std::vector<node_data_s> node_geometry;
-
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
   
@@ -273,6 +265,8 @@ class NodeArray {
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
   void updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); }
 
+  std::vector<node_data_s> node_geometry;
+    
  private:
   void lockReader() const {
     MutexLocker locker(mutex);
