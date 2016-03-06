@@ -1191,14 +1191,16 @@ bool
 Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   auto & size_method = nodes->getNodeSizeMethod();
-    
+
+  bool changed = false;
+
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     if (node_geometry3.size() <= *it) node_geometry3.resize(*it + 1);
     auto & td = node_geometry3[*it];
     if (td.age < 0.0f || (!td.child_count && pd.label.empty())) {
-      td.setLabelVisibility(false);
+      changed |= td.setLabelVisibility(false);
       continue;
     }
     auto pos = pd.position;
@@ -1206,14 +1208,18 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       pos += nodes->getNodeData(p).position;
     }
     if (!display.isPointVisible(pos)) {
-      td.setLabelVisibility(false);
+      changed |= td.setLabelVisibility(false);
       continue;
     }
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
     if (td.child_count) {
-      bool is_open = false;
-      if (!td.isOpen()) {
-	td.setLabelVisibility(true);
+      if (td.child_count >= 2) {
+	bool is_open = false;
+	if (!td.isOpen()) {
+	  changed |= td.setLabelVisibility(true);
+	}
+      } else {
+	changed |= td.setLabelVisibility(false);
       }
     } else {
       all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, *it });
@@ -1228,9 +1234,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, i });
     }
   }
-  
-  bool changed = false;
-  
+    
   sort(all_labels.begin(), all_labels.end(), compareSize);
   
   vector<label_data_s> drawn_labels;
