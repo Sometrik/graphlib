@@ -494,7 +494,7 @@ class Graph : public MBRObject {
   float getLineWidth() const { return line_width; }
   void setLineWidth(float w) { line_width = w; }
 
-  bool updateLabelVisibility(const DisplayInfo & display, bool reset = false);
+  bool updateVisibilities(const DisplayInfo & display, bool reset = false);
 
   void setRadius(float r) { radius = r; }
   float getRadius() const { return radius; }
