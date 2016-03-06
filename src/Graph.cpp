@@ -320,7 +320,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
     std::unique_ptr<line_data_s[]> new_geometry(new line_data_s[2 * ec]);
     // vector<unsigned int> node_mapping, indices;
     // node_mapping.resize(nodes->size());
-    graph_color_s sel_color = { 100, 200, 255, 255 };
+    graph_color_s sel_color = { 200, 200, 200, 255 };
     graph_color_s def_color = { 200, 200, 200, 255 };
     auto & size_method = nodes->getNodeSizeMethod();
     unsigned int vn = 0;
@@ -376,32 +376,24 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	p = ptd.parent_node;
       }
       if (!visible1 && !visible2) continue;
-      glm::vec3 v = pos2 - pos1;
-      float l = glm::length(v);
-      if (l > 0.0001) v *= 1.0f / l;
 	
       if (1) { // !i1) {
 	float size = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
-
-	pos1 += v * size;
-
+	float scaling = td1.child_count ? 0.0 : 1.0;
 	auto color = edge_selected ? sel_color : def_color;
-	
 	float a = powf(it->weight / max_edge_weight, 0.9);
-	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos1, td1.age, 1.0f }; // g1.size
+	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos1, pos2, td1.age, size, scaling };
 	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
 	vn++;
       }
       if (1) { // !i2) {
 	float size = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
-
-	pos2 -= v * (size / l);
-
+	float scaling = td2.child_count ? 0.0 : 1.0;
 	auto color = edge_selected ? sel_color : def_color;
 	float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
-	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos2, td2.age, 1.0f }; // g.size
+	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos2, pos1, td2.age, size, scaling };
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
 	vn++;
       }
@@ -471,8 +463,8 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
   std::vector<unsigned int> indices;
   auto & size_method = nodes->getNodeSizeMethod();
 
-  static graph_color_s parent_color = { 50, 50, 255, 0 };
-  static graph_color_s def_color = { 200, 200, 200, 255 };
+  static graph_color_s parent_color = { 150, 150, 150, 0 };
+  static graph_color_s def_color = { 80, 80, 80, 255 };
 
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
@@ -558,7 +550,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 
     glm::vec4 color1 = black, color2 = white;
     if (td.child_count) {
-      color1 = glm::vec4(0.0, 0.5, 1.0, 1.0);
+      color1 = glm::vec4(0.0, 0.1, 0.2, 1.0);
       flags |= LABEL_FLAG_CENTER;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float node_size = 0.0f;
