@@ -1195,8 +1195,9 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
-    auto & td = getNodeTertiaryData(*it);
-    if (td.age < 0.0f || (!td.child_coun && pd.label.empty())) {
+    if (node_geometry3.size() <= *it) node_geometry3.resize(*it + 1);
+    auto & td = node_geometry3[*it];
+    if (td.age < 0.0f || (!td.child_count && pd.label.empty())) {
       td.setLabelVisibility(false);
       continue;
     }
@@ -1230,53 +1231,38 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   
   bool changed = false;
   
-  if (all_labels.size() <= 10) {
-    for (vector<label_data_s>::iterator it = all_labels.begin(); it != all_labels.end(); it++) {
-      if (it->type == label_data_s::NODE) {
-	if (node_geometry3.size() <= it->index) node_geometry3.resize(it->index + 1);
-	auto & td = node_geometry3[it->index];
-	td.setLabelVisibilityValue(1);
-	changed |= td.setLabelVisibility(true);
-      } else {
-	auto & fd = getFaceAttributes(it->index);
-	fd.setLabelVisibilityValue(1);
-	changed |= fd.setLabelVisibility(true);
+  sort(all_labels.begin(), all_labels.end(), compareSize);
+  
+  vector<label_data_s> drawn_labels;
+  // const Rect2d & region = getContentRegion();
+  
+  for (auto & ld : all_labels) {
+    auto tmp = display.project(ld.world_pos);
+    ld.screen_pos = glm::vec2(tmp.x, tmp.y);
+    auto & my_pos = ld.screen_pos;
+    
+    bool fits = true;
+    
+    for (auto & ld2 : drawn_labels) {
+      auto & other_pos = ld2.screen_pos;
+      
+      float dx = fabsf(my_pos.x - other_pos.x);
+      float dy = fabsf(my_pos.y - other_pos.y);
+      
+      if (dx < 200 && dy < 100) {
+	fits = false;
       }
     }
-  } else {
-    sort(all_labels.begin(), all_labels.end(), compareSize);
-  
-    vector<label_data_s> drawn_labels;
-    // const Rect2d & region = getContentRegion();
-    
-    for (auto & ld : all_labels) {
-      auto tmp = display.project(ld.world_pos);
-      ld.screen_pos = glm::vec2(tmp.x, tmp.y);
-      auto & my_pos = ld.screen_pos;
-
-      bool fits = true;
-      
-      for (auto & ld2 : drawn_labels) {
-	auto & other_pos = ld2.screen_pos;
-	
-	float dx = fabsf(my_pos.x - other_pos.x);
-	float dy = fabsf(my_pos.y - other_pos.y);
-	
-	if (dx < 200 && dy < 100) {
-	  fits = false;
-	}
-      }
-      if (fits) {
-	drawn_labels.push_back(ld);
-      }
-      if (ld.type == label_data_s::NODE) {
-	changed |= updateNodeLabelValues(ld.index, fits ? 1.00f : -1.00f);
-      } else {
-	changed |= updateFaceLabelValues(ld.index, fits ? 1.00f : -1.00f);
-      }
+    if (fits) {
+      drawn_labels.push_back(ld);
+    }
+    if (ld.type == label_data_s::NODE) {
+      changed |= updateNodeLabelValues(ld.index, fits ? 1.00f : -1.00f);
+    } else {
+      changed |= updateFaceLabelValues(ld.index, fits ? 1.00f : -1.00f);
     }
   }
-
+  
   if (changed) {
     // cerr << "labels changed!\n";
     incVersion();
