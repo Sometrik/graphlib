@@ -353,11 +353,11 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	    head = node_geometry3[head].parent_node;
 	  }
 	}
-	if (processed_edges[tail * num_nodes + head]) {
-	  continue;
-	}
-	processed_edges[tail * num_nodes + head] = true;
-	processed_edges[head * num_nodes + tail] = true;
+        unsigned int key1 = tail * num_nodes + head, key2 = head * num_nodes + tail;
+        assert(key1 < processed_edges.size());
+        assert(key2 < processed_edges.size());
+	if (processed_edges[key1]) continue;
+	processed_edges[key1] = processed_edges[key2] = true;
       }
       if (tail == head) continue;
       auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
@@ -622,7 +622,7 @@ Graph::relaxLinks() {
   float alpha = getNodeArray().getAlpha2();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
-  int num_nodes = nodes->size();
+  unsigned int num_nodes = nodes->size();
   vector<bool> processed_edges;
   processed_edges.resize(num_nodes * num_nodes);			
   auto end = end_edges();
@@ -648,11 +648,11 @@ Graph::relaxLinks() {
 	  head = node_geometry3[head].parent_node;
 	}
       }
-      if (processed_edges[tail * num_nodes + head]) {
-	continue;
-      }
-      processed_edges[tail * num_nodes + head] = true;
-      processed_edges[head * num_nodes + tail] = true;
+      unsigned int key1 = tail * num_nodes + head, key2 = head * num_nodes + tail;
+      assert(key1 < processed_edges.size());
+      assert(key2 < processed_edges.size());
+      if (processed_edges[key1]) continue;
+      processed_edges[key1] = processed_edges[key2] = true;
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     bool visible = true;
