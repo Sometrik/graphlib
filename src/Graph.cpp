@@ -1216,15 +1216,15 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       if (td.child_count >= 2) {
 	auto d = display.project(pos) - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
 	float l = glm::length(d);
-	if (l >= 200.0f) {
+	if (l >= 100.0f) {
 	  if (td.toggleNode(true)) {
 	    nodes->resume2();
 	    changed = true;
 	  }
-	  changed |= td.setLabelVisibility(true);
+	  changed |= td.setLabelVisibility(false);
 	} else {
 	  changed |= td.toggleNode(false);
-	  if (l >= 20.0f) {
+	  if (l >= 10.0f) {
 	    changed |= td.setLabelVisibility(true);	    
 	  } else {
 	    changed |= td.setLabelVisibility(false);
