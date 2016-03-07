@@ -360,7 +360,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	processed_edges[head * num_nodes + tail] = true;
       }
       if (tail == head) continue;
-      auto & g1 = nodes->node_geometry[tail], & g2 = nodes->node_geometry[head];
+      auto & g1 = nodes->getGeometry()[tail], & g2 = nodes->getGeometry()[head];
       auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
 	
       bool edge_selected = td1.isSelected() || td2.isSelected();
