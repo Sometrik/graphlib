@@ -1,8 +1,6 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
-#include <FeedMode.h>
-
 #include "MBRObject.h"
 #include "RawStatistics.h"
 #include "NodeArray.h"
@@ -385,7 +383,7 @@ class Graph : public MBRObject {
   unsigned int getNewPrimaryObjects() const { return new_primary_objects_counter; }
   unsigned int getNewSecondaryObjects() const { return new_secondary_objects_counter; }
   unsigned int getNewImages() const { return new_images_counter; }
-  unsigned int getNewObjects(FeedMode feed) const { return feed == PRIMARY_FEED ? new_primary_objects_counter : (feed == SECONDARY_FEED ? new_secondary_objects_counter : new_images_counter); }
+  
   void updateNewPrimaryObjects(unsigned int i) { new_primary_objects_counter += i; }
   void updateNewSecondaryObjects(unsigned int i) { new_secondary_objects_counter += i; }
   void resetNewObjects2() { new_primary_objects_counter = new_secondary_objects_counter = new_images_counter = 0; }
