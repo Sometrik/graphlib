@@ -3,6 +3,7 @@
 
 #include <skey.h>
 
+#include "ReadWriteObject.h"
 #include "NodeType.h"
 #include "SizeMethod.h"
 #include "LabelStyle.h"
@@ -10,8 +11,6 @@
 #include "LabelMethod.h"
 #include "ArcData2D.h"
 #include "Table.h"
-
-#include "../system/Mutex.h"
 
 #include <glm/glm.hpp>
 #include <string>
@@ -34,8 +33,6 @@
 #define CLEAR_NODES	2
 #define CLEAR_ALL	(CLEAR_LABELS | CLEAR_NODES)
 
-class Graph;
-
 struct node_data_s {
   glm::vec3 position;
   glm::vec3 prev_position;
@@ -45,7 +42,7 @@ struct node_data_s {
   int group_node;
 };
 
-class NodeArray {
+class NodeArray : public ReadWriteObject {
  public:
   enum Personality {
     NONE = 0,
@@ -53,7 +50,6 @@ class NodeArray {
     TIME_SERIES
   };
 
-  friend class Graph;
   NodeArray();
   NodeArray(const NodeArray & other) = delete;
   NodeArray & operator=(const NodeArray & other) = delete;
@@ -269,25 +265,6 @@ class NodeArray {
   std::vector<node_data_s> node_geometry;
     
  private:
-  void lockReader() const {
-    MutexLocker locker(mutex);
-    num_readers++;
-    if (num_readers == 1) writer_mutex.lock();
-  }
-  void unlockReader() const {
-    MutexLocker locker(mutex);
-    num_readers--;
-    if (num_readers == 0) {
-      writer_mutex.unlock();
-    }
-  }
-  void lockWriter() {
-    writer_mutex.lock();
-  }
-  void unlockWriter() {
-    writer_mutex.unlock();
-  }
-
   std::map<skey, int> node_cache;
   table::Table nodes;
   SizeMethod size_method;
@@ -300,9 +277,6 @@ class NodeArray {
   std::string node_color_column;
   unsigned int flags = 0;
   Personality personality = NONE;
-
-  mutable int num_readers = 0;
-  mutable Mutex mutex, writer_mutex;
 };
 
 #endif
