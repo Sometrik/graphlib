@@ -6,6 +6,7 @@
 class ReadWriteObject {
  public:
   ReadWriteObject() { }
+  virtual ~ReadWriteObject() { }
   
   void lockReader() const {
     MutexLocker locker(mutex);
