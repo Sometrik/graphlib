@@ -302,7 +302,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
     }  
   }
 
-  cerr << "updated graph data, nodes = " << nodes.size() << ", edges = " << getEdgeCount() << ", min_sig = " << getMinSignificance() << ", skipped = " << skipped_count << ", first = " << is_first_level << endl;
+  // cerr << "updated graph data, nodes = " << nodes.size() << ", edges = " << getEdgeCount() << ", min_sig = " << getMinSignificance() << ", skipped = " << skipped_count << ", first = " << is_first_level << endl;
 
   if (is_first_level) {
     stats.setTimeRange(min_time, max_time);
