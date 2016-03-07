@@ -15,14 +15,7 @@ NodeArray::NodeArray() : size_method(SizeMethod::CONSTANT, 1.0f) {
 }
 
 void
-NodeArray::updateAppearance() {
-  for (unsigned int i = 0; i < size(); i++) {
-    updateAppearanceSlow(i);
-  }
-}
-
-void
-NodeArray::updateAppearanceSlow(int node_id) {
+NodeArray::updateNodeAppearance(int node_id) {
   string label, uname, name;
   long long id = 0;
 
