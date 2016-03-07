@@ -38,9 +38,14 @@ struct node_tertiary_data_s {
     // doesn't affect anything directly, so no need to update version
   }
   
-  void toggleNode(bool t) {
-    if (t) flags |= NODE_IS_OPEN;
-    else flags &= ~NODE_IS_OPEN;
+  bool toggleNode(bool t) {
+    if ((t && !isOpen()) || (!t && isOpen()) || 1) {
+      if (t) flags |= NODE_IS_OPEN;
+      else flags &= ~NODE_IS_OPEN;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   bool isOpen() const { return flags & NODE_IS_OPEN; }  
