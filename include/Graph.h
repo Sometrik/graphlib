@@ -37,7 +37,7 @@ struct node_tertiary_data_s {
   }
   
   bool toggleNode(bool t) {
-    if ((t && !isOpen()) || (!t && isOpen()) || 1) {
+    if ((t && !isOpen()) || (!t && isOpen())) {
       if (t) flags |= NODE_IS_OPEN;
       else flags &= ~NODE_IS_OPEN;
       return true;
@@ -559,7 +559,7 @@ class Graph : public MBRObject {
   }
   
   const std::unordered_map<int, std::shared_ptr<Graph> > & getNestedGraphs() const { return nested_graphs; }
-  void updateAppearance();
+  void updateFaceAppearance();
     
   float getMinSignificance() const { return min_significance; }
   float getMinScale() const { return min_scale; }

@@ -816,7 +816,6 @@ Graph::extractLocationGraph(Graph & target_graph) {
   
   target_graph.getNodeArray().setSRID(4326);
   target_graph.getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
-  target_graph.updateAppearance();
   target_graph.setNodeVisibility(true);
   target_graph.setEdgeVisibility(true);
   target_graph.setFaceVisibility(false);
@@ -1089,7 +1088,6 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     Graph * base_graph = final_graphs[0].get();
     assert(base_graph);
     if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
-      g->updateAppearance();
       g->incVersion();
       setLocationGraphValid(false);
       incVersion();
@@ -1174,7 +1172,6 @@ Graph::calculateEdgeCentrality() {
 
   incVersion();
   randomizeGeometry();
-  updateAppearance();
   getNodeArray().resume2();
 }
 
@@ -1220,7 +1217,10 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	auto d = display.project(pos) - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
 	float l = glm::length(d);
 	if (l >= 200.0f) {
-	  changed |= td.toggleNode(true);
+	  if (td.toggleNode(true)) {
+	    nodes->resume2();
+	    changed = true;
+	  }
 	  changed |= td.setLabelVisibility(true);
 	} else {
 	  changed |= td.toggleNode(false);
@@ -1415,31 +1415,7 @@ Graph::getFinal(float scale) const {
 }
 
 void
-Graph::updateAppearance() {
-  if (node_geometry3.size() < nodes->size()) node_geometry3.resize(nodes->size());
-#if 0
-  auto & method = getNodeArray().getNodeSizeMethod();
-  if (method.getValue() == SizeMethod::SIZE_FROM_COLUMN) {
-    table::Column & sc = getNodeArray().getTable()[method.getColumn()];
-    for (unsigned int i = 0; i < nodes->size(); i++) {
-      node_geometry3[i].size = 2 * (1 + log(1 + sc.getDouble(i)) / log(1.5));
-    }
-    version++;
-  } else if (method.getValue() == SizeMethod::SIZE_FROM_NODE_COUNT) {
-    for (unsigned int i = 0; i < nodes->size(); i++) {
-      auto it = nested_graphs.find(i);
-      float a = it != nested_graphs.end() ? it->second->nodes->size() : 0;
-      node_geometry3[i].size = 2 * (1 + log(1 + a) / log(2));
-    }
-    version++;
-  } else if (method.getValue() == SizeMethod::CONSTANT) {
-    for (unsigned int i = 0; i < nodes->size(); i++) {
-      node_geometry3[i].size = method.getConstant();
-    }    
-    version++;
-  }
-#endif
-
+Graph::updateFaceAppearance() {
   auto & label_method = nodes->getLabelMethod();
   if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
     for (int i = 0; i < getFaceCount(); i++) {
@@ -1473,8 +1449,6 @@ Graph::updateAppearance() {
       getFaceAttributes(i).setLabel(label);
     }
   }
-  
-  nodes->updateAppearance();
 }
 
 static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, float weight) {
@@ -1547,6 +1521,7 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
   int edge = (int)edge_attributes.size();
 
   if (!isNodeVisible(n1)) {
+    nodes->updateNodeAppearance(n1);
     setNodeAge(n1, initial_node_age); // this is first edge
   }
   int next_node_edge = getNodeFirstEdge(n1);
@@ -1555,6 +1530,7 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
 
   if (n1 != n2) {
     if (!isNodeVisible(n2)) {
+      nodes->updateNodeAppearance(n2);
       setNodeAge(n2, initial_node_age); // this is first edge
     }
     updateOutdegree(n1, 1.0f); // weight);
@@ -1583,6 +1559,7 @@ Graph::addChild(int parent, int child) {
 
   if (!isNodeVisible(parent)) {
     // PROBLEM: parent doesn't actually become visible, if the added child has no edges or children with edges
+    nodes->updateNodeAppearance(parent);
     setNodeAge(parent, initial_node_age);
   }
   
