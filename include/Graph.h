@@ -543,8 +543,8 @@ class Graph : public MBRObject {
     if (new_weight > max_node_coverage_weight) max_node_coverage_weight = new_weight;
   }
 
-  GraphRefR getGraphForReading(int graph_id) const;
-  GraphRefW getGraphForWriting(int graph_id);
+  GraphRefR getGraphForReading(int graph_id, const char * debug_name) const;
+  GraphRefW getGraphForWriting(int graph_id, const char * debug_name);
 
   std::string getGraphName(int graph_id) const {
     for (auto & gd : nested_graphs) {
