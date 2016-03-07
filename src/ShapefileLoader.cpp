@@ -308,7 +308,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
     table.addColumn(col);
   }
 
-  graph->updateAppearance();
+  graph->updateFaceAppearance();
   
   return graph;
 }
