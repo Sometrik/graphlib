@@ -9,6 +9,7 @@
 #include "ui/ArtProvider.h"
 #include "ui/TextureAtlas.h"
 
+#include <DateTime.h>
 #include <VBO.h>
 #include <algorithm>
 #include <iostream>
@@ -1313,15 +1314,31 @@ Graph::getGraphById2(int graph_id) const {
 }
 
 GraphRefR
-Graph::getGraphForReading(int graph_id) const {
-  const Graph * graph = getGraphById2(graph_id);
-  return GraphRefR(graph); 
+Graph::getGraphForReading(int graph_id, const char * debug_name) const {
+  double t0 = DateTime::getCurrentTime();
+  const Graph * ptr = getGraphById2(graph_id);
+  auto graph = GraphRefR(ptr);
+  double t = DateTime::getCurrentTime() - t0;
+  if (t > 0.1) {
+    cerr << "getGraphForReading() took too long (" << t << ")";
+    if (debug_name) cerr << " for " << debug_name << endl;
+    else cerr << endl;
+  }
+  return graph;
 }
 
 GraphRefW
-Graph::getGraphForWriting(int graph_id) {
-  Graph * graph = getGraphById2(graph_id);
-  return GraphRefW(graph); 
+Graph::getGraphForWriting(int graph_id, const char * debug_name) {
+  double t0 = DateTime::getCurrentTime();
+  Graph * ptr = getGraphById2(graph_id);
+  auto graph = GraphRefW(ptr); 
+  double t = DateTime::getCurrentTime() - t0;
+  if (t > 0.1) {
+    cerr << "getGraphForWriting() took too long (" << t << ")";
+    if (debug_name) cerr << " for " << debug_name << endl;
+    else cerr << endl;
+  }
+  return graph;
 }
 
 glm::vec3
