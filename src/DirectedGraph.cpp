@@ -225,7 +225,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  if (td1.indegree == 0 && td1.outdegree == 0) {
 	    bool has_zero = zerodegree_nodes.count(np.first) != 0;
 	    if (np.first == np.second && !has_zero) {
-	      int z = nodes.getZeroDegreeNode();
+	      int z = nodes.createZeroDegreeGroup();
 	      cerr << "DEBUG: adding node " << np.first << " to zero degree node (id = " << z << ")\n";
 	      addChild(z, np.first);
 	      zerodegree_nodes.insert(np.first);
@@ -239,7 +239,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 		breakZeroDegreeNode(np.second);
 		assert(node_pairs.find(np.first) == node_pairs.end());
 		assert(node_pairs.find(np.second) == node_pairs.end());
-		int o = nodes.getPairsNode();
+		int o = nodes.createPairsGroup();
 		cerr << "adding to pairs node\n";
 		addChild(o, np.first);
 		addChild(o, np.second);

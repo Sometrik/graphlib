@@ -202,15 +202,16 @@ class NodeArray {
   int getSRID() const { return srid; }
   void setSRID(int _srid) { srid = _srid; }
 
-  // bool hasZeroDegreeNode() const { return zerodegree_node_id != -1; }
-  int getZeroDegreeNode() {
+  int getZeroDegreeGroup() const { return zerodegree_node_id; }
+  int createZeroDegreeGroup() {
     if (zerodegree_node_id == -1) {
       zerodegree_node_id = add();
       setRandomPosition(zerodegree_node_id);
     }
     return zerodegree_node_id;
   }
-  int getPairsNode() {
+  int getPairsGroup() const { return pairs_node_id; }
+  int createPairsGroup() {
     if (pairs_node_id == -1) {
       pairs_node_id = add();
       setRandomPosition(pairs_node_id);
