@@ -1214,11 +1214,21 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
     if (td.child_count) {
       if (td.child_count >= 2) {
-	bool is_open = false;
-	if (!td.isOpen()) {
+	auto d = display.project(pos) - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
+	float l = glm::length(d);
+	if (l >= 200.0f) {
+	  changed |= td.toggleNode(true);
 	  changed |= td.setLabelVisibility(true);
+	} else {
+	  changed |= td.toggleNode(false);
+	  if (l >= 20.0f) {
+	    changed |= td.setLabelVisibility(true);	    
+	  } else {
+	    changed |= td.setLabelVisibility(false);
+	  }
 	}
       } else {
+	changed |= td.toggleNode(true);
 	changed |= td.setLabelVisibility(false);
       }
     } else {
