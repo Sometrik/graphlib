@@ -6,8 +6,8 @@
 #include "ColorProvider.h"
 #include "Controller.h"
 #include "RenderMode.h"
-#include "ui/ArtProvider.h"
-#include "ui/TextureAtlas.h"
+
+#include "TextureAtlas.h"
 
 #include <DateTime.h>
 #include <VBO.h>
@@ -16,9 +16,11 @@
 #include <typeinfo>
 #include <unordered_set>
 
+#if 0
 #ifndef _WIN32
 #include "community/BinaryGraph.h"
 #include "community/Community.h"
+#endif
 #endif
 
 #define EPSILON 0.0000000001
