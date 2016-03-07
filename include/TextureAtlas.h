@@ -1,7 +1,7 @@
 #ifndef _TEXTUREATLAS_H_
 #define _TEXTUREATLAS_H_
 
-#include "../ReadWriteObject.h"
+#include "ReadWriteObject.h"
 
 #include <TextureRef.h>
 #include <InternalFormat.h>
