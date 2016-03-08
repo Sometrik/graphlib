@@ -1326,7 +1326,7 @@ Graph::getGraphForReading(int graph_id, const char * debug_name) const {
   const Graph * ptr = getGraphById2(graph_id);
   auto graph = GraphRefR(ptr);
   double t = DateTime::getCurrentTime() - t0;
-  if (t > 0.1) {
+  if (t > 0.01) {
     cerr << "getGraphForReading() took too long (" << t << ")";
     if (debug_name) cerr << " for " << debug_name << endl;
     else cerr << endl;
@@ -1340,7 +1340,7 @@ Graph::getGraphForWriting(int graph_id, const char * debug_name) {
   Graph * ptr = getGraphById2(graph_id);
   auto graph = GraphRefW(ptr); 
   double t = DateTime::getCurrentTime() - t0;
-  if (t > 0.1) {
+  if (t > 0.01) {
     cerr << "getGraphForWriting() took too long (" << t << ")";
     if (debug_name) cerr << " for " << debug_name << endl;
     else cerr << endl;
