@@ -507,9 +507,10 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
 
 #define LABEL_FLAG_CENTER	1
 #define LABEL_FLAG_MIDDLE	2
+
 struct label_pos_s {
   glm::vec3 pos;
-  float x, y;
+  glm::vec2 offset;
   int texture;
   unsigned short flags;
   glm::vec4 color1, color2;
@@ -527,12 +528,11 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
     if (!(fd.flags & FACE_LABEL_VISIBLE && fd.label_texture)) continue;
 
     glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
-    float x = 0.0f, y = 0.0f;
 
     unsigned short flags = 0;
     flags |= LABEL_FLAG_MIDDLE;
 
-    labels.push_back({ pos, x, y, fd.label_texture, flags, black, white });
+    labels.push_back({ pos, glm::vec2(), fd.label_texture, flags, black, white });
   }
 
   auto nodes_end = end_visible_nodes();
@@ -546,7 +546,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       pos += nodes->getNodeData(p).position;
     }
 
-    float offset_x = 0, offset_y = 0;
+    glm::vec2 offset;
     unsigned short flags = 0;
 
     flags |= LABEL_FLAG_MIDDLE;
@@ -557,11 +557,11 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       flags |= LABEL_FLAG_CENTER;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float node_size = 0.0f;
-      offset_y -= 0.8 * (3.0 + 2.0 * node_size);
+      offset += glm::vec2(0, -0.8 * (3.0 + 2.0 * node_size)I);
       flags |= LABEL_FLAG_CENTER;
     }
         
-    labels.push_back({ pos, offset_x, offset_y, pd.label_texture, flags, color1, color2 });
+    labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
   }
   
   if (!labels.empty()) {
@@ -573,9 +573,11 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
     
     for (auto & ld : labels) {
       auto & tp = atlas.getTexturePos(ld.texture);
-      
-      if (ld.flags & LABEL_FLAG_CENTER) ld.x -= tp.width / 2.0f;
-      if (ld.flags & LABEL_FLAG_MIDDLE) ld.y -= tp.height / 2.0f;
+
+      float corner_base_x = 0, corner_base_y = 0;
+
+      if (ld.flags & LABEL_FLAG_CENTER) corner_base_x -= tp.width / 2.0f;
+      if (ld.flags & LABEL_FLAG_MIDDLE) corner_base_y -= tp.height / 2.0f;
       // else y -= tp.height;
       
       float tx1 = (float)tp.x / atlas.getWidth(), ty1 = (float)tp.y / atlas.getHeight();
@@ -590,10 +592,12 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 			     (unsigned char)(ld.color2.z * 255.0),
 			     (unsigned char)(ld.color2.w * 255.0) };
       
-      *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x, ld.y + tp.height)), glm::packHalf2x16(glm::vec2(tx1, ty1)), color1, color2 };
-      *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x, ld.y)), glm::packHalf2x16(glm::vec2(tx1, ty2)), color1, color2 };
-      *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x + tp.width, ld.y)), glm::packHalf2x16(glm::vec2(tx2, ty2)), color1, color2 };
-      *(current_data++) = { ld.pos, glm::packHalf2x16(glm::vec2(ld.x + tp.width, ld.y + tp.height)), glm::packHalf2x16(glm::vec2(tx2, ty1)), color1, color2 };
+      glm::uint32 offset = glm::packHalf2x16(ld.offset);
+
+      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x, corner_base_y + tp.height)), glm::packHalf2x16(glm::vec2(tx1, ty1)), color1, color2 };
+      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x, corner_base_y)), glm::packHalf2x16(glm::vec2(tx1, ty2)), color1, color2 };
+      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x + tp.width, corner_base_y)), glm::packHalf2x16(glm::vec2(tx2, ty2)), color1, color2 };
+      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x + tp.width, corner_base_y + tp.height)), glm::packHalf2x16(glm::vec2(tx2, ty1)), color1, color2 };
       
       *current_index++ = idx + 0;
       *current_index++ = idx + 1;
@@ -1102,7 +1106,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
 
 void
 Graph::calculateEdgeCentrality() {
-  int num_edges = getEdgeCount();
+  unsigned int num_edges = getEdgeCount();
   vector<double> betweenness_data(num_edges, 0);
 
   cerr << "edge centrality: n = " << num_edges << endl;
