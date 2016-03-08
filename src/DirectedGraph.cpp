@@ -76,9 +76,23 @@ void
 DirectedGraph::breakZeroDegreeNode(int node_id) {
   auto it = zerodegree_nodes.find(node_id);
   if (it != zerodegree_nodes.end()) {
+    // cerr << "DEBUG: removing node " << np.first << " from zero degree node (A)\n";
     removeChild(node_id);
     zerodegree_nodes.erase(it);
   }
+}
+
+bool
+DirectedGraph::canPair(int n1, int n2, const node_tertiary_data_s & td1, const node_tertiary_data_s & td2) const {
+  if (td1.indegree == 0 && td1.outdegree == 0 && td2.indegree == 0 && td2.outdegree == 0) {
+    return true;
+  } else {
+    auto it1 = onedegree_nodes.find(n1), it2 = onedegree_nodes.find(n2);
+    if (it1 != onedegree_nodes.end() && it2 != onedegree_nodes.end() && it1->second == it2->second) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool
@@ -223,31 +237,31 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	  }
 	} else {
 	  if (td1.indegree == 0 && td1.outdegree == 0) {
-	    bool has_zero = zerodegree_nodes.count(np.first) != 0;
-	    if (np.first == np.second && !has_zero) {
+	    // bool has_zero = zerodegree_nodes.count(np.first) != 0;
+	    if (np.first == np.second) { // && !has_zero) {
+	      assert(!zerodegree_nodes.count(np.first));
 	      int z = nodes.createZeroDegreeGroup();
 	      cerr << "DEBUG: adding node " << np.first << " to zero degree node (id = " << z << ")\n";
 	      addChild(z, np.first);
 	      zerodegree_nodes.insert(np.first);
-	    } else if (np.first != np.second && has_zero) {
-	      cerr << "DEBUG: removing node " << np.first << " from zero degree node (A)\n";
-	      removeChild(np.first);
-	      zerodegree_nodes.erase(np.first);
+	    } else { // if (np.first != np.second && has_zero) {
+	      breakZeroDegreeNode(np.first);
 	    }
 	    if (np.first != np.second) {
-	      if (td2.indegree == 0 && td2.outdegree == 0) {
+	      if (canPair(np.first, np.second, td1, td2)) {
 		breakZeroDegreeNode(np.second);
 		assert(node_pairs.find(np.first) == node_pairs.end());
 		assert(node_pairs.find(np.second) == node_pairs.end());
 		int o = nodes.createPairsGroup();
-		cerr << "adding to pairs node\n";
+		// cerr << "adding to pairs node\n";
 		addChild(o, np.first);
 		addChild(o, np.second);
 		node_pairs[np.first] = np.second;
 		node_pairs[np.second] = np.first;
-	      } else if (!onedegree_nodes.count(np.first)) {
+	      } else {
+		assert(!onedegree_nodes.count(np.first));
+		assert(!node_pairs.count(np.first));
 		cerr << "adding to onedegree node (A)\n";
-		assert(node_pairs.find(np.first) == node_pairs.end());
 		breakOneDegreeNode(np.second);
 		breakNodePair(np.second);
 		int o = nodes.getOneDegreeNode(np.second);

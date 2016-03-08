@@ -24,6 +24,7 @@ class DirectedGraph : public Graph {
     onedegree_nodes.clear();
     zerodegree_nodes.clear();
     node_pairs.clear();
+    node_triplets.clear();
     current_pos = -1;
     num_links = 0;
     num_hashtags = 0;
@@ -37,13 +38,15 @@ class DirectedGraph : public Graph {
   void breakNodePair(int node_id);
   void breakOneDegreeNode(int node_id);
   void breakZeroDegreeNode(int node_id);
-  
+  bool canPair(int n1, int n2, const node_tertiary_data_s & td1, const node_tertiary_data_s & td2) const;
+
  private:
   std::unordered_set<int> seen_nodes;
   std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
   std::unordered_map<int, int> onedegree_nodes;
   std::unordered_set<int> zerodegree_nodes;
   std::unordered_map<int, int> node_pairs;
+  std::unordered_map<int, std::pair<int, int> > node_triplets;
   int current_pos = -1;
   unsigned int num_links = 0, num_hashtags = 0;
   time_t min_time = 0, max_time = 0;
