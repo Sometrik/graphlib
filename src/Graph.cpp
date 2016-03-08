@@ -519,6 +519,7 @@ struct label_pos_s {
 void
 Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {  
   const table::Column & user_type = getNodeArray().getTable()["type"];
+  auto & size_method = nodes->getNodeSizeMethod();
   vector<label_pos_s> labels;
 
   glm::vec4 black(0.0, 0.0, 0.0, 1.0), white(1.0, 1.0, 1.0, 1.0);
@@ -556,8 +557,8 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       color1 = glm::vec4(0.0, 0.1, 0.2, 1.0);
       flags |= LABEL_FLAG_CENTER;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
-      float node_size = 0.0f;
-      offset += glm::vec2(0, -0.8 * (3.0 + 2.0 * node_size));
+      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+      offset += glm::vec2(0, -3.2 * size);
       flags |= LABEL_FLAG_CENTER;
     }
         
