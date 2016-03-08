@@ -189,6 +189,8 @@ class NodeArray : public ReadWriteObject {
   void setAlpha3(float f) { alpha = f; }
   void updateAlpha() { alpha *= 0.99f; }
   float getAlpha2() const { return alpha; }
+  float isRunning() const { return alpha >= 0.0005f; }
+
   void resume2();
   void stop() { alpha = 0.0f; }
 
