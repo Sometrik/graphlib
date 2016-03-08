@@ -557,7 +557,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       flags |= LABEL_FLAG_CENTER;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float node_size = 0.0f;
-      offset += glm::vec2(0, -0.8 * (3.0 + 2.0 * node_size)I);
+      offset += glm::vec2(0, -0.8 * (3.0 + 2.0 * node_size));
       flags |= LABEL_FLAG_CENTER;
     }
         
