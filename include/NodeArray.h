@@ -99,9 +99,6 @@ class NodeArray : public ReadWriteObject {
   void updatePosition(int i, const glm::vec3 & v) {
     node_geometry[i].position = v;    
   }
-  void updatePrevPosition(int i, const glm::vec3 & v) {
-    node_geometry[i].prev_position = v;    
-  }
   void setPosition(int i, const glm::vec3 & v) { 
     node_geometry[i].position = node_geometry[i].prev_position = v;
     // mbr.growToContain(v.x, v.y);
