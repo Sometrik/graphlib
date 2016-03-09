@@ -234,11 +234,11 @@ class NodeArray : public ReadWriteObject {
   }
   int getOneDegreeNode(int node_id) {
     auto & nd = node_geometry[node_id];
-    if (nd.group_node == -1) {
-      nd.group_node = add();
-      setRandomPosition(nd.group_node);
-    }
-    return nd.group_node;
+    if (nd.group_node != -1) return nd.group_node;
+    int group_node = add(); // nd is no longer valid after add
+    node_geometry[node_id].group_node = group_node;
+    setRandomPosition(group_node);
+    return group_node;
   }
 
   int addArcGeometry(const ArcData2D & data) {
