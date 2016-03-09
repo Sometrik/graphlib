@@ -609,7 +609,7 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 
 // Gauss-Seidel relaxation for links
 void
-Graph::relaxLinks(const std::vector<node_position_data_s> & v) const {
+Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   float alpha = getNodeArray().getAlpha2();
   auto & size_method = nodes->getNodeSizeMethod();
