@@ -391,8 +391,6 @@ class Graph : public MBRObject {
   void setLocationGraphValid(bool t) { location_graph_valid = t; }
   bool isLocationGraphValid() const { return location_graph_valid; }
 
-  void relaxLinks();
-
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
     face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
@@ -567,8 +565,9 @@ class Graph : public MBRObject {
   void setMinSignificance(float s) { min_significance = s; }
   void setMinScale(float s) { min_scale = s; }
 
-  void applyGravity(float gravity, std::vector<node_position_data_s> & v);
-  void applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v);
+  void relaxLinks(std::vector<node_position_data_s> & v) const;
+  void applyGravity(float gravity, std::vector<node_position_data_s> & v) const;
+  void applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v) const;
   void applyAge();
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
