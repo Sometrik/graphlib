@@ -609,10 +609,8 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
 
 // Gauss-Seidel relaxation for links
 void
-Graph::relaxLinks() {
-  // cerr << "relax: " << max_edge_weight << endl;
+Graph::relaxLinks(const std::vector<node_position_data_s> & v) const {
   double avg_edge_weight = total_edge_weight / getEdgeCount();
-  // cerr << "avg edge weight = " << avg_edge_weight << endl;
   float alpha = getNodeArray().getAlpha2();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
@@ -664,7 +662,7 @@ Graph::relaxLinks() {
       p = ptd.parent_node;
     }
     if (closed) continue;
-    auto & pd1 = nodes->getNodeData(tail), & pd2 = nodes->getNodeData(head);
+    auto & pd1 = v[tail], & pd2 = v[head];
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
@@ -689,7 +687,6 @@ Graph::relaxLinks() {
     pos2 -= d * k;
     pos1 += d * (1 - k);
   }
-  version++;
 }
 
 int
@@ -1443,19 +1440,16 @@ Graph::updateFaceAppearance() {
   }
 }
 
-static inline void applyGravityToNode(float k, node_data_s & pd, const node_tertiary_data_s & td, float weight) {
-}
-
 void
-Graph::applyGravity(float gravity) {
+Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const {
   float k = nodes->getAlpha2() * gravity;
   if (k < EPSILON) return;
   
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
-    auto & pd = nodes->getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
     if (!td.isFixed()) {
+      auto & pd = v[*it];
       float factor = 1.0f;
       if (td.parent_node >= 0) {
 	factor = 96.0f;
@@ -1471,23 +1465,27 @@ Graph::applyGravity(float gravity) {
 }
 
 void
-Graph::applyDragAndAge(RenderMode mode, float friction) {
+Graph::applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v) const {
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
-    auto & pd = nodes->getNodeData(*it);
-    auto & td = node_geometry3[*it];
-      
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    
+    auto & pd = v[*it];
+    glm::vec3 & pd = v.position, & ppos = pd.prev_position;
     glm::vec3 new_pos = pos - (ppos - pos) * friction;
     if (mode == RENDERMODE_2D) {
       new_pos.z = 0;
     }
     pd.prev_position = pos;
     pd.position = new_pos;
+  }
+}
+
+void
+Graph::applyAge() {
+  auto end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & td = node_geometry3[*it];
     td.age += 1.0f / 50.0f;
   }
-  
   version++;
 }
 

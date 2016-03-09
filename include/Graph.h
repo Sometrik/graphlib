@@ -567,8 +567,10 @@ class Graph : public MBRObject {
   void setMinSignificance(float s) { min_significance = s; }
   void setMinScale(float s) { min_scale = s; }
 
-  void applyGravity(float gravity);
-  void applyDragAndAge(RenderMode mode, float friction);
+  void applyGravity(float gravity, std::vector<node_position_data_s> & v);
+  void applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v);
+  void applyAge();
+  
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
   double getTotalOutdegree() const { return total_outdegree; }
