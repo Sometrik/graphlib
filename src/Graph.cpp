@@ -404,33 +404,6 @@ Graph::createEdgeVBO(VBO & vbo) const {
   }
 }
 
-void
-Graph::createNodeVBOForSprites(VBO & vbo) const {
-  if (!getEdgeCount()) {
-    return;
-  }
-
-  vector<node_vbo_s> new_geometry;
-  graph_color_s parent_color = { 50, 50, 255, 0 };
-  graph_color_s def_color = { 200, 200, 200, 255 };
-  auto & size_method = nodes->getNodeSizeMethod();
-
-  auto end = end_visible_nodes();
-  for (auto it = begin_visible_nodes(); it != end; ++it) {
-    auto & nd = nodes->getNodeData(*it);
-    auto & td = getNodeTertiaryData(*it);
-    const graph_color_s & col = td.child_count ? parent_color : def_color;
-    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-    auto pos = nd.position;
-    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      pos += nodes->getNodeData(p).position;
-    }
-    new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, td.flags });
-  }
-    
-  vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
-}
-
 #if 0
 vector<int>
 Graph::createSortedNodeIndices(const glm::vec3 & camera_pos) const {

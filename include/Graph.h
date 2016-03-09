@@ -251,7 +251,6 @@ class Graph : public MBRObject {
   
   void createEdgeVBO(VBO & vbo) const;
   void createRegionVBO(VBO & vbo) const;
-  void createNodeVBOForSprites(VBO & vbo) const;
   void createNodeVBOForQuads(VBO & vbo) const;
   void createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const;
 
