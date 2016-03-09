@@ -1469,7 +1469,7 @@ Graph::applyDrag(RenderMode mode, float friction, std::vector<node_position_data
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = v[*it];
-    glm::vec3 & pd = v.position, & ppos = pd.prev_position;
+    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
     glm::vec3 new_pos = pos - (ppos - pos) * friction;
     if (mode == RENDERMODE_2D) {
       new_pos.z = 0;
