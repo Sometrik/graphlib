@@ -33,6 +33,10 @@
 #define CLEAR_NODES	2
 #define CLEAR_ALL	(CLEAR_LABELS | CLEAR_NODES)
 
+struct node_position_data_s {
+  glm::vec3 position, prev_position;
+};
+
 struct node_data_s {
   glm::vec3 position;
   glm::vec3 prev_position;
@@ -177,11 +181,27 @@ class NodeArray : public ReadWriteObject {
   
   std::vector<node_data_s> & getGeometry() { return node_geometry; }
   const std::vector<node_data_s> & getGeometry() const { return node_geometry; }
-
+  std::vector<node_position_data_s> copyPositions() const {
+    std::vector<node_position_data_s> v;
+    v.resize(node_geometry.size());
+    for (unsigned int i = 0, n = node_geometry.size(); i < n; i++) {
+      v[i].position = node_geometry[i].position;
+      v[i].prev_position = node_geometry[i].prev_position;
+    }
+    return v;
+  }
+  void storePositions(const std::vector<node_position_data_s> & v) {
+    for (unsigned int i = 0, n = v.size(); i < n; i++) {
+      node_geometry[i].position = v[i].position;
+      node_geometry[i].prev_position = v[i].prev_position;
+    }
+    version++;
+  }
+  
 #if 0
   NodeIterator begin_nodes() { return NodeIterator(&(node_geometry.front())); }
   NodeIterator end_nodes() { return NodeIterator(&(node_geometry.back())) + 1; }
-#endif
+#endif  
   
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
