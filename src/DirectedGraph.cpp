@@ -241,7 +241,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	    if (np.first == np.second) { // && !has_zero) {
 	      assert(!zerodegree_nodes.count(np.first));
 	      int z = nodes.createZeroDegreeGroup();
-	      cerr << "DEBUG: adding node " << np.first << " to zero degree node (id = " << z << ")\n";
+	      // cerr << "DEBUG: adding node " << np.first << " to zero degree node (id = " << z << ")\n";
 	      addChild(z, np.first);
 	      zerodegree_nodes.insert(np.first);
 	    } else { // if (np.first != np.second && has_zero) {
@@ -261,7 +261,7 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 	      } else {
 		assert(!onedegree_nodes.count(np.first));
 		assert(!node_pairs.count(np.first));
-		cerr << "adding to onedegree node (A)\n";
+		// cerr << "adding to onedegree node (A)\n";
 		breakOneDegreeNode(np.second);
 		breakNodePair(np.second);
 		int o = nodes.getOneDegreeNode(np.second);
@@ -279,9 +279,9 @@ DirectedGraph::updateData(time_t start_time, time_t end_time, float start_sentim
 		// pair was created
 	      } else if (!onedegree_nodes.count(np.second)) {
 		if (node_pairs.count(np.second)) {
-		  cerr << "ERROR!\n";
+		  cerr << "DirectedGraph: error with pairs!\n";
 		} else {
-		  cerr << "adding child " << np.second << " to onedegree node (B) [td1.i = " << td1.indegree << ", td1.o = " << td1.outdegree << "]\n";
+		  // cerr << "adding child " << np.second << " to onedegree node (B) [td1.i = " << td1.indegree << ", td1.o = " << td1.outdegree << "]\n";
 		  assert(node_pairs.find(np.second) == node_pairs.end());
 		  breakOneDegreeNode(np.first);
 		  breakNodePair(np.first);

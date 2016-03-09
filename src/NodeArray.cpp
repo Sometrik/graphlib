@@ -45,7 +45,6 @@ NodeArray::updateNodeAppearance(int node_id) {
 	label = to_string(id);
       }
     }
-    // cerr << "setting label for node " << node_id << ": " << label << endl;
     setLabel(node_id, label);
   }
 }

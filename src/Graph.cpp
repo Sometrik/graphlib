@@ -134,7 +134,6 @@ Graph::createRegionVBO(VBO & vbo) const {
     vector<int> stored_arcs;
     stored_arcs.resize(arc_geometry.size());
 		       
-    cerr << "creating complex region VBO, faces = " << getFaceCount() << "\n";
     for (unsigned int face = 0; face < getFaceCount(); face++) {   
       auto & this_color = getFaceAttributes(face).color;
       glm::vec4 color( this_color.r * 255.0f, this_color.g * 255.0f, this_color.b * 255.0f, this_color.a * 255.0f );
@@ -200,8 +199,6 @@ Graph::createRegionVBO(VBO & vbo) const {
     vbo.upload(VBO::ARCS_2D, &(new_geometry.front()), new_geometry.size() * sizeof(arc_data_2d_s));
     vbo.uploadIndices(&(back_indices.front()), back_indices.size() * sizeof(unsigned int));    
   } else {
-    cerr << "creating simple region VBO, faces = " << getFaceCount() << "\n";
-
     vector<arc_data_3d_s> new_geometry;
     vector<unsigned int> indices;
     glm::vec3 normal;
@@ -232,8 +229,6 @@ Graph::createRegionVBO(VBO & vbo) const {
     if (!new_geometry.empty() && !indices.empty()) {
       vbo.upload(VBO::ARCS_3D, &(new_geometry.front()), new_geometry.size() * sizeof(arc_data_3d_s));
       vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
-    } else {
-      cerr << "skipping VBO for Graph " << getId() << "\n";
     }
   }
 }
@@ -248,7 +243,6 @@ struct pair_hash {
 void
 Graph::createEdgeVBO(VBO & vbo) const {
   if (nodes->hasArcData()) {
-    cerr << "loading arcs" << endl;
     unsigned int num_vertices = 0, num_indices = 0;
     auto & arc_geometry = nodes->getArcGeometry();
     for (unsigned int i = 0; i < getEdgeCount(); i++) {
@@ -256,7 +250,6 @@ Graph::createEdgeVBO(VBO & vbo) const {
       assert(ed.arc);
       if (ed.arc) {
 	int j = abs(ed.arc) - 1;
-	// cerr << "arc = " << ed.arc << ", size = " << arc_geometry.size() << endl;
 	if (j < 0 || j >= arc_geometry.size()) {
 	  cerr << "invalid arc, j = " << j << ", size = " << arc_geometry.size() << endl;
 	  assert(0);
@@ -298,7 +291,6 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	  indices[in++] = vn - 1;
 	  indices[in++] = vn;
 	}
-	// cerr << "point = " << v.x << " " << v.y << " " << v.z << endl;
 #if 1
 	new_geometry[vn++] = {
 	  (unsigned char)(color.x * 255), (unsigned char)(color.y * 255), (unsigned char)(color.z * 255), (unsigned char)(color.w * 255), glm::vec2((float)v.x, (float)v.y ) };
@@ -404,7 +396,6 @@ Graph::createEdgeVBO(VBO & vbo) const {
     assert(vn <= 2 * ec);
 
     if (vn > 0) {
-      // cerr << "uploading edges: vn = " << vn << ", indices = " << indices.size() << endl;
       vbo.upload(VBO::EDGES, new_geometry.get(), vn * sizeof(line_data_s));
       // vbo.uploadIndices(&(indices.front()), indices.size() * sizeof(unsigned int));
     } else {
@@ -436,9 +427,7 @@ Graph::createNodeVBOForSprites(VBO & vbo) const {
     }
     new_geometry.push_back({ col.r, col.g, col.b, col.a, pos, td.age, size, nd.texture, td.flags });
   }
-  
-  // cerr << "uploaded node vbo: edges = " << edge_count << ", nodes = " << new_geometry.size() << endl;
-  
+    
   vbo.upload(VBO::NODES, &(new_geometry.front()), new_geometry.size() * sizeof(node_vbo_s));
 }
 
@@ -1047,7 +1036,6 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
       final_graphs.front()->removeAllChildren();
     }
     final_graphs.clear();
-    cerr << "CREATING FINALs!\n";
     if (count == 5) {
       auto g0 = createSimilar();
       auto g1 = createSimilar();
@@ -1286,7 +1274,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   }
   
   if (changed) {
-    // cerr << "labels changed!\n";
     incVersion();
     return true;
   } else {
@@ -1450,7 +1437,7 @@ Graph::updateFaceAppearance() {
 	  }    
 	}
       }
-      if (!label.empty()) cerr << "setting label for face " << i << ": " << label << endl;
+      // if (!label.empty()) cerr << "setting label for face " << i << ": " << label << endl;
       getFaceAttributes(i).setLabel(label);
     }
   }
@@ -1580,7 +1567,6 @@ Graph::addChild(int parent, int child) {
   nodes->getNodeData(child).position -= nodes->getNodeData(parent).position;
   version++;
   assert(node_geometry3[child].parent_node == parent);
-  cerr << "added child " << child << " to " << parent << endl;
 }
 
 void
