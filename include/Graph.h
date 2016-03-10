@@ -223,7 +223,7 @@ class Graph : public MBRObject {
 
   void setFaceLabelTexture(int i, int texture) {
     face_attributes[i].label_texture = texture;
-    version++;
+    incLabelVersion();
   }
 
   bool updateFaceLabelValues(int i, float visibility) {
@@ -419,12 +419,7 @@ class Graph : public MBRObject {
 
   void createClusters();
   void calculateEdgeCentrality();
-  
-  void incVersion() { version++; }
-  void setVersion(int _version) { version = _version; }
-
-  void incLabelVersion() { label_version++; }
-    
+      
   Graph & getActualGraph(float scale) {
     auto g = getFinal(scale);
     return g.get() ? *g : *this;
@@ -601,6 +596,10 @@ class Graph : public MBRObject {
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
+
+  void incVersion() { version++; }
+  // void setVersion(int _version) { version = _version; }
+  void incLabelVersion() { label_version++; }
 
   table::Table faces;
   std::vector<face_data_s> face_attributes;
