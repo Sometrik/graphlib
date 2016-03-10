@@ -248,7 +248,8 @@ class Graph : public MBRObject {
   void createEdgeVBO(VBO & vbo) const;
   void createRegionVBO(VBO & vbo) const;
   void createNodeVBOForQuads(VBO & vbo) const;
-  void createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const;
+
+  void getVisibleLabels(vector<Label> & labels) const;
 
   virtual std::set<int> getAdjacentRegions() const { return std::set<int>(); }
 

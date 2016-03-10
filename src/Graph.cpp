@@ -8,6 +8,7 @@
 #include "RenderMode.h"
 
 #include "TextureAtlas.h"
+#include "Label.h"
 
 #include <DateTime.h>
 #include <VBO.h>
@@ -467,25 +468,13 @@ Graph::createNodeVBOForQuads(VBO & vbo) const {
   }
 }
 
-#define LABEL_FLAG_CENTER	1
-#define LABEL_FLAG_MIDDLE	2
-
-struct label_pos_s {
-  glm::vec3 pos;
-  glm::vec2 offset;
-  int texture;
-  unsigned short flags;
-  glm::vec4 color1, color2;
-};
-
 void
-Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) const {  
+Graph::getVisibleLabels(vector<Label> & labels) const {  
   const table::Column & user_type = getNodeArray().getTable()["type"];
   auto & size_method = nodes->getNodeSizeMethod();
-  vector<label_pos_s> labels;
-
+  
   glm::vec4 black(0.0, 0.0, 0.0, 1.0), white(1.0, 1.0, 1.0, 1.0);
-    
+  
   for (unsigned int i = 0; i < getFaceCount(); i++) {
     auto & fd = getFaceAttributes(i);
     if (!(fd.flags & FACE_LABEL_VISIBLE && fd.label_texture)) continue;
@@ -525,61 +514,6 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
     }
         
     labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
-  }
-  
-  if (!labels.empty()) {
-    std::unique_ptr<billboard_data_s[]> data(new billboard_data_s[4 * labels.size()]);
-    std::unique_ptr<unsigned int[]> indices(new unsigned int[6 * labels.size()]);
-    billboard_data_s * current_data = data.get();
-    unsigned int * current_index = indices.get();
-    int idx = 0;
-    
-    for (auto & ld : labels) {
-      auto & tp = atlas.getTexturePos(ld.texture);
-
-      float corner_base_x = 0, corner_base_y = 0;
-
-      if (ld.flags & LABEL_FLAG_CENTER) corner_base_x -= tp.width / 2.0f;
-      if (ld.flags & LABEL_FLAG_MIDDLE) corner_base_y -= tp.height / 2.0f;
-      // else y -= tp.height;
-      
-      float tx1 = (float)tp.x / atlas.getWidth(), ty1 = (float)tp.y / atlas.getHeight();
-      float tx2 = (float)(tp.x + tp.width) / atlas.getWidth(), ty2 = (float)(tp.y + tp.height) / atlas.getHeight();
-      
-      vbo_color_s color1 = { (unsigned char)(ld.color1.x * 255.0),
-			     (unsigned char)(ld.color1.y * 255.0),
-			     (unsigned char)(ld.color1.z * 255.0),
-			     (unsigned char)(ld.color1.w * 255.0) };
-      vbo_color_s color2 = { (unsigned char)(ld.color2.x * 255.0),
-			     (unsigned char)(ld.color2.y * 255.0),
-			     (unsigned char)(ld.color2.z * 255.0),
-			     (unsigned char)(ld.color2.w * 255.0) };
-      
-      glm::uint32 offset = glm::packHalf2x16(ld.offset);
-
-      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x, corner_base_y + tp.height)), glm::packHalf2x16(glm::vec2(tx1, ty1)), color1, color2 };
-      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x, corner_base_y)), glm::packHalf2x16(glm::vec2(tx1, ty2)), color1, color2 };
-      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x + tp.width, corner_base_y)), glm::packHalf2x16(glm::vec2(tx2, ty2)), color1, color2 };
-      *(current_data++) = { ld.pos, offset, glm::packHalf2x16(glm::vec2(corner_base_x + tp.width, corner_base_y + tp.height)), glm::packHalf2x16(glm::vec2(tx2, ty1)), color1, color2 };
-      
-      *current_index++ = idx + 0;
-      *current_index++ = idx + 1;
-      *current_index++ = idx + 3;
-      *current_index++ = idx + 1;
-      *current_index++ = idx + 2;
-      *current_index++ = idx + 3;
-      
-      idx += 4;
-    }
-
-    cerr << "creating label vbo, n = " << labels.size() << endl;
-    
-    vbo.setDrawType(VBO::TRIANGLES);
-    vbo.uploadIndices(indices.get(), labels.size() * 6 * sizeof(unsigned int));
-    vbo.upload(VBO::BILLBOARDS, data.get(), labels.size() * 4 * sizeof(billboard_data_s));
-  } else {
-    cerr << "clearing label vbo, n = " << labels.size() << endl;
-    vbo.clear();
   }
 }
 
