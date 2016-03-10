@@ -52,7 +52,7 @@ struct node_tertiary_data_s {
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
 
   bool setLabelVisibility(bool t) {
-    if ((t && !isLabelVisible()) || (!t && isLabelVisible()) || 1) {
+    if ((t && !isLabelVisible()) || (!t && isLabelVisible())) {
       if (t) flags |= NODE_LABEL_VISIBLE;
       else flags &= ~NODE_LABEL_VISIBLE;
       return true;
@@ -103,13 +103,9 @@ struct face_data_s {
   }
 
   bool setLabelVisibility(bool t) {
-    bool orig_t = flags | FACE_LABEL_VISIBLE ? true : false;
-    if (t != orig_t || 1) {
-      if (t) {
-	flags |= FACE_LABEL_VISIBLE;
-      } else {
-	flags &= ~FACE_LABEL_VISIBLE;
-      }
+    if ((t && !isLabelVisible()) || (!t && isLabelVisible())) {
+      if (t) flags |= FACE_LABEL_VISIBLE;
+      else flags &= ~FACE_LABEL_VISIBLE;
       return true;
     } else {
       return false;
