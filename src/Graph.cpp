@@ -738,7 +738,7 @@ Graph::extractLocationGraph(Graph & target_graph) {
 	int new_node_id = target_graph.addNode();
 	node_mapping[key1] = new_node_id;
 	glm::vec3 tmp((float)lon1, (float)lat1, 0);
-	target_graph.getNodeArray().setPositions(new_node_id, pair<glm::vec3, glm::vec3>(tmp, tmp));
+	target_graph.getNodeArray().setPosition(new_node_id, tmp);
 	np.first = new_node_id;
       }
 
@@ -761,7 +761,7 @@ Graph::extractLocationGraph(Graph & target_graph) {
 	int new_node_id = target_graph.addNode();
 	node_mapping[key2] = new_node_id;
 	glm::vec3 tmp((float)lon2, (float)lat2, 0);
-	target_graph.getNodeArray().setPositions(new_node_id, pair<glm::vec3, glm::vec3>(tmp, tmp));
+	target_graph.getNodeArray().setPosition(new_node_id, tmp);
 	np.second = new_node_id;
       }
     }
@@ -842,8 +842,6 @@ Graph::selectNodes(int input_node, int depth) {
       }
     }
   }
-
-  version++;
 }
 
 std::vector<int>
@@ -1056,6 +1054,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
       g->incVersion();
       setLocationGraphValid(false);
+      assert(nodes->isDynamic());
       incVersion();
       getNodeArray().resume2();
       g->getNodeArray().resume2();
@@ -1136,6 +1135,7 @@ Graph::calculateEdgeCentrality() {
 
   cerr << "sum = " << sum << ", avg =  " << sum / num_edges << endl;
 
+  assert(nodes->isDynamic());
   incVersion();
   randomizeGeometry();
   getNodeArray().resume2();
@@ -1250,6 +1250,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   if (labels_changed) incLabelVersion();
   if (structure_changed) {
     cerr << "graph structure changed in updateVisibilities()" << endl;
+    assert(nodes->isDynamic());
     incVersion();
   }
 
@@ -1464,7 +1465,8 @@ Graph::applyAge() {
     auto & td = node_geometry3[*it];
     td.age += 1.0f / 50.0f;
   }
-  version++;
+  assert(nodes->isDynamic());
+  incVersion();
 }
 
 bool
@@ -1541,7 +1543,9 @@ Graph::addChild(int parent, int child) {
   node_geometry3[parent].coverage = 0xffffffffffffffffULL;
   node_geometry3[parent].coverage_weight = 1.0f;
   nodes->getNodeData(child).position -= nodes->getNodeData(parent).position;
-  version++;
+
+  assert(nodes->isDynamic());
+  incVersion();
   assert(node_geometry3[child].parent_node == parent);
 }
 
@@ -1569,12 +1573,15 @@ Graph::removeChild(int child) {
     node_geometry3[parent].child_count--;
     nodes->getNodeData(parent).label_texture = 0;
     nodes->getNodeData(child).position += nodes->getNodeData(parent).position;
-    version++;
+
+    assert(nodes->isDynamic());
+    incVersion();
   }        
 }
 
 void
 Graph::removeAllChildren() {
+  assert(nodes->isDynamic());
   for (int i = 0; i < nodes->size(); i++) {
     auto & nd = nodes->getNodeData(i);
     auto & td = node_geometry3[i];
