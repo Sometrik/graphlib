@@ -47,6 +47,7 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
     graph->setNodeArray(initial_nodes);
     graph->getNodeArray().setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_DEGREE));
   }
+  graph->getNodeArray().setDynamic(true);
   graph->getNodeArray().setFlattenHierarchy(true);
 
   auto & node_table = graph->getNodeArray().getTable();
