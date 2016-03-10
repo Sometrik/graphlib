@@ -5,6 +5,7 @@
 #define LABEL_FLAG_MIDDLE	2
 
 class Label {
+ public:
   glm::vec3 pos;
   glm::vec2 offset;
   int texture;
