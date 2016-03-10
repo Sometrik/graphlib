@@ -419,12 +419,15 @@ class Graph : public MBRObject {
   const NodeArray & getNodeArray() const { return *nodes; }
       
   int getVersion() const { return version + nodes->getVersion(); }
+  int getLabelVersion() const { return label_version + nodes->getVersion(); }
 
   void createClusters();
   void calculateEdgeCentrality();
   
   void incVersion() { version++; }
   void setVersion(int _version) { version = _version; }
+
+  void incLabelVersion() { label_version++; }
     
   Graph & getActualGraph(float scale) {
     auto g = getFinal(scale);
@@ -616,7 +619,7 @@ class Graph : public MBRObject {
   void lockWriter() { nodes->lockWriter(); }
   void unlockWriter() { nodes->unlockWriter(); }
   
-  int version = 1;
+  int version = 1, label_version = 1;
   short source_id = 0;
 
   int id;
