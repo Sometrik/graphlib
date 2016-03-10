@@ -134,6 +134,7 @@ class VBO;
 class TextureAtlas;
 class GraphRefR;
 class GraphRefW;
+class Label;
 
 class Graph : public MBRObject {
  public:
@@ -249,7 +250,7 @@ class Graph : public MBRObject {
   void createRegionVBO(VBO & vbo) const;
   void createNodeVBOForQuads(VBO & vbo) const;
 
-  void getVisibleLabels(vector<Label> & labels) const;
+  void getVisibleLabels(std::vector<Label> & labels) const;
 
   virtual std::set<int> getAdjacentRegions() const { return std::set<int>(); }
 
