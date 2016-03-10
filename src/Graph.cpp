@@ -1207,8 +1207,9 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     
   for (int i = 0; i < getFaceCount(); i++) {
     auto & fd = getFaceAttributes(i);
-    if ((!fd.label.empty() || getDefaultSymbolId()) &&
-	(display.isPointVisible(fd.centroid) || fd.isLabelVisible())) {
+    if (!display.isPointVisible(fd.centroid)) {
+      labels_changed |= fd.setLabelVisibility(false);
+    } else if (!fd.label.empty() || getDefaultSymbolId()) {
       glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
       all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, i });
     }
@@ -1247,9 +1248,12 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   }
   
   if (labels_changed) incLabelVersion();
-  if (structure_changed) incVersion();
+  if (structure_changed) {
+    cerr << "graph structure changed in updateVisibilities()" << endl;
+    incVersion();
+  }
 
-  return labels_changed || structure_changed;
+  return labels_changed;
 }
 
 Graph *
