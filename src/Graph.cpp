@@ -571,11 +571,14 @@ Graph::createLabelVBO(VBO & vbo, const TextureAtlas & atlas, float node_scale) c
       
       idx += 4;
     }
+
+    cerr << "creating label vbo, n = " << labels.size() << endl;
     
     vbo.setDrawType(VBO::TRIANGLES);
     vbo.uploadIndices(indices.get(), labels.size() * 6 * sizeof(unsigned int));
     vbo.upload(VBO::BILLBOARDS, data.get(), labels.size() * 4 * sizeof(billboard_data_s));
   } else {
+    cerr << "clearing label vbo, n = " << labels.size() << endl;
     vbo.clear();
   }
 }
@@ -1154,8 +1157,8 @@ bool
 Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   auto & size_method = nodes->getNodeSizeMethod();
-
-  bool changed = false;
+  
+  bool labels_changed = false, structure_changed = false;
 
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
@@ -1163,7 +1166,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     if (node_geometry3.size() <= *it) node_geometry3.resize(*it + 1);
     auto & td = node_geometry3[*it];
     if (td.age < 0.0f || (!td.child_count && pd.label.empty())) {
-      changed |= td.setLabelVisibility(false);
+      labels_changed |= td.setLabelVisibility(false);
       continue;
     }
     auto pos = pd.position;
@@ -1171,7 +1174,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       pos += nodes->getNodeData(p).position;
     }
     if (!display.isPointVisible(pos)) {
-      changed |= td.setLabelVisibility(false);
+      labels_changed |= td.setLabelVisibility(false);
       continue;
     }
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
@@ -1182,20 +1185,20 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	if (l >= 100.0f) {
 	  if (td.toggleNode(true)) {
 	    nodes->resume2();
-	    changed = true;
+	    structure_changed = true;
 	  }
-	  changed |= td.setLabelVisibility(false);
+	  labels_changed |= td.setLabelVisibility(false);
 	} else {
-	  changed |= td.toggleNode(false);
+	  structure_changed |= td.toggleNode(false);
 	  if (l >= 10.0f) {
-	    changed |= td.setLabelVisibility(true);	    
+	    labels_changed |= td.setLabelVisibility(true);	    
 	  } else {
-	    changed |= td.setLabelVisibility(false);
+	    labels_changed |= td.setLabelVisibility(false);
 	  }
 	}
       } else {
-	changed |= td.toggleNode(true);
-	changed |= td.setLabelVisibility(false);
+	structure_changed |= td.toggleNode(true);
+	labels_changed |= td.setLabelVisibility(false);
       }
     } else {
       all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, *it });
@@ -1237,18 +1240,16 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       drawn_labels.push_back(ld);
     }
     if (ld.type == label_data_s::NODE) {
-      changed |= updateNodeLabelValues(ld.index, fits ? 1.00f : -1.00f);
+      labels_changed |= updateNodeLabelValues(ld.index, fits ? 1.00f : -1.00f);
     } else {
-      changed |= updateFaceLabelValues(ld.index, fits ? 1.00f : -1.00f);
+      labels_changed |= updateFaceLabelValues(ld.index, fits ? 1.00f : -1.00f);
     }
   }
   
-  if (changed) {
-    incVersion();
-    return true;
-  } else {
-    return false;
-  }
+  if (labels_changed) incLabelVersion();
+  if (structure_changed) incVersion();
+
+  return labels_changed || structure_changed;
 }
 
 Graph *
