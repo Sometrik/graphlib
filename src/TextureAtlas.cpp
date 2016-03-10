@@ -214,13 +214,3 @@ TextureAtlas::renderLabelToTexture(canvas::ContextFactory & factory, const std::
   std::shared_ptr<canvas::Image> img = context->getDefaultSurface().createImage();
   return addImage(img, (unsigned int)(w * context->getDisplayScale()), (unsigned int)(h * context->getDisplayScale()));
 }
-
-void
-TextureAtlas::bindAtlas() {
-  glBindTexture(GL_TEXTURE_2D, getBackingTexture().getTextureId());
-}
-
-void
-TextureAtlas::unbindAtlas() {
-  glBindTexture(GL_TEXTURE_2D, 0);
-}
