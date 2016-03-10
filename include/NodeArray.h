@@ -18,12 +18,11 @@
 #define GF_TEMPORAL_GRAPH	1
 #define GF_HAS_SPATIAL_DATA	4
 #define GF_HAS_ARC_DATA		8
-#define GF_COMPLEX		16
+#define GF_DYNAMIC		16
 #define GF_HAS_TEXTURES		32
 #define GF_PER_NODE_COLORS	64
-#define GF_DOUBLE_BUFFERED_VBO	128
-#define GF_TEMPORAL_COVERAGE	256
-#define GF_FLATTEN_HIERARCHY	512
+#define GF_TEMPORAL_COVERAGE	128
+#define GF_FLATTEN_HIERARCHY	256
 
 #define DEFAULT_PROFILE	0
 #define PENDING_PROFILE	1
@@ -253,8 +252,8 @@ class NodeArray : public ReadWriteObject {
   bool isTemporal() const { return testFlags(GF_TEMPORAL_GRAPH); }
   void setTemporal(bool t) { updateFlags(GF_TEMPORAL_GRAPH, t); } 
   
-  bool isComplexGraph() const { return testFlags(GF_COMPLEX); }
-  void setComplexGraph(bool t) { updateFlags(GF_COMPLEX, t); }
+  bool isDynamic() const { return testFlags(GF_DYNAMIC); }
+  void setDynamic(bool t) { updateFlags(GF_DYNAMIC, t); }
 
   bool hasSpatialData() const { return testFlags(GF_HAS_SPATIAL_DATA); }
   void setHasSpatialData(bool t) { updateFlags(GF_HAS_SPATIAL_DATA, t); }
@@ -264,9 +263,6 @@ class NodeArray : public ReadWriteObject {
 
   bool hasTextures() const { return testFlags(GF_HAS_TEXTURES); }
   void setHasTextures(bool t) { updateFlags(GF_HAS_TEXTURES, t); }
-
-  bool hasDoubleBufferedVBO() const { return testFlags(GF_DOUBLE_BUFFERED_VBO); }
-  void setDoubleBufferedVBO(bool t) { updateFlags(GF_DOUBLE_BUFFERED_VBO, t); }
 
   bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
   void setHasTemporalCoverage(bool t) { updateFlags(GF_TEMPORAL_COVERAGE, t); } 
