@@ -106,12 +106,14 @@ class NodeArray : public ReadWriteObject {
   void setPosition(int i, const glm::vec2 & v) {
     setPosition(i, glm::vec3(v, 0.0f));
   }
+#if 0
   void setPositions(int i, const std::pair<glm::vec3, glm::vec3> & p) {
     node_geometry[i].position = p.first;
     node_geometry[i].prev_position = p.second;
     // mbr.growToContain(p.first.x, p.first.y);
     version++;
   }
+#endif
 #if 0
   void setNodeColor2(int i, const graph_color_s & c) {
     node_geometry[i].color = c;
@@ -127,8 +129,7 @@ class NodeArray : public ReadWriteObject {
 
   void setLabelTexture(const skey & key, int texture);  
   void setLabelTexture(int i, int texture) {
-    node_geometry[i].label_texture = texture;
-    version++;
+    node_geometry[i].label_texture = texture; // don't increment version for labels
   }
   
   void clearTextures(int clear_flags) {
