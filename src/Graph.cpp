@@ -1079,21 +1079,29 @@ struct label_data_s {
   enum { NODE, FACE } type;
   glm::vec3 world_pos;
   glm::vec2 screen_pos;
-  float size;
+  float size, priority;
   int index;
 };
 
-static bool compareSize(const label_data_s & a, const label_data_s & b) {
-  return a.size > b.size;
+static bool comparePriority(const label_data_s & a, const label_data_s & b) {
+  if (a.priority != b.priority) {
+    return a.priority < b.priority;
+  } else {
+    return a.size > b.size;
+  }
 }
 
 bool
 Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   auto & size_method = nodes->getNodeSizeMethod();
-  
+  auto & label_method = nodes->getLabelMethod();
   bool labels_changed = false, structure_changed = false;
 
+  bool has_priority_column = !label_method.getPriorityColumn().empty();
+  auto & node_priority_column = nodes->getTable()[label_method.getPriorityColumn()];
+  auto & face_priority_column = getFaceTable()[label_method.getPriorityColumn()];
+  
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
@@ -1135,7 +1143,11 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	labels_changed |= td.setLabelVisibility(false);
       }
     } else {
-      all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, *it });
+      float priority = 1000;
+      if (has_priority_column) {
+	priority = node_priority_column.getDouble(*it);
+      }
+      all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, priority, *it });
     }
   }
     
@@ -1145,11 +1157,15 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       labels_changed |= fd.setLabelVisibility(false);
     } else if (!fd.label.empty() || getDefaultSymbolId()) {
       glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
-      all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, i });
+      float priority = 1000;
+      if (has_priority_column) {
+	priority = face_priority_column.getDouble(i);
+      }
+      all_labels.push_back({ label_data_s::FACE, pos, glm::vec2(), 1.0f, priority, i });
     }
   }
     
-  sort(all_labels.begin(), all_labels.end(), compareSize);
+  sort(all_labels.begin(), all_labels.end(), comparePriority);
   
   vector<label_data_s> drawn_labels;
   // const Rect2d & region = getContentRegion();
