@@ -593,14 +593,15 @@ class Graph : public MBRObject {
 
   void setInitialNodeAge(float t) { initial_node_age = t; }
   float getInitialNodeAge() const { return initial_node_age; }
+
+  void setVersion(int _version) { version = _version; }
+  void incVersion() { version++; }
   
  protected:
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
 
-  void incVersion() { version++; }
-  // void setVersion(int _version) { version = _version; }
   void incLabelVersion() { label_version++; }
 
   table::Table faces;
