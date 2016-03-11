@@ -1100,7 +1100,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 
   bool has_priority_column = !label_method.getPriorityColumn().empty();
   auto & node_priority_column = nodes->getTable()[label_method.getPriorityColumn()];
-  auto & face_priority_column = getFaceTable()[label_method.getPriorityColumn()];
+  auto & face_priority_column = getFaceData()[label_method.getPriorityColumn()];
   
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
