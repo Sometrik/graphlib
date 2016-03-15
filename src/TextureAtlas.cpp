@@ -16,14 +16,19 @@ TextureAtlas::TextureAtlas(AtlasType _type, unsigned int _block_size, unsigned i
 }
 
 void
+TextureAtlas::initializeTexture() {
+  if (!texture.get()) { 
+    cerr << "creating texture for atlas, w = " << texture_width << ", h = " << texture_height << ", l = " << texture_levels << endl;
+    canvas::FilterMode min_filter2 = min_filter;
+    if (min_filter2 == canvas::LINEAR_MIPMAP_LINEAR && texture_levels <= 1) min_filter2 = canvas::LINEAR;
+    texture = canvas::OpenGLTexture::createTexture(texture_width, texture_height, texture_width, texture_height, min_filter2, mag_filter, internal_format, texture_levels);
+  }
+}
+
+void
 TextureAtlas::updateTexture() {
+  initializeTexture();
   if (!waiting_updates.empty()) {
-    if (!texture.get()) {
-      cerr << "creating texture for atlas, w = " << texture_width << ", h = " << texture_height << ", l = " << texture_levels << endl;
-      canvas::FilterMode min_filter2 = min_filter;
-      if (min_filter2 == canvas::LINEAR_MIPMAP_LINEAR && texture_levels <= 1) min_filter2 = canvas::LINEAR;
-      texture = canvas::OpenGLTexture::createTexture(texture_width, texture_height, texture_width, texture_height, min_filter2, mag_filter, internal_format, texture_levels);
-    }
     assert(texture.get());
     // cerr << "updating textureAtlas " << texture.getTextureId() << ": " << waiting_updates.size() << endl;
     

@@ -54,7 +54,8 @@ class TextureAtlas : public ReadWriteObject {
     texture_positions.clear();
     // texture.clear();
   }
-  
+
+  void initializeTexture();
   void updateTexture();
 
   const texture_pos_s & getTexturePos(unsigned int i) const {
