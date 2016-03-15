@@ -598,6 +598,7 @@ class Graph : public MBRObject {
   void incVersion() { version++; }
   
  protected:
+  unsigned int calcVisibleNodeCount() const;
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;

@@ -311,14 +311,16 @@ Graph::createEdgeVBO(VBO & vbo) const {
       vbo.clear();
     }
   } else {
+    unsigned int visible_nodes = calcVisibleNodeCount();
     unsigned int ec = getEdgeCount();
     unsigned int asize = 2 * ec * sizeof(line_data_s);
     std::unique_ptr<line_data_s[]> new_geometry(new line_data_s[2 * ec]);
     // vector<unsigned int> node_mapping, indices;
     // node_mapping.resize(nodes->size());
-    graph_color_s sel_color = { 200, 200, 200, 255 };
-    graph_color_s def_color = { 200, 200, 200, 255 };
+    graph_color_s sel_color = { 0, 0, 0, 255 };
+    graph_color_s def_color = { 0, 0, 0, 255 };
     auto & size_method = nodes->getNodeSizeMethod();
+    float max_idf = log(visible_nodes / 1.0f);
     unsigned int vn = 0;
     bool flatten = nodes->doFlattenHierarchy();
     unsigned int num_nodes = nodes->size();
@@ -346,16 +348,15 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	    head = node_geometry3[head].parent_node;
 	  }
 	}
-        unsigned int key1 = tail * num_nodes + head, key2 = head * num_nodes + tail;
-        assert(key1 < processed_edges.size());
-        assert(key2 < processed_edges.size());
-	if (processed_edges[key1]) continue;
-	processed_edges[key1] = processed_edges[key2] = true;
+        unsigned int key = tail * num_nodes + head;
+        assert(key < processed_edges.size());
+	if (processed_edges[key]) continue;
+	processed_edges[key] = true;
       }
       if (tail == head) continue;
       auto & g1 = nodes->getGeometry()[tail], & g2 = nodes->getGeometry()[head];
       auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
-	
+      
       bool edge_selected = td1.isSelected() || td2.isSelected();
       glm::vec3 pos1 = g1.position, pos2 = g2.position;
       bool visible1 = true, visible2 = true;
@@ -372,12 +373,17 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	p = ptd.parent_node;
       }
       if (!visible1 && !visible2) continue;
-	
+
+      float degree = td2.indegree + td2.outdegree;
+      if (degree == 0) degree = 1;
+      float idf = log(visible_nodes / degree) / max_idf;
+      float a = idf > 1.0 ? 1.0 : idf;
+
       if (1) { // !i1) {
 	float size = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
 	float scaling = td1.child_count ? 0.0 : 1.0;
 	auto color = edge_selected ? sel_color : def_color;
-	float a = powf(it->weight / max_edge_weight, 0.9);
+	// float a = powf(it->weight / max_edge_weight, 0.9);
 	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos1, pos2, td1.age, size, scaling };
 	// i1 = node_mapping[it->tail] = vn + 1;
 	*((line_data_s*)(new_geometry.get()) + vn) = s;      
@@ -387,7 +393,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
 	float size = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
 	float scaling = td2.child_count ? 0.0 : 1.0;
 	auto color = edge_selected ? sel_color : def_color;
-	float a = powf(it->weight / max_edge_weight, 0.9);
+	// float a = powf(it->weight / max_edge_weight, 0.9);
 	// i2 = node_mapping[it->head] = vn + 1;
 	line_data_s s = { (unsigned char)((255 * (1-a)) + color.r * a), (unsigned char)((255 * (1-a)) + color.g * a), (unsigned char)((255 * (1-a)) + color.b * a), (unsigned char)((255 * (1-a)) + color.a * a), pos2, pos1, td2.age, size, scaling };
 	*((line_data_s*)(new_geometry.get()) + vn) = s;
@@ -517,15 +523,27 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
   }
 }
 
+unsigned int
+Graph::calcVisibleNodeCount() const {
+  unsigned int n = 0;
+  auto nodes_end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != nodes_end; ++it) {
+    n++;
+  }
+  return n;
+}
+
 // Gauss-Seidel relaxation for links
 void
 Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
+  unsigned int visible_nodes = calcVisibleNodeCount();
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   float alpha = getNodeArray().getAlpha2();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
   unsigned int num_nodes = nodes->size();
-  vector<bool> processed_edges;
+  float max_idf = log(visible_nodes / 1.0f);
+  vector<bool> processed_edges;  
   processed_edges.resize(num_nodes * num_nodes);			
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -550,11 +568,10 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
 	  head = node_geometry3[head].parent_node;
 	}
       }
-      unsigned int key1 = tail * num_nodes + head, key2 = head * num_nodes + tail;
-      assert(key1 < processed_edges.size());
-      assert(key2 < processed_edges.size());
-      if (processed_edges[key1]) continue;
-      processed_edges[key1] = processed_edges[key2] = true;
+      unsigned int key = tail * num_nodes + head;
+      assert(key < processed_edges.size());
+      if (processed_edges[key]) continue;
+      processed_edges[key] = true;
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     bool visible = true;
@@ -581,8 +598,15 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     bool fixed2 = td2.isFixed();
     if (fixed1 && fixed2) continue;      
     assert(td1.parent_node == td2.parent_node);
+
+    float degree = td2.indegree + td2.outdegree;
+    if (degree == 0) degree = 1;
+    float idf = log(visible_nodes / degree) / max_idf;
+    // float a = idf > 1.0 ? 1.0 : idf;
+    
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
-    d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
+    // d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
+    d *= alpha * idf;
     
     float w1 = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
     float w2 = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
