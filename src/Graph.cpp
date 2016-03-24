@@ -374,10 +374,12 @@ Graph::createEdgeVBO(VBO & vbo) const {
       }
       if (!visible1 && !visible2) continue;
 
-      float degree = td2.indegree + td2.outdegree;
+      float degree1 = td1.outdegree, degree2 = td2.indegree;
+      float degree = degree1 > degree2 ? degree1 : degree2;
       if (degree == 0) degree = 1;
       float idf = log(visible_nodes / degree) / max_idf;
       float a = idf > 1.0 ? 1.0 : idf;
+      assert(a >= 0.0f);
 
       if (1) { // !i1) {
 	float size = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
@@ -599,9 +601,10 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     if (fixed1 && fixed2) continue;      
     assert(td1.parent_node == td2.parent_node);
 
-    float degree = td2.indegree + td2.outdegree;
+    float degree1 = td1.outdegree, degree2 = td2.indegree;
+    float degree = degree1 > degree2 ? degree1 : degree2;
     if (degree == 0) degree = 1;
-    float idf = log(visible_nodes / degree) / max_idf;
+    float idf = 1.0f; // log(visible_nodes / degree) / max_idf;
     // float a = idf > 1.0 ? 1.0 : idf;
     
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
