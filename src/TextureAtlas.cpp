@@ -169,11 +169,6 @@ TextureAtlas::renderLabelToTexture(canvas::ContextFactory & factory, const std::
     context->arcTo(x,   y,   x+w, y,   r);
     context->fill();
     context->fillStyle = "#fff";
-#ifndef __APPLE__
-    context->shadowColor = canvas::Color(0.0f, 0.0f, 0.0f, 0.25f);
-    context->shadowBlur = 2.0f;
-    context->shadowOffsetX = context->shadowOffsetY = 1.0f;
-#endif
   } else if (style == LABEL_GROUP_TITLE) {
     context->shadowColor = canvas::Color(1.0f, 1.0f, 1.0f, 1.0f);
     context->shadowBlur = 2.0f;    
