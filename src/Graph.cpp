@@ -304,7 +304,7 @@ Graph::createEdgeVBO(VBO & vbo) const {
     assert(in <= num_indices);
     assert(vn <= num_vertices);
 
-    if (!vn) {
+    if (vn > 0) {
       vbo.upload(VBO::ARCS_2D, new_geometry.get(), vn * sizeof(arc_data_2d_s));
       vbo.uploadIndices(indices.get(), in * sizeof(unsigned int));
     } else {
