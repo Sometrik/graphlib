@@ -492,9 +492,6 @@ class Graph : public MBRObject {
 
   bool updateVisibilities(const DisplayInfo & display, bool reset = false);
 
-  void setRadius(float r) { radius = r; }
-  float getRadius() const { return radius; }
-
   bool updateNodeLabelValues(int n, float visibility) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
     auto & td = node_geometry3[n];
@@ -634,7 +631,6 @@ class Graph : public MBRObject {
   int server_search_id = 0;
   bool is_loaded = false;
   float line_width = 1.0f;
-  float radius = 0.0f;
   float min_significance = 0.0f, min_scale = 0.0f;
   std::vector<node_tertiary_data_s> node_geometry3;
   double total_outdegree = 0, total_indegree = 0;
