@@ -248,7 +248,7 @@ class NodeArray : public ReadWriteObject {
   }
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
-  void setRandomPosition(int node_id);
+  void setRandomPosition(int node_id, bool use_2d = true);
 
   bool isTemporal() const { return testFlags(GF_TEMPORAL_GRAPH); }
   void setTemporal(bool t) { updateFlags(GF_TEMPORAL_GRAPH, t); } 
