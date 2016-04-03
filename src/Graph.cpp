@@ -108,7 +108,7 @@ Graph::randomizeGeometry(bool use_2d) {
   assert(!nodes->hasSpatialData());
   unsigned int num_nodes = getNodeArray().size();
   for (unsigned int i = 0; i < num_nodes; i++) {
-    getNodeArray().setRandomPosition(i);
+    getNodeArray().setRandomPosition(i, use_2d);
   }
   for (auto & gd : nested_graphs) {
     auto & graph = gd.second;
