@@ -6,6 +6,8 @@
 #include "TextColumn.h"
 #include "IntColumn.h"
 #include "UShortColumn.h"
+#include "DoubleColumn.h"
+#include "BigIntColumn.h"
 // #include "CompressedTextColumn.h"
 
 #include <vector>
@@ -28,94 +30,7 @@ namespace table {
     size_t rows, columns;
   }
 #endif
-  
-  class ColumnDouble : public Column {
-  public:
-  ColumnDouble(const std::string & _name) : Column(_name) { }
-  ColumnDouble(const char * _name) : Column(_name) { }
-
-    std::shared_ptr<Column> copy() const override { return std::make_shared<ColumnDouble>(*this); }
-    std::shared_ptr<Column> create() const override { return std::make_shared<ColumnDouble>(name()); }
-
-    size_t size() const override { return data.size(); }
     
-    ColumnType getType() const override { return FLOAT; }
-
-    double getDouble(int i) const override { return data[i]; }
-    int getInt(int i) const override { return (int)getDouble(i); }
-    long long getInt64(int i) const override { return (long long)getDouble(i); }
-    std::string getText(int i) const override {
-      std::string s = std::to_string(data[i]);
-      while (s[s.size() - 2] == '0' && s[s.size() - 1] == '0') s.erase(s.size() - 1);
-      return s;
-    }
-    
-    void setValue(int i, double v) override { data[i] = v; }
-    void setValue(int i, int v) override { data[i] = v; }
-    void setValue(int i, long long v) override { data[i] = v; }
-    void setValue(int i, const std::string & v) override { data[i] = stof(v); }
-    bool compare(int a, int b) const override {
-      return data[a] < data[b];
-    }
-    void clear() override { data.clear(); }
-
-    Column & operator= (double a) override { 
-      data.assign(data.size(), a);
-      return *this;
-    }
-    Column & operator= (int a) override {
-      data.assign(data.size(), (double)a);
-      return *this;
-    }        
-    void addRow() override {
-      data.push_back(0.0);
-    }
-    
-  private:
-    std::vector<double> data;
-  };
-
-  class ColumnBigInt : public Column {
-  public:
-  ColumnBigInt(const std::string & _name) : Column(_name) { }
-  ColumnBigInt(const char * _name) : Column(_name) { }
-    
-    ColumnType getType() const override { return NUMBER; }
-
-    std::shared_ptr<Column> copy() const override { return std::make_shared<ColumnBigInt>(*this); }
-    std::shared_ptr<Column> create() const override { return std::make_shared<ColumnBigInt>(name()); }
-    size_t size() const override { return data.size(); }
-    
-    double getDouble(int i) const override { return (double)data[i]; }
-    int getInt(int i) const override { return (int)data[i]; }
-    long long getInt64(int i) const override { return data[i]; }
-    std::string getText(int i) const override { return std::to_string(data[i]); }
-    
-    void setValue(int i, double v) override { }
-    void setValue(int i, int v) override { data[i] = v; }
-    void setValue(int i, long long v) override { data[i] = v; }
-    void setValue(int i, const std::string & v) override { data[i] = stoll(v); }
-    bool compare(int a, int b) const override {
-      return data[a] < data[b];
-    }
-    void clear() override { data.clear(); }
-
-    Column & operator= (double a) override { 
-      data.assign(data.size(), int(a));
-      return *this;
-    }
-    Column & operator= (int a) override {
-      data.assign(data.size(), a);
-      return *this;
-    }
-    void addRow() override {
-      data.push_back(0);
-    }
-    
-  private:
-    std::vector<long long> data;
-  };
-  
   class Table {
   public:
   Table() : num_rows(0) { }
@@ -153,7 +68,7 @@ namespace table {
       if (it != columns.end()) {
 	return *(it->second);
       } else {
-	return addColumn(std::make_shared<ColumnDouble>(name));
+	return addColumn(std::make_shared<DoubleColumn>(name));
       }
     }
 
@@ -180,7 +95,7 @@ namespace table {
       if (it != columns.end()) {
 	return *(it->second);
       } else {
-	return addColumn(std::make_shared<ColumnBigInt>(name));
+	return addColumn(std::make_shared<BigIntColumn>(name));
       }
     }
 
