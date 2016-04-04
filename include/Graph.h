@@ -130,7 +130,6 @@ struct face_data_s {
 #include <list>
 #include <set>
 
-class TextureAtlas;
 class GraphRefR;
 class GraphRefW;
 class Label;
@@ -507,6 +506,12 @@ class Graph : public MBRObject {
     }
   }
 
+  int getNodeDepth(int n) const {
+    int l = 0;
+    for (int p = node_geometry3[n].parent_node; p != -1; p = node_geometry3[p].parent_node) l++;
+    return l;
+  }
+
   glm::vec3 getNodePosition(int node_id) const;
   
   skey getNodeKey(int node_id) const;
@@ -588,9 +593,10 @@ class Graph : public MBRObject {
 
   void setVersion(int _version) { version = _version; }
   void incVersion() { version++; }
+
+  unsigned int calcVisibleNodeCount() const;
   
  protected:
-  unsigned int calcVisibleNodeCount() const;
   unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
