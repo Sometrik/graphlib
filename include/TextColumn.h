@@ -3,6 +3,9 @@
 
 #include "Column.h"
 
+#include <iostream>
+#include <cstring>
+
 namespace table {
   class TextColumn : public Column {
   public:
@@ -41,6 +44,7 @@ namespace table {
     void setValue(int i, long long v) override { setValue(i, std::to_string(v)); }
     void setValue(int i, const std::string & v) override { setValue(i, v.c_str(), v.size()); }
     void setValue(int i, const char * v, const size_t len) {
+      while (i >= data.size()) data.push_back(0);
       delete[] data[i];
       if (v) {
 	data[i] = new char[len + 1];
@@ -49,7 +53,20 @@ namespace table {
 	data[i] = 0;
       }
     }
-    
+
+    void pushValue(double v) override { pushValue(std::to_string(v)); }
+    void pushValue(int v) override { pushValue(std::to_string(v)); }
+    void pushValue(long long v) override { pushValue(std::to_string(v)); }
+    void pushValue(const std::string & v) override { pushValue(i, v.c_str(), v.size()); }
+    void pushValue(const char * v, const size_t len) {
+      if (v) {
+	data.push_back(new char[len + 1]);
+	memcpy(data[i], v, len + 1);
+      } else {
+	data.push_back(0);
+      }
+    }
+        
     bool compare(int a, int b) const override { return strcmp(data[a] ? data[a] : "", data[b] ? data[b] : "") < 0; }
     void clear() override {
       for (int i = 0; i < data.size(); i++) {
@@ -58,8 +75,6 @@ namespace table {
       data.clear();
     }
     
-    void addRow() override { data.push_back(0);  }
-
     Column & operator= (double a) override {
       *this = std::to_string(a);
       return *this;
