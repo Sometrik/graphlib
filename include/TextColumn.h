@@ -1,0 +1,83 @@
+#ifndef _TABLE_TEXTCOLUMN_H_
+#define _TABLE_TEXTCOLUMN_H_
+
+#include "Column.h"
+
+namespace table {
+  class TextColumn : public Column {
+  public:
+  TextColumn(const std::string & _name) : Column(_name) { }
+  TextColumn(const TextColumn & other) : Column(other.name()) {
+      auto & other_data = other.data;
+      for (int i = 0; i < other_data.size(); i++) {
+	addRow();
+	setValue(i, other_data[i], other_data[i] ? strlen(other_data[i]) : 0);
+      }      
+    }
+    ~TextColumn() {
+      for (int i = 0; i < data.size(); i++) {
+	delete[] data[i];
+      }
+    }
+    
+    std::shared_ptr<Column> copy() const override { return std::make_shared<TextColumn>(*this); }
+    std::shared_ptr<Column> create() const override { return std::make_shared<TextColumn>(name()); }
+    size_t size() const override { return data.size(); }
+    
+    double getDouble(int i) const override { return 0; }
+    int getInt(int i) const override { return 0; }
+    long long getInt64(int i) const override { return 0; }
+    std::string getText(int i) const override {
+      if (i >= 0 && i < data.size()) {
+	return data[i] ? data[i] : "";
+      } else {
+	std::cerr << "invalid TextColumn access (i = " << i << ", size = " << data.size() << ")" << std::endl;
+	return 0;
+      }
+    }
+    
+    void setValue(int i, double v) override { setValue(i, std::to_string(v)); }
+    void setValue(int i, int v) override { setValue(i, std::to_string(v)); }
+    void setValue(int i, long long v) override { setValue(i, std::to_string(v)); }
+    void setValue(int i, const std::string & v) override { setValue(i, v.c_str(), v.size()); }
+    void setValue(int i, const char * v, const size_t len) {
+      delete[] data[i];
+      if (v) {
+	data[i] = new char[len + 1];
+	memcpy(data[i], v, len + 1);
+      } else {
+	data[i] = 0;
+      }
+    }
+    
+    bool compare(int a, int b) const override { return strcmp(data[a] ? data[a] : "", data[b] ? data[b] : "") < 0; }
+    void clear() override {
+      for (int i = 0; i < data.size(); i++) {
+	delete[] data[i];
+      }
+      data.clear();
+    }
+    
+    void addRow() override { data.push_back(0);  }
+
+    Column & operator= (double a) override {
+      *this = std::to_string(a);
+      return *this;
+    }
+    Column & operator= (int a) override {
+      *this = std::to_string(a);
+      return *this;
+    }
+    Column & operator= (const std::string & a) {
+      for (int i = 0; i < data.size(); i++) {
+	setValue(i, a);
+      }
+      return *this;
+    }
+    
+  private:
+    std::vector<char *> data;
+  };
+};
+
+#endif
