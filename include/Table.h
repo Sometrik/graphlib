@@ -160,17 +160,17 @@ namespace table {
   Table() : num_rows(0) { }
     
     bool hasColumn(const char * name) const {
-      std::map<std::string, std::shared_ptr<Column> >::const_iterator it = columns.find(name);
+      auto it = columns.find(name);
       return it != columns.end();
     }
 
     const Column * getColumnSafe(const char * name) const {
-      std::map<std::string, std::shared_ptr<Column> >::const_iterator it = columns.find(name);
+      auto it = columns.find(name);
       return it != columns.end() ? it->second.get() : 0;
     }
     
     Column & addTextColumn(const char * name) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(name);
+      auto it = columns.find(name);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
@@ -179,7 +179,7 @@ namespace table {
     }
     
     Column & addDoubleColumn(const char * name) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(name);
+      auto it = columns.find(name);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
@@ -188,7 +188,7 @@ namespace table {
     }
 
     Column & addIntColumn(const char * name) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(name);
+      auto it = columns.find(name);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
@@ -197,7 +197,7 @@ namespace table {
     }
 
     Column & addBigIntColumn(const char * name) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(name);
+      auto it = columns.find(name);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
@@ -206,7 +206,7 @@ namespace table {
     }
 
     Column & addTimeSeriesColumn(const char * name) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(name);
+      auto it = columns.find(name);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
@@ -229,7 +229,7 @@ namespace table {
     }
 
     void dropColumn(const char * name) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(name);
+      auto it = columns.find(name);
       if (it != columns.end()) columns.erase(it);
     }
     void dropColumn(const std::string & name) { dropColumn(name.c_str()); }
@@ -256,7 +256,7 @@ namespace table {
     }
     
     Column & operator[] (const char * s) {
-      std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.find(s);
+      auto it = columns.find(s);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
@@ -265,7 +265,7 @@ namespace table {
     }
     
     const Column & operator[] (const char * s) const {
-      std::map<std::string, std::shared_ptr<Column> >::const_iterator it = columns.find(s);
+      auto it = columns.find(s);
       if (it != columns.end()) {
 	return *(it->second);
       } else {
