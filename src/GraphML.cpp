@@ -64,11 +64,11 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
     
     std::shared_ptr<table::Column> column;
     if (strcmp(key_type, "string") == 0) {
-      column = std::make_shared<table::ColumnText>(key_id ? key_id : "");
+      column = std::make_shared<table::TextColumn>(key_id ? key_id : "");
     } else if (strcmp(key_type, "double") == 0 || strcmp(key_type, "float") == 0) {
-      column = std::make_shared<table::ColumnDouble>(key_id ? key_id : "");
+      column = std::make_shared<table::DoubleColumn>(key_id ? key_id : "");
     } else if (strcmp(key_type, "int") == 0) {
-      column = std::make_shared<table::ColumnInt>(key_id ? key_id : "");
+      column = std::make_shared<table::IntColumn>(key_id ? key_id : "");
     } else {
       assert(0);
     }
