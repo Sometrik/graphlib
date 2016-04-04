@@ -130,7 +130,6 @@ struct face_data_s {
 #include <list>
 #include <set>
 
-class VBO;
 class TextureAtlas;
 class GraphRefR;
 class GraphRefW;
@@ -246,10 +245,6 @@ class Graph : public MBRObject {
   virtual void updateMBR(int edge) { }
   virtual void addUniversalRegion() { }
   
-  void createEdgeVBO(VBO & vbo) const;
-  void createRegionVBO(VBO & vbo) const;
-  void createNodeVBOForQuads(VBO & vbo) const;
-
   void getVisibleLabels(std::vector<Label> & labels) const;
 
   virtual std::set<int> getAdjacentRegions() const { return std::set<int>(); }
