@@ -146,7 +146,7 @@ TextureAtlas::renderLabelToTexture(canvas::ContextFactory & factory, const std::
   float h_margin = style == LABEL_DARK_BOX ? 18 : 1;
   float v_margin = style == LABEL_DARK_BOX ? 9 : 0;
   context->font.size = font_size;
-  context->font.weight = style == LABEL_GROUP_TITLE ? canvas::Font::BOLD : canvas::Font::NORMAL;  
+  context->font.weight = style == LABEL_GROUP_TITLE ? "bold" : "normal";
   context->textBaseline = "middle";
   canvas::TextMetrics size = context->measureText(text);  
   
