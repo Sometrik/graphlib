@@ -16,13 +16,19 @@ namespace table {
     
     ColumnType getType() const override { return FLOAT; }
 
-    double getDouble(int i) const override { return data[i]; }
     int getInt(int i) const override { return (int)getDouble(i); }
     long long getInt64(int i) const override { return (long long)getDouble(i); }
     std::string getText(int i) const override {
-      std::string s = std::to_string(data[i]);
+      std::string s = std::to_string(getDouble(i));
       while (s[s.size() - 2] == '0' && s[s.size() - 1] == '0') s.erase(s.size() - 1);
       return s;
+    }
+    double getDouble(int i) const override {
+      if (i >= 0 && i < data.size()) {
+	return data[i];
+      } else {
+	return 0.0;
+      }
     }
     
     void setValue(int i, int v) override { setValue(i, (double)i); }
@@ -42,15 +48,6 @@ namespace table {
       return data[a] < data[b];
     }
     void clear() override { data.clear(); }
-
-    Column & operator= (double a) override { 
-      data.assign(data.size(), a);
-      return *this;
-    }
-    Column & operator= (int a) override {
-      data.assign(data.size(), (double)a);
-      return *this;
-    }        
     
   private:
     std::vector<double> data;
