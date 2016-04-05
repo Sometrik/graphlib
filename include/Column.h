@@ -47,9 +47,6 @@ namespace table {
     virtual void pushValue(long long v) = 0;
     virtual void pushValue(const std::string & v) = 0;
     
-    virtual Column & operator= (double a) = 0;
-    virtual Column & operator= (int a) = 0;
-
     const char * getTypeText() const {
       switch (getType()) {
       case TEXT: return "string";
@@ -92,9 +89,6 @@ namespace table {
     void pushValue(int v) { }
     void pushValue(long long v) { }
     void pushValue(const std::string & v) { }
-    
-    Column & operator= (double a) override { return *this; }
-    Column & operator= (int a) override { return *this; }
   };
 };
 
