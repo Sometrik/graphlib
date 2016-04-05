@@ -99,8 +99,8 @@ namespace table {
     bool empty() const { return num_rows == 0; }
     size_t getColumnCount() const { return columns.size(); }
 
-    std::map<std::string, std::shared_ptr<Column> > & getColumns() { return columns; }
-    const std::map<std::string, std::shared_ptr<Column> > & getColumns() const { return columns; }
+    std::unordered_map<std::string, std::shared_ptr<Column> > & getColumns() { return columns; }
+    const std::unordered_map<std::string, std::shared_ptr<Column> > & getColumns() const { return columns; }
 
   private:
     std::unordered_map<std::string, std::shared_ptr<Column> > columns;
