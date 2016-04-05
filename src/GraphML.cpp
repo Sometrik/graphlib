@@ -106,7 +106,7 @@ GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XML
     assert(node_id_text);
 
     int node_id = graph.addNode();
-    node_id_column.setValue(node_id, node_id_text);
+    node_id_column.pushValue(node_id_text);
     nodes_by_id[node_id_text] = node_id + 1;
 
     if (parent_node_id != -1) graph.addChild(parent_node_id, node_id);
