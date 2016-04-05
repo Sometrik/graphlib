@@ -16,10 +16,16 @@ namespace table {
     void reserve(size_t n) { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
-    double getDouble(int i) const override { return (double)data[i]; }
-    int getInt(int i) const override { return (int)data[i]; }
-    long long getInt64(int i) const override { return data[i]; }
-    std::string getText(int i) const override { return std::to_string(data[i]); }
+    double getDouble(int i) const override { return (double)getInt64(i); }
+    int getInt(int i) const override { return (int)getInt64(i); }
+    std::string getText(int i) const override { return std::to_string(getInt64(i)); }
+    long long getInt64(int i) const override {
+      if (i >= 0 && i < data.size()) {
+	return data[i];
+      } else {
+	return 0;
+      }
+    }
     
     void setValue(int i, double v) override { setValue(i, (long long)v); }
     void setValue(int i, int v) override { setValue(i, (int)v); }
@@ -38,15 +44,6 @@ namespace table {
       return data[a] < data[b];
     }
     void clear() override { data.clear(); }
-
-    Column & operator= (double a) override { 
-      data.assign(data.size(), int(a));
-      return *this;
-    }
-    Column & operator= (int a) override {
-      data.assign(data.size(), a);
-      return *this;
-    }
     
   private:
     std::vector<long long> data;
