@@ -25,6 +25,12 @@ namespace table {
     void setValue(int i, int v) override { data[i] = v; }
     void setValue(int i, long long v) override { data[i] = v; }
     void setValue(int i, const std::string & v) override { data[i] = stoi(v); }
+
+    void pushValue(double v) override { pushValue((int)v); }
+    void pushValue(const std::string & v) override { pushValue(stoi(v)); }
+    void pushValue(long long v) override { pushValue((int)v); }
+    void pushValue(int v) override { data.push_back(v); }
+
     bool compare(int a, int b) const override {
       return data[a] < data[b];
     }
@@ -37,9 +43,6 @@ namespace table {
     Column & operator= (int a) override {
       data.assign(data.size(), a);
       return *this;
-    }
-    void addRow() override {
-      data.push_back(0);
     }
     
   private:
