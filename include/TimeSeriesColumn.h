@@ -41,9 +41,6 @@ namespace table {
     bool compare(int a, int b) const override { return false; }
     void clear() override { data.clear(); }
 
-    Column & operator= (double a) override { return *this; }
-    Column & operator= (int a) override { return *this; }
-
     void pushValue(double v) override {
       data.push_back(std::map<time_t, double>());
     }
