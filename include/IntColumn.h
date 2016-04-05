@@ -16,16 +16,25 @@ namespace table {
     void reserve(size_t n) { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
-    double getDouble(int i) const override { return (double)data[i]; }
-    int getInt(int i) const override { return data[i]; }
-    long long getInt64(int i) const override { return data[i]; }
-    std::string getText(int i) const override { return std::to_string(data[i]); }
+    double getDouble(int i) const override { return (double)getInt(i); }
+    long long getInt64(int i) const override { return getInt(i); }
+    std::string getText(int i) const override { return std::to_string(getInt(i)); }
+    int getInt(int i) const override {
+      if (i >= 0 && i < data.size()) {
+	return data[i];
+      } else {
+	return 0;
+      }
+    }
     
-    void setValue(int i, double v) override { }
-    void setValue(int i, int v) override { data[i] = v; }
-    void setValue(int i, long long v) override { data[i] = v; }
-    void setValue(int i, const std::string & v) override { data[i] = stoi(v); }
-
+    void setValue(int i, double v) override { setValue(i, (int)v); }
+    void setValue(int i, long long v) override { setValue(i, (int)v); }
+    void setValue(int i, const std::string & v) override { setValue(i, stoi(v)); }
+    void setValue(int i, int v) override {
+      while (i >= data.size()) data.push_back(0);
+      data[i] = v;
+    }
+    
     void pushValue(double v) override { pushValue((int)v); }
     void pushValue(const std::string & v) override { pushValue(stoi(v)); }
     void pushValue(long long v) override { pushValue((int)v); }
@@ -35,15 +44,6 @@ namespace table {
       return data[a] < data[b];
     }
     void clear() override { data.clear(); }
-
-    Column & operator= (double a) override { 
-      data.assign(data.size(), int(a));
-      return *this;
-    }
-    Column & operator= (int a) override {
-      data.assign(data.size(), a);
-      return *this;
-    }
     
   private:
     std::vector<int> data;
