@@ -13,8 +13,7 @@ namespace table {
   TextColumn(const TextColumn & other) : Column(other.name()) {
       auto & other_data = other.data;
       for (int i = 0; i < other_data.size(); i++) {
-	addRow();
-	setValue(i, other_data[i], other_data[i] ? strlen(other_data[i]) : 0);
+	pushValue(other_data[i]);
       }      
     }
     ~TextColumn() {
@@ -26,6 +25,7 @@ namespace table {
     std::shared_ptr<Column> copy() const override { return std::make_shared<TextColumn>(*this); }
     std::shared_ptr<Column> create() const override { return std::make_shared<TextColumn>(name()); }
     size_t size() const override { return data.size(); }
+    void reserve(size_t n) override { data.reserve(n); }
     
     double getDouble(int i) const override { return 0; }
     int getInt(int i) const override { return 0; }
@@ -57,11 +57,11 @@ namespace table {
     void pushValue(double v) override { pushValue(std::to_string(v)); }
     void pushValue(int v) override { pushValue(std::to_string(v)); }
     void pushValue(long long v) override { pushValue(std::to_string(v)); }
-    void pushValue(const std::string & v) override { pushValue(i, v.c_str(), v.size()); }
+    void pushValue(const std::string & v) override { pushValue(v.c_str(), v.size()); }
     void pushValue(const char * v, const size_t len) {
       if (v) {
 	data.push_back(new char[len + 1]);
-	memcpy(data[i], v, len + 1);
+	memcpy(data.back(), v, len + 1);
       } else {
 	data.push_back(0);
       }
