@@ -76,6 +76,7 @@ namespace table {
   NullColumn() : Column("") { }
     std::shared_ptr<Column> copy() const override { return std::make_shared<NullColumn>(*this); }
     std::shared_ptr<Column> create() const override { return std::make_shared<NullColumn>(); }
+    void reserve(size_t n) { }
     size_t size() const override { return 0; }
     double getDouble(int i) const override { return 0; }
     int getInt(int i) const override { return 0; }
@@ -86,7 +87,12 @@ namespace table {
     void setValue(int i, long long v) override { }
     void setValue(int i, const std::string & v) override { }
     void clear() override { }
-    void addRow() override { }
+
+    void pushValue(double v) { }
+    void pushValue(int v) { }
+    void pushValue(long long v) { }
+    void pushValue(const std::string & v) { }
+    
     Column & operator= (double a) override { return *this; }
     Column & operator= (int a) override { return *this; }
   };
