@@ -175,14 +175,7 @@ namespace table {
       return (*this)[s.c_str()];
     }
     
-    void addRow() {
-      num_rows++;
-      for (std::map<std::string, std::shared_ptr<Column> >::iterator it = columns.begin(); it != columns.end(); it++) {
-	while (it->second->size() < size()) {
-	  it->second->addRow();
-	}
-      }      
-    }
+    void addRow() { num_rows++; }
 
     void loadCSV(const char * filename, char delimiter = ';');
     
