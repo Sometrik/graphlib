@@ -79,12 +79,12 @@ DBase3File::openDBF(const string & filename) {
   unsigned int field_count = dbf->getFieldCount();
   for (unsigned int i = 0; i < field_count; i++) {
     string name = dbf->getFieldName(i);
-    columns.push_back(std::make_shared<ColumnDBase3>(dbf, i, record_count, name));
+    columns.push_back(std::make_shared<DBase3Column>(dbf, i, record_count, name));
   }
   return true;
 }
 
-ColumnDBase3::ColumnDBase3(const std::shared_ptr<DBase3Handle> _dbf,
+DBase3Column::DBase3Column(const std::shared_ptr<DBase3Handle> _dbf,
 			   int _column_index,
 			   int _num_rows,
 			   const std::string & _name)
@@ -97,7 +97,7 @@ ColumnDBase3::ColumnDBase3(const std::shared_ptr<DBase3Handle> _dbf,
 }
 
 long long
-ColumnDBase3::getInt64(int i) const {
+DBase3Column::getInt64(int i) const {
   if (i >= 0 && i < num_rows) {
     return dbf->readIntegerAttribute(i, column_index);
   } else {
@@ -106,7 +106,7 @@ ColumnDBase3::getInt64(int i) const {
 }
     
 std::string
-ColumnDBase3::getText(int i) const {
+DBase3Column::getText(int i) const {
   if (i >= 0 && i < num_rows) {
     return dbf->readStringAttribute(i, column_index);
   } else {
@@ -115,7 +115,7 @@ ColumnDBase3::getText(int i) const {
 }
 
 double
-ColumnDBase3::getDouble(int i) const {
+DBase3Column::getDouble(int i) const {
   if (i >= 0 && i < num_rows) {
     return dbf->readIntegerAttribute(i, column_index);
   } else {
@@ -124,7 +124,7 @@ ColumnDBase3::getDouble(int i) const {
 }
 
 int
-ColumnDBase3::getInt(int i) const {
+DBase3Column::getInt(int i) const {
   if (i >= 0 && i < num_rows) {
     return dbf->readIntegerAttribute(i, column_index);
   } else {
