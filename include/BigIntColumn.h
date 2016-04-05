@@ -21,7 +21,7 @@ namespace table {
     long long getInt64(int i) const override { return data[i]; }
     std::string getText(int i) const override { return std::to_string(data[i]); }
     
-    void setValue(int i, double v) override { setValue(i, (long long v)); }
+    void setValue(int i, double v) override { setValue(i, (long long)v); }
     void setValue(int i, int v) override { setValue(i, (int)v); }
     void setValue(int i, const std::string & v) override { setValue(i, stoll(v)); }
     void setValue(int i, long long v) override {
@@ -31,7 +31,7 @@ namespace table {
 	
     void pushValue(double v) override { pushValue((long long)v); }
     void pushValue(int v) override { pushValue((long long)v); }
-    void pushValue(const std::string & v) override { pushValue((long long)v); }
+    void pushValue(const std::string & v) override { pushValue(stoll(v)); }
     void pushValue(long long v) override { data.push_back(v); }
     
     bool compare(int a, int b) const override {
