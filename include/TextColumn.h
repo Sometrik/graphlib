@@ -34,8 +34,7 @@ namespace table {
       if (i >= 0 && i < data.size()) {
 	return data[i] ? data[i] : "";
       } else {
-	std::cerr << "invalid TextColumn access (i = " << i << ", size = " << data.size() << ")" << std::endl;
-	return 0;
+	return "";
       }
     }
     
@@ -74,22 +73,7 @@ namespace table {
       }
       data.clear();
     }
-    
-    Column & operator= (double a) override {
-      *this = std::to_string(a);
-      return *this;
-    }
-    Column & operator= (int a) override {
-      *this = std::to_string(a);
-      return *this;
-    }
-    Column & operator= (const std::string & a) {
-      for (int i = 0; i < data.size(); i++) {
-	setValue(i, a);
-      }
-      return *this;
-    }
-    
+        
   private:
     std::vector<char *> data;
   };
