@@ -9,6 +9,8 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
+#include <string>
+#include <vector>
 
 #define FACE_LABEL_VISIBLE	1
 
@@ -124,11 +126,6 @@ struct face_data_s {
 
 #include "EdgeIterator.h"
 #include "VisibleNodeIterator.h"
-
-#include <string>
-#include <vector>
-#include <list>
-#include <set>
 
 class GraphRefR;
 class GraphRefW;
