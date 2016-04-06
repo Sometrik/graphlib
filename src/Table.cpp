@@ -63,7 +63,7 @@ Table::addCompressedTextColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<TextColumn>(name));
+    return addColumn(std::make_shared<CompressedTextColumn>(name));
   }
 }
 
