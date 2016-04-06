@@ -39,14 +39,7 @@ namespace table {
 
     bool compare(int a, int b) const override { return getText(a) < getText(b); }
     void clear() override { }
-    
-    Column & operator= (double a) override {
-      return *this;
-    }
-    Column & operator= (int a) override {
-      return *this;
-    }
-    
+        
   private:
     std::shared_ptr<DBase3Handle> dbf;
     int column_index;
