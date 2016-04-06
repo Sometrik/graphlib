@@ -20,7 +20,7 @@ namespace table {
     std::shared_ptr<Column> create() const override { return std::shared_ptr<Column>(0); } // FIXME
   
     size_t size() const override { return num_rows; }
-    void reserve(size_t n) { }
+    void reserve(size_t n) override { }
 
     double getDouble(int i) const override;
     int getInt(int i) const override;
@@ -32,10 +32,10 @@ namespace table {
     void setValue(int i, long long v) override { }
     void setValue(int i, const std::string & v) override { }
 
-    void pushValue(double v) { }
-    void pushValue(int v) { }
-    void pushValue(long long v) { }
-    void pushValue(const std::string & v) { }
+    void pushValue(double v) override { }
+    void pushValue(int v) override { }
+    void pushValue(long long v) override { }
+    void pushValue(const std::string & v) override { }
 
     bool compare(int a, int b) const override { return getText(a) < getText(b); }
     void clear() override { }

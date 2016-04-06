@@ -13,7 +13,7 @@ namespace table {
 
     std::shared_ptr<Column> copy() const override { return std::make_shared<IntColumn>(*this); }
     std::shared_ptr<Column> create() const override { return std::make_shared<IntColumn>(name()); }
-    void reserve(size_t n) { data.reserve(n); }
+    void reserve(size_t n) override { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
     double getDouble(int i) const override { return (double)getInt(i); }

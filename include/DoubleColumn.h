@@ -11,7 +11,7 @@ namespace table {
 
     std::shared_ptr<Column> copy() const override { return std::make_shared<DoubleColumn>(*this); }
     std::shared_ptr<Column> create() const override { return std::make_shared<DoubleColumn>(name()); }
-    void reserve(size_t n) { data.reserve(n); }     
+    void reserve(size_t n) override { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
     ColumnType getType() const override { return FLOAT; }
