@@ -14,6 +14,7 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <map>
 
 #define GF_TEMPORAL_GRAPH	1
 #define GF_HAS_SPATIAL_DATA	4
