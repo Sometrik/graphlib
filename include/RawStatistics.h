@@ -10,8 +10,7 @@
 
 #include <UserType.h>
 #include <FilterType.h>
-
-#include "PoliticalParty.h"
+#include <PoliticalParty.h>
 
 class Graph;
 class StatisticsData;
