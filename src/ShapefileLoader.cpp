@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cmath>
 #include <sstream>
+#include <deque>
 
 using namespace std;
 
@@ -187,7 +188,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	  start = 0;
 	}
 	int end = j + 1 < o->nParts ? o->panPartStart[j + 1] : o->nVertices;
-	list<glm::dvec2> input;
+	deque<glm::dvec2> input;
 	for (int k = start; k < end; k++) {
 	  double x = o->padfX[k], y = o->padfY[k], z = o->padfZ[k];
 	  input.push_back(glm::dvec2(x, y));
