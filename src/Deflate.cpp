@@ -1,8 +1,13 @@
 #include "Deflate.h"
 
+extern "C" {
+#include <zlib.h>
+};
+
+#include <iostream>
 #include <cassert>
 #include <cstring>
-#include <cstdio>
+#include <cstdlib>
 
 #define CHUNK 65536
 
@@ -10,254 +15,126 @@ using namespace std;
 
 Deflate::Deflate(int _compression_level) : compression_level(_compression_level)
 {
-  in_buffer = new unsigned char[CHUNK];
-  out_buffer = new unsigned char[CHUNK];    
 }
 
 Deflate::Deflate(const Deflate & other)
-  : compression_level(other.compression_level) {
-  
-  in_buffer = new unsigned char[CHUNK];
-  out_buffer = new unsigned char[CHUNK];
-}
-
-Deflate &
-Deflate::operator=(const Deflate & other) {
-  if (this != &other) {
-    compression_level = other.compression_level;
-    deflate_init = inflate_init = false;
+  : compression_level(other.compression_level),
+    current_uncompressed_pos(other.current_uncompressed_pos),
+    output_buffer(other.output_buffer)
+{
+  if (other.def_stream) {
+    def_stream = (z_stream *)malloc(sizeof(z_stream));
+    z_stream * other_stream = const_cast<z_stream*>(other.def_stream);
+    deflateCopy(def_stream, other_stream);    
   }
-  return *this;
 }
 
 Deflate::~Deflate() {   
-  if (deflate_init) {
-    deflateEnd(&def_stream);
+  if (def_stream) {
+    deflateEnd(def_stream);
+    free(def_stream);
   }
-  if (inflate_init) {
-    inflateEnd(&inf_stream);
-  }
-
-  delete[] in_buffer;
-  delete[] out_buffer;
 }
 
 bool
-Deflate::initDeflate() {
-  int ret;
-  if (!deflate_init) {
-    deflate_init = true;
+Deflate::init() {
+  if (!def_stream) {
+    cerr << "init stream\n";
+    def_stream = (z_stream *)malloc(sizeof(z_stream));
     
     // allocate deflate state
-    def_stream.zalloc = 0;
-    def_stream.zfree = 0;
-    def_stream.opaque = 0;
+    def_stream->zalloc = 0;
+    def_stream->zfree = 0;
+    def_stream->opaque = 0;
     
-    ret = deflateInit(&def_stream, compression_level);
-  } else {
-    ret = deflateReset(&def_stream);
+    int ret = deflateInit(def_stream, compression_level);
+    if (ret != Z_OK) {
+      free(def_stream);
+      def_stream = 0;
+    }
   }
-    
-  assert(ret == Z_OK);
-    
-  return ret == Z_OK;
-}
-
-bool
-Deflate::initInflate(bool reset) {
-  int ret;
-  if (!inflate_init) {
-    inflate_init = true;
-
-    // allocate inflate state
-    inf_stream.zalloc = 0;
-    inf_stream.zfree = 0;
-    inf_stream.opaque = 0;
-    inf_stream.avail_in = 0;
-    inf_stream.next_in = 0;
-
-    ret = inflateInit(&inf_stream);    
-  } else if (reset) {
-    ret = inflateReset(&inf_stream);
-  } else {
-    return true;
-  }
-
-  // assert(ret == Z_OK);
-  
-  if (ret == Z_OK) {
-    return true;
-  } else {
-    return false;
-  }
+  return def_stream != 0;
 }
 
 void
 Deflate::reset() {
-  if (inflate_init) {
-    initInflate();
+  if (def_stream) {
+    deflateReset(def_stream);
   }
-  if (deflate_init) {
-    initDeflate();
-  }		 
+  current_uncompressed_pos = 0;
+  output_buffer.clear();
 }
-		 
-bool
-Deflate::decompress(const ustring & input, ustring & output) {
-  if (!initInflate()) {
-    fprintf(stderr, "deflate init failed\n");
-    return false;
+
+void
+Deflate::flush() {
+  compress(0, 0, true);
+}
+
+unsigned int
+Deflate::compress(const void * input, size_t input_len, bool do_flush) {
+  if (!init()) {
+    return 0;
   }
 
+  unsigned char * in_buffer = new unsigned char[CHUNK];
+  unsigned char * out_buffer = new unsigned char[CHUNK];
+
+  unsigned int uncompressed_pos = current_uncompressed_pos;
+  current_uncompressed_pos += input_len;
+  
   int ret;
   unsigned int pos = 0;
-  // unsigned int iter_count = 0;
-
-  // decompress until deflate stream ends or end of file
-  do {
-    assert(pos <= input.size());
-    
-    unsigned int len = input.size() - pos;
-    if (len > CHUNK) {
-      len = CHUNK;
-    }
-    
-    memcpy(in_buffer, input.data() + pos, len);
-    pos += len;
-    
-    inf_stream.avail_in = len;
-    inf_stream.next_in = in_buffer;
-
-    // run inflate() on input until output buffer not full
-
-    do {
-//      if (++iter_count > 10000) {
-//	fprintf(stderr, "Deflate: iter count too big, ret = %d\n", ret);
-//	return false;
-//      }
-      inf_stream.avail_out = CHUNK;
-      inf_stream.next_out = out_buffer;
-      
-      // fprintf(stderr, "inflating\n");
-      ret = inflate(&inf_stream, Z_NO_FLUSH);
-      // fprintf(stderr, "inflating done, ret = %d\n", ret);
-      
-      if (ret < 0 && ret != Z_BUF_ERROR) {
-	fprintf(stderr, "error: %d (before: avail_in = %d, avail_out = %d, after: avail_in = %d, avail_out = %d)\n", ret, len, CHUNK, inf_stream.avail_in, inf_stream.avail_out);
-	return false;
-      }
-      
-      unsigned int have = CHUNK - inf_stream.avail_out;
-      
-      output += ustring(out_buffer, have);
-    } while (inf_stream.avail_out == 0); // && ret != Z_STREAM_END);
-
-    // done when inflate() says it's done
-    // what if we still have stuff to decompress?
-  } while (ret != Z_STREAM_END);
-
-  return true;
-}
-
-bool
-Deflate::decompressStream(const ustring & input, ustring & output) {
-  if (!initInflate(false)) {
-    fprintf(stderr, "deflate init failed\n");
-    return false;
-  }
-
-  int ret;
-  unsigned int pos = 0;
-
-  // decompress until deflate stream ends or end of file
-  do {
-    assert(pos <= input.size());
-    
-    unsigned int len = input.size() - pos;
-    if (len > CHUNK) {
-      len = CHUNK;
-    }
-
-    if (!len) {
-      break;
-    }
-    
-    memcpy(in_buffer, input.data() + pos, len);
-    pos += len;
-    
-    inf_stream.avail_in = len;
-    inf_stream.next_in = in_buffer;
-
-    // run inflate() on input until output buffer not full
-
-    do {
-      inf_stream.avail_out = CHUNK;
-      inf_stream.next_out = out_buffer;
-      
-      ret = inflate(&inf_stream, Z_NO_FLUSH);
-      
-      if (ret == Z_NEED_DICT || ret < 0) {
-	fprintf(stderr, "error: %d\n", ret);
-	return false;
-      }
-      
-      unsigned int have = CHUNK - inf_stream.avail_out;
-      
-      output += ustring(out_buffer, have);
-    } while (inf_stream.avail_out == 0);
-
-    // done when inflate() says it's done
-  } while (ret != Z_STREAM_END);
+  bool finished = false;
   
-  return true;
-}
-
-bool
-Deflate::compress(const ustring & input, ustring & output) {
-  if (!initDeflate()) {
-    return false;
-  }
-  
-  int ret, flush;
-  unsigned int pos = 0;
-
   do {
-    assert(pos <= input.size());
+    assert(pos <= input_len);
     
-    flush = Z_FINISH;
-    unsigned int len = input.size() - pos;
-    if (len > CHUNK) {
-      flush = Z_NO_FLUSH;
+    int flush_v;
+    unsigned int len = input_len - pos;
+    if (len <= CHUNK) {
+      flush_v = do_flush ? Z_SYNC_FLUSH : Z_NO_FLUSH;
+      finished = true;
+    } else {
+      flush_v = Z_NO_FLUSH;
       len = CHUNK;
     }
 
-    memcpy(in_buffer, input.data() + pos, len);
-    pos += len;
+    if (len) {
+      assert(input);
+      memcpy(in_buffer, (unsigned char*)input + pos, len);
+      pos += len;
+    }
 
-    def_stream.avail_in = len;
-    def_stream.next_in = in_buffer;
+    def_stream->avail_in = len;
+    def_stream->next_in = in_buffer;
        
     // run deflate() on input until output buffer not full, finish
     // compression if all of source has been read in
     
     do {
-      def_stream.avail_out = CHUNK;
-      def_stream.next_out = out_buffer;
+      def_stream->avail_out = CHUNK;
+      def_stream->next_out = out_buffer;
 
-      ret = deflate(&def_stream, flush);    // no bad return value
+      ret = deflate(def_stream, flush_v);    // no bad return value
       assert(ret != Z_STREAM_ERROR);  // state not clobbered
 
-      unsigned int have = CHUNK - def_stream.avail_out;
+      unsigned int have = CHUNK - def_stream->avail_out;
 
-      output += ustring(out_buffer, have);
-      
-    } while (def_stream.avail_out == 0);
+      assert(have >= 0 && have <= CHUNK);
+      output_buffer.append(out_buffer, have);      
+    } while (def_stream->avail_out == 0);
+
+    // cerr << "avail_in = " << def_stream->avail_in << ", len = " << len << endl;
     
-    assert(def_stream.avail_in == 0);       // all input will be used
+    assert(def_stream->avail_in == 0);       // all input will be used
 
-  } while (flush != Z_FINISH);
+  } while (!finished);
+
+  // cerr << "ret = " << ret << endl;
+  assert(ret == Z_OK || ret == Z_STREAM_END); // stream will be complete (or not)
+
+  delete[] in_buffer;
+  delete[] out_buffer;
   
-  assert(ret == Z_STREAM_END);        // stream will be complete
-
-  return true;
+  return uncompressed_pos;
 }

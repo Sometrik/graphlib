@@ -1,30 +1,31 @@
 #ifndef _DEFLATE_H_
 #define _DEFLATE_H_
 
-extern "C" {
-#include <zlib.h>
-};
+#include <string>
+
+struct z_stream_s;
 
 class Deflate {
  public:
-  Deflate(int _compression_level = Z_DEFAULT_COMPRESSION);
+  Deflate(int _compression_level = 6);
   Deflate(const Deflate & other);
-  Deflate & operator=(const Deflate & other);
+  Deflate & operator=(const Deflate & other) = delete;
   ~Deflate();
 
-  bool compress(const ustring & input, ustring & output);
-  bool decompress(const ustring & input, ustring & output);
-  bool decompressStream(const ustring & input, ustring & output);
+  unsigned int compress(const void * input, size_t input_len, bool flush = false);
+  void flush();
   void reset();
 
+  size_t size() const { return output_buffer.size(); }
+  const std::basic_string<unsigned char> & data() const { return output_buffer; }
+  
  private:
-  bool initInflate(bool reset = true);
-  bool initDeflate();
-
+  bool init();
+  
   int compression_level;
-  bool deflate_init = 0, inflate_init = 0;
-  z_stream def_stream, inf_stream;
-  unsigned char * in_buffer, * out_buffer;
+  struct z_stream_s * def_stream = 0;
+  unsigned int current_uncompressed_pos = 0;
+  std::basic_string<unsigned char> output_buffer;
 };
 
 #endif
