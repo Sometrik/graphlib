@@ -17,6 +17,18 @@ GraphML::GraphML() : FileTypeHandler("GraphML", true) {
   addExtension("graphml");
 }
 
+static void createColumn(table::Table & table, const char * type, const char * id) {
+  if (strcmp(type, "string") == 0) {
+    table.addCompressedTextColumn(id ? id : "");
+  } else if (strcmp(type, "double") == 0 || strcmp(type, "float") == 0) {
+    table.addDoubleColumn(id ? id : "");
+  } else if (strcmp(type, "int") == 0) {
+    table.addIntColumn(id ? id : "");
+  } else {
+    assert(0);
+  }
+}
+
 std::shared_ptr<Graph>
 GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
   RenderMode mode = RENDERMODE_3D;
@@ -58,25 +70,14 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
     const char * key_type = key_element->Attribute("attr.type");
     const char * key_id = key_element->Attribute("id");
     const char * for_type = key_element->Attribute("for");
-    const char * name = key_element->Attribute("attr.name");
+    // const char * name = key_element->Attribute("attr.name");
     
     assert(key_type && key_id && for_type);
-    
-    std::shared_ptr<table::Column> column;
-    if (strcmp(key_type, "string") == 0) {
-      column = std::make_shared<table::TextColumn>(key_id ? key_id : "");
-    } else if (strcmp(key_type, "double") == 0 || strcmp(key_type, "float") == 0) {
-      column = std::make_shared<table::DoubleColumn>(key_id ? key_id : "");
-    } else if (strcmp(key_type, "int") == 0) {
-      column = std::make_shared<table::IntColumn>(key_id ? key_id : "");
-    } else {
-      assert(0);
-    }
 
     if (strcmp(for_type, "node") == 0) {
-      node_table.addColumn(column);
+      createColumn(node_table, key_type, key_id);
     } else if (strcmp(for_type, "edge") == 0) {
-      edge_table.addColumn(column);
+      createColumn(edge_table, key_type, key_id);
     } else {
       assert(0);
     }
@@ -126,7 +127,7 @@ GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XML
       createGraphFromElement(graph, graphml_element, *nested_graph_element, nodes_by_id, is_directed, node_id);
     }
   }
-  
+
   XMLElement * edge_element = graph_element.FirstChildElement("edge");
   for ( ; edge_element ; edge_element = edge_element->NextSiblingElement("edge") ) {
     const char * edge_id_text = edge_element->Attribute("id");
