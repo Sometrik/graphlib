@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #define EPSILON 0.0000000001
-#define INITIAL_ALPHA		0.075f
+#define INITIAL_ALPHA		0.1f
 
 using namespace std;
 
@@ -106,8 +106,13 @@ NodeArray::setNodeColor2(int i, const canvas::Color & c) {
 #endif
 
 void
-NodeArray::resume2() {
+NodeArray::resume() {
   alpha = INITIAL_ALPHA;
+}
+
+void
+NodeArray::updateAlpha() {
+  alpha *= 0.990f;
 }
 
 void
