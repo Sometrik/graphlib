@@ -204,12 +204,12 @@ class NodeArray : public ReadWriteObject {
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
   
-  void setAlpha3(float f) { alpha = f; }
-  void updateAlpha() { alpha *= 0.99f; }
-  float getAlpha2() const { return alpha; }
+  void setAlpha(float f) { alpha = f; }
+  void updateAlpha();
+  float getAlpha() const { return alpha; }
   float isRunning() const { return alpha >= 0.0005f; }
 
-  void resume2();
+  void resume();
   void stop() { alpha = 0.0f; }
 
   int getVersion() const { return version; }
