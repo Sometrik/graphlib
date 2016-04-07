@@ -182,7 +182,7 @@ void
 Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   unsigned int visible_nodes = calcVisibleNodeCount();
   double avg_edge_weight = total_edge_weight / getEdgeCount();
-  float alpha = getNodeArray().getAlpha2();
+  float alpha = getNodeArray().getAlpha();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
   unsigned int num_nodes = nodes->size();
@@ -469,9 +469,9 @@ Graph::getLocationGraphs() const {
 void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
-  getNodeArray().resume2();
+  getNodeArray().resume();
   for (auto & g : final_graphs) {
-    g->getNodeArray().resume2();
+    g->getNodeArray().resume();
   }
   for (auto & gd : nested_graphs) {
     gd.second->refreshLayouts();
@@ -659,8 +659,8 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
       setLocationGraphValid(false);
       assert(nodes->isDynamic());
       incVersion();
-      getNodeArray().resume2();
-      g->getNodeArray().resume2();
+      getNodeArray().resume();
+      g->getNodeArray().resume();
       changed = true;
     }
   }
@@ -741,7 +741,7 @@ Graph::calculateEdgeCentrality() {
   assert(nodes->isDynamic());
   incVersion();
   randomizeGeometry();
-  getNodeArray().resume2();
+  getNodeArray().resume();
 }
 
 struct label_data_s {
@@ -795,7 +795,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	float l = glm::length(d);
 	if (l >= 100.0f) {
 	  if (td.toggleNode(true)) {
-	    nodes->resume2();
+	    nodes->resume();
 	    structure_changed = true;
 	  }
 	  labels_changed |= td.setLabelVisibility(false);
@@ -1040,7 +1040,7 @@ Graph::updateFaceAppearance() {
 
 void
 Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const {
-  float k = nodes->getAlpha2() * gravity;
+  float k = nodes->getAlpha() * gravity;
   if (k < EPSILON) return;
   
   auto end = end_visible_nodes();
