@@ -6,8 +6,6 @@
 #include "ColorProvider.h"
 #include "Controller.h"
 #include "RenderMode.h"
-
-#include "TextureAtlas.h"
 #include "Label.h"
 
 #include <DateTime.h>
