@@ -1,6 +1,7 @@
 #ifndef _RAWSTATISTICS_H_
 #define _RAWSTATISTICS_H_
 
+#include <unordered_map>
 #include <map>
 #include <string>
 #include <vector>
@@ -94,9 +95,9 @@ class RawStatistics {
   float start_sentiment = -1, end_sentiment = 1;
   size_t num_raw_nodes = 0, num_raw_edges = 0;
   size_t num_posts = 0, num_active_users = 0;
-  std::map<std::string, int> links;
-  std::map<std::string, int> hashtags;
-  std::map<std::string, int> headlines;
+  std::unordered_map<std::string, int> links;
+  std::unordered_map<std::string, int> hashtags;
+  std::unordered_map<std::string, int> headlines;
   std::map<UserType, int> user_types;
   std::map<PoliticalParty, int> political_parties;
   std::vector<unsigned int> hours, weekdays;
@@ -105,7 +106,7 @@ class RawStatistics {
   std::map<skey, int> user_activity, user_popularity;
 
   std::map<FilterType, int> filter_usage;
-  std::map<short, int> language_usage;
+  std::unordered_map<short, int> language_usage;
   
   unsigned int version = 1;
 };
