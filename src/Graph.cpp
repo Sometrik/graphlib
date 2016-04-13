@@ -190,10 +190,15 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int tail = it->tail, head = it->head;
+    assert(tail >= 0 && head >= 0);
     if (flatten) {
       int l1 = 0, l2 = 0;
-      for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node ) l1++;
-      for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node ) l2++;      
+      if (tail < node_geometry3.size()) {
+        for (int p = node_geometry3[tail].parent_node; p != -1; p = node_geometry3[p].parent_node) l1++;
+      }
+      if (head < node_geometry3.size()) {
+        for (int p = node_geometry3[head].parent_node; p != -1; p = node_geometry3[p].parent_node) l2++;
+      }
       while ( 1 ) {
 	if (l1 > l2) {
 	  tail = node_geometry3[tail].parent_node;
@@ -201,8 +206,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
 	} else if (l2 > l1) {
 	  head = node_geometry3[head].parent_node;
 	  l2--;
-	} else if (node_geometry3[tail].parent_node == node_geometry3[head].parent_node) {
-	  
+	} else if (l1 == 0 || l2 == 0 || node_geometry3[tail].parent_node == node_geometry3[head].parent_node) {
 	  break;
 	} else {
 	  l1--; l2--;
@@ -1079,6 +1083,7 @@ void
 Graph::applyAge() {
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
+    if (node_geometry3.size() <= *it) node_geometry3.resize(*it + 1);
     auto & td = node_geometry3[*it];
     td.age += 1.0f / 50.0f;
   }
