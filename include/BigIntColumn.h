@@ -28,7 +28,7 @@ namespace table {
     }
     
     void setValue(int i, double v) override { setValue(i, (long long)v); }
-    void setValue(int i, int v) override { setValue(i, (int)v); }
+    void setValue(int i, int v) override { setValue(i, (long long)v); }
     void setValue(int i, const std::string & v) override { setValue(i, stoll(v)); }
     void setValue(int i, long long v) override {
       while (i >= data.size()) data.push_back(0);
