@@ -915,6 +915,7 @@ Graph::getGraphForReading(int graph_id, const char * debug_name) const {
     if (debug_name) cerr << " for " << debug_name << endl;
     else cerr << endl;
   }
+  cerr << "gr: " << debug_name << endl;
   return graph;
 }
 
@@ -929,6 +930,7 @@ Graph::getGraphForWriting(int graph_id, const char * debug_name) {
     if (debug_name) cerr << " for " << debug_name << endl;
     else cerr << endl;
   }
+  cerr << "gw: " << debug_name << endl;
   return graph;
 }
 
