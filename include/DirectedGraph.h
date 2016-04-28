@@ -50,6 +50,7 @@ class DirectedGraph : public Graph {
   int current_pos = -1;
   unsigned int num_links = 0, num_hashtags = 0;
   time_t min_time = 0, max_time = 0;
+  bool create_groups = true;
 };
 
 #endif
