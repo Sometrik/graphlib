@@ -14,12 +14,7 @@
 #include <typeinfo>
 #include <unordered_set>
 
-#if 1
-#ifndef _WIN32
-#include "BinaryGraph.h"
-#include "Community.h"
-#endif
-#endif
+#include "Louvain.h"
 
 #define EPSILON 0.0000000001
 
@@ -488,20 +483,26 @@ Graph::getGraphNodeId(int graph_id) const {
   return -1;
 }
 
+#include "BinaryGraph.h"
+
 void
 Graph::createClusters() {
   double precision = 0.000001;
-  
+  vector<int> actual_nodes;
+
+#if 1
+  GraphInterface * actual_graph = this;
+  for (int v = 0; v < nodes->size(); v++) {
+    actual_nodes.push_back(v);
+  }
+#else
   cerr << "creating arrays, precision = " << precision << "\n";
   
   double total_weight = 0;
   vector<unsigned long long> degrees;
   vector<unsigned int> links;
   vector<float> weights;
-  vector<int> actual_nodes;
-
   cerr << "populating arrays\n";
-
   for (int v = 0; v < nodes->size(); v++) {
     unsigned int degree = 0;
     int edge = getNodeFirstEdge(v);
@@ -521,7 +522,6 @@ Graph::createClusters() {
     degrees.push_back(degree);
     actual_nodes.push_back(v);
   }
-
   cerr << "accumulating\n";
 
   for (int i = 1; i < degrees.size(); i++) {
@@ -533,28 +533,30 @@ Graph::createClusters() {
   assert(degrees.size() == nodes->size());
   assert(degrees.back() == getEdgeCount() ||
 	 degrees.back() == 2 * getEdgeCount());
+
+  GraphInterface * actual_graph = new BinaryGraph(nodes->size(), weights.size(), total_weight, degrees, links, weights);
+
+#endif
   
   cerr << "creating communities\n";
 
   ColorProvider colors(ColorProvider::CHART2);
-  
-  BinaryGraph * binary_graph = new BinaryGraph(nodes->size(), weights.size(), total_weight, degrees, links, weights);
-  
-  Community c(binary_graph, -1, precision);
+    
+  Louvain c(actual_graph, -1, precision);
   double mod = c.modularity(), new_mod;
   int level = 0;
   int display_level = -1;
   bool improvement = true;
   bool is_first = true;
-  GraphInterface * g = binary_graph;
+  GraphInterface * g = actual_graph;
   do {
     cerr << "level " << level << ":\n";
     cerr << "  network size: " 
 	 << c.getGraph().getNodeCount() << " nodes" << endl;
-    improvement = c.one_level();
+    improvement = c.oneLevel();
     new_mod = c.modularity();
     // if (++level == display_level) g.display();
-    if (display_level == -1) c.display_partition();
+    if (display_level == -1) c.displayPartition();
 
     if (is_first) {
       auto partition = c.getRenumberedPartition();
@@ -571,14 +573,13 @@ Graph::createClusters() {
 	// cerr << "assigning colors (" << i << "/" << n << ", p = " << p << ", f = " << f << ")\n";
 	auto color = colors.getColorByIndex(p);
 	// getNodeArray().setNodeColor2(i, color);
-	int cluster_id = getNodeArray().getClusterById(p);
-	if (cluster_id == -1) {
-	  cluster_id = getNodeArray().createCluster(p);
-	  cerr << "created cluster " << p << " => " << cluster_id << endl;
+	int community_id = getNodeArray().getCommunityById(p);
+	if (community_id == -1) {
+	  community_id = getNodeArray().createCommunity(p);
+	  cerr << "created cluster " << p << " => " << community_id << endl;
 	  // setClusterColor(cluster_id, color);
 	}
-	// setNodeCluster(i, p);
-	addChild(cluster_id, i);
+	addChild(community_id, i);
       }
       is_first = false;
     }
@@ -596,7 +597,7 @@ Graph::createClusters() {
 #endif
   } while (improvement);
 
-  delete g;
+  // delete g;
 
   incVersion();
 }
@@ -1227,3 +1228,20 @@ Graph::removeAllChildren() {
     }
   }
 }
+
+std::vector<std::pair<int, float> >
+Graph::neighbors2(int node) {
+  std::vector<std::pair<int, float> > r;
+
+  auto end = end_edges();
+  for (auto it = begin_edges(); it != end; ++it) {
+    if (it->tail == node && it->head != node) {
+      r.push_back(std::pair<int, float>(it->head, it->weight));
+    } else if (it->tail == node && it->head != node) {
+      r.push_back(std::pair<int, float>(it->tail, it->weight));
+    }
+  }
+
+  return r;
+}
+ 
