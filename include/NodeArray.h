@@ -275,6 +275,20 @@ class NodeArray : public ReadWriteObject {
   bool perNodeColorsEnabled() const { return testFlags(GF_PER_NODE_COLORS); }
   void setPerNodeColors(bool t) { updateFlags(GF_PER_NODE_COLORS, t); }
 
+  int getClusterById(int id) const {
+    auto it = clusters.find(id);
+    if (it != clusters.end()) return it->second;
+    return -1;
+  }
+
+  int createCluster(int id) {
+    int cluster_id = getClusterById(id);
+    if (cluster_id != -1) return cluster_id;
+    clusters[id] = cluster_id = add();
+    setRandomPosition(cluster_id);
+    return cluster_id;    
+  }
+
  protected:
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
   void updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); }
@@ -292,6 +306,7 @@ class NodeArray : public ReadWriteObject {
   int zerodegree_node_id = -1, pairs_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
+  std::map<int, int> clusters;
   unsigned int flags = 0;
   Personality personality = NONE;
 };
