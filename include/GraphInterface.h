@@ -21,31 +21,9 @@ class GraphInterface : public MBRObject {
   
   // return the number of neighbors (degree) of the node
   virtual unsigned int nb_neighbors(int node) = 0;
-
-#if 0
-  virtual const std::vector<float> & getWeights() const { return dummy2; }
-#endif
   
-  // return pointers to the first neighbor and first weight of the node
-#if 0
-  virtual std::pair<std::vector<unsigned int>::iterator, std::vector<float>::iterator > neighbors(unsigned int node) {
-    return std::make_pair<std::vector<unsigned int>::iterator, std::vector<float>::iterator>(dummy1.begin(), dummy2.begin());
-  }
-#else
+  // return indices to neighbours as well as weights of the corresponding edges
   virtual std::vector<std::pair<int, float> > neighbors2(int node) = 0;  
-#endif  
-  
-#if 0
-  virtual std::vector<unsigned long long> & getDegrees() = 0;
-  virtual const std::vector<unsigned long long> & getDegrees() const = 0;
-  virtual void addLinks(const std::map<int, float> & m) = 0;
-#endif
-
- public:
-#if 0
-  std::vector<unsigned int> dummy1;
-  std::vector<float> dummy2;
-#endif
 };
 
 #endif
