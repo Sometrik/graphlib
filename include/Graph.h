@@ -1,7 +1,7 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
-#include "MBRObject.h"
+#include "GraphInterface.h"
 #include "RawStatistics.h"
 #include "NodeArray.h"
 #include "graph_color.h"
@@ -24,7 +24,8 @@ class DisplayInfo;
 
 struct node_tertiary_data_s {
   int first_edge = -1;
-  float indegree = 0.0f, outdegree = 0.0f, coverage_weight = 0.0f;
+  int indegree = 0, outdegree = 0;
+  float weighted_indegree = 0.0f, weighted_outdegree = 0.0f, coverage_weight = 0.0f;
   long long coverage = 0;
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
@@ -131,7 +132,7 @@ class GraphRefR;
 class GraphRefW;
 class Label;
 
-class Graph : public MBRObject {
+class Graph : public GraphInterface {
  public:
   friend class GraphRefR;
   friend class GraphRefW;
@@ -258,16 +259,20 @@ class Graph : public MBRObject {
     node_geometry3[n].first_edge = edge;
   }
 
-  void updateOutdegree(int n, float d) {
+  void updateOutdegree(int n, float weight) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].outdegree += d; // weight;
-    total_outdegree += d; // weight;
+    node_geometry3[n].weighted_outdegree += weight;
+    node_geometry3[n].outdegree++;
+    total_outdegree++;
+    total_weighted_outdegree += weight;
   }
 
-  void updateIndegree(int n, float d) {
+  void updateIndegree(int n, float weight) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].indegree += d; // weight;
-    total_indegree += d; // weight;
+    node_geometry3[n].weighted_indegree += weight;
+    node_geometry3[n].indegree++;
+    total_indegree++;
+    total_weighted_indegree += weight;
   }
   
   // return the weighted degree of the node
@@ -290,54 +295,30 @@ class Graph : public MBRObject {
   }
 
   // return the weighted degree of the node
-  double weighted_degree(int node) const {
-#if 1
-    double d = 0;
-    int edge = getNodeFirstEdge(node);
-    while (edge != -1) {
-      d += getEdgeAttributes(edge).weight;
-      edge = getNextNodeEdge(edge);
-    }
-    return d;
-#else
-    if (weights.size() == 0) {
-      return (double)nb_neighbors(node);
-    } else {
-      pair<vector<unsigned int>::iterator, vector<float>::iterator > p = neighbors(node);
-      double res = 0;
-      for (unsigned int i=0 ; i<nb_neighbors(node) ; i++) {
-	res += (double)*(p.second+i);
-      }
-      return res;
-    }
-#endif
+  float weighted_degree(int n) override {
+    if (node_geometry3.size() <= n) return 0.0f;
+    return node_geometry3[n].weighted_indegree + node_geometry3[n].weighted_outdegree;    
   }
 
-  double nb_selfloops(int node) const {
-#if 1
+  unsigned int nb_neighbors(int n) override {
+    if (node_geometry3.size() <= n) return 0;
+    return node_geometry3[n].indegree + node_geometry3[n].outdegree;
+  }
+
+  float nb_selfloops(int node) override {
     int edge = getNodeFirstEdge(node);
+    float ws = 0.0f;
     while (edge != -1) {
-      if (getEdgeTargetNode(edge) == node) {
-	return getEdgeAttributes(edge).weight;
+      auto & ed = getEdgeAttributes(edge);
+      if (ed.head == node) {
+	ws += ed.weight;
       }
+      edge = ed.next_node_edge;
     }
-    return 0;
-#else
-    pair<vector<unsigned int>::iterator, vector<float>::iterator > p = neighbors(node);
-    for (unsigned int i=0 ; i<nb_neighbors(node) ; i++) {
-      if (*(p.first+i)==node) {
-	if (weights.size()!=0)
-	  return (double)*(p.second+i);
-	else 
-	  return 1.;
-      }
-    }
-    return 0.;
-#endif
+    return ws;
   }
  
-  // int getTotalDegrees(int i) const { return 1; }; //return getInDegrees() + getOutDegrees(); }
-
+  size_t getNodeCount() const override { return getNodeArray().size(); }
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
   
@@ -441,7 +422,8 @@ class Graph : public MBRObject {
 
     highlighted_node = -1;
     has_node_selection = false;
-    total_edge_weight = total_indegree = total_outdegree = 0.0;
+    total_indegree = total_outdegree = 0;
+    total_edge_weight = total_weighted_indegree = total_weighted_outdegree = 0.0;
   }
       
   std::map<skey, int> & getFaceCache() { return face_cache; } 
@@ -561,8 +543,9 @@ class Graph : public MBRObject {
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
-  double getTotalOutdegree() const { return total_outdegree; }
-  double getTotalIndegree() const { return total_indegree; }
+  double getTotalWeight() const override { return getTotalWeightedOutdegree(); }
+  double getTotalWeightedOutdegree() const { return total_weighted_outdegree; }
+  double getTotalWeightedIndegree() const { return total_weighted_indegree; }
 
   void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
   int getDefaultSymbolId() const { return default_symbol_id; }
@@ -631,7 +614,8 @@ class Graph : public MBRObject {
   float line_width = 1.0f;
   float min_significance = 0.0f, min_scale = 0.0f;
   std::vector<node_tertiary_data_s> node_geometry3;
-  double total_outdegree = 0, total_indegree = 0;
+  double total_weighted_outdegree = 0, total_weighted_indegree = 0;
+  unsigned int total_outdegree = 0, total_indegree = 0;
   node_tertiary_data_s null_geometry3;
   int default_symbol_id = 0;
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
