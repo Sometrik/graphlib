@@ -5,15 +5,15 @@
 using namespace std;
 
 float
-SizeMethod::calculateSize(const node_tertiary_data_s & data, double total_indegree, double total_outdegree, size_t node_count) const {
+SizeMethod::calculateSize(const node_tertiary_data_s & data, unsigned int total_indegree, unsigned int total_outdegree, size_t node_count) const {
   switch (method) {
   case CONSTANT: return constant;    
   case SIZE_FROM_DEGREE:
     {
-      float degree = data.indegree + data.outdegree;      
+      unsigned int degree = data.indegree + data.outdegree;      
       float a;
       if (degree) {
-	double avg_degree = float(total_indegree + total_outdegree) / node_count;
+	double avg_degree = double(total_indegree + total_outdegree) / node_count;
 	a = degree / avg_degree;
       } else { // if this degree is zero, total degree might also be
 	a = 0;
@@ -23,10 +23,10 @@ SizeMethod::calculateSize(const node_tertiary_data_s & data, double total_indegr
     }
   case SIZE_FROM_INDEGREE:
     {
-      float degree = data.indegree;
+      unsigned int degree = data.indegree;
       float a;
       if (degree) {
-	float avg_degree = float(total_indegree / node_count);
+	double avg_degree = double(total_indegree) / node_count;
 	a = degree / avg_degree;
       } else {
 	a = 0;
