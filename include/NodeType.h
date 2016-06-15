@@ -9,7 +9,8 @@ enum NodeType : unsigned short {
   NODE_URL,
   NODE_HASHTAG,
   NODE_TOKEN,
-  NODE_USER
+  NODE_USER,
+  NODE_COMMUNITY  
 };
 
 #endif
