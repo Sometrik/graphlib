@@ -32,10 +32,7 @@ class GraphInterface : public MBRObject {
     return std::make_pair<std::vector<unsigned int>::iterator, std::vector<float>::iterator>(dummy1.begin(), dummy2.begin());
   }
 #else
-  virtual std::vector<std::pair<int, float> > neighbors2(int node) {
-    std::vector<std::pair<int, float> > r;
-    return r;
-  }
+  virtual std::vector<std::pair<int, float> > neighbors2(int node) = 0;  
 #endif  
   
 #if 0
