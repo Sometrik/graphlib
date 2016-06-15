@@ -317,7 +317,9 @@ class Graph : public GraphInterface {
     }
     return ws;
   }
- 
+
+  std::vector<std::pair<int, float> > neighbors2(int node) override;
+  
   size_t getNodeCount() const override { return getNodeArray().size(); }
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
@@ -546,6 +548,8 @@ class Graph : public GraphInterface {
   double getTotalWeight() const override { return getTotalWeightedOutdegree(); }
   double getTotalWeightedOutdegree() const { return total_weighted_outdegree; }
   double getTotalWeightedIndegree() const { return total_weighted_indegree; }
+  unsigned int getTotalOutdegree() const { return total_outdegree; }
+  unsigned int getTotalIndegree() const { return total_indegree; }
 
   void setDefaultSymbolId(int symbol_id) { default_symbol_id = symbol_id; }
   int getDefaultSymbolId() const { return default_symbol_id; }
