@@ -14,10 +14,10 @@
 #include <typeinfo>
 #include <unordered_set>
 
-#if 0
+#if 1
 #ifndef _WIN32
-#include "community/BinaryGraph.h"
-#include "community/Community.h"
+#include "BinaryGraph.h"
+#include "Community.h"
 #endif
 #endif
 
@@ -490,7 +490,6 @@ Graph::getGraphNodeId(int graph_id) const {
 
 void
 Graph::createClusters() {
-#if 0
   double precision = 0.000001;
   
   cerr << "creating arrays, precision = " << precision << "\n";
@@ -499,6 +498,7 @@ Graph::createClusters() {
   vector<unsigned long long> degrees;
   vector<unsigned int> links;
   vector<float> weights;
+  vector<int> actual_nodes;
 
   cerr << "populating arrays\n";
 
@@ -519,6 +519,7 @@ Graph::createClusters() {
       edge = getNextNodeEdge(edge);
     }
     degrees.push_back(degree);
+    actual_nodes.push_back(v);
   }
 
   cerr << "accumulating\n";
@@ -537,7 +538,7 @@ Graph::createClusters() {
 
   ColorProvider colors(ColorProvider::CHART2);
   
-  BinaryGraph binary_graph(nodes->size(), weights.size(), total_weight, degrees, links, weights);
+  BinaryGraph * binary_graph = new BinaryGraph(nodes->size(), weights.size(), total_weight, degrees, links, weights);
   
   Community c(binary_graph, -1, precision);
   double mod = c.modularity(), new_mod;
@@ -545,15 +546,14 @@ Graph::createClusters() {
   int display_level = -1;
   bool improvement = true;
   bool is_first = true;
-  BinaryGraph g;
+  GraphInterface * g = binary_graph;
   do {
     cerr << "level " << level << ":\n";
     cerr << "  network size: " 
-	 << c.getGraph().getNodeCount() << " nodes, " 
-	 << c.getGraph().getLinkCount() << " links, " << endl;
+	 << c.getGraph().getNodeCount() << " nodes" << endl;
     improvement = c.one_level();
     new_mod = c.modularity();
-    if (++level == display_level) g.display();
+    // if (++level == display_level) g.display();
     if (display_level == -1) c.display_partition();
 
     if (is_first) {
@@ -563,32 +563,42 @@ Graph::createClusters() {
       assert(partition.size() == nodes->size());
 
       glm::vec3 c1(1.0, 0.0, 0.0), c2(1.0, 1.0, 0.0);
-      for (int i = 0; i < nodes->size(); i++) {
+      for (auto i : actual_nodes) {
+	assert(i >= 0 && i < partition.size());
 	int p = partition[i];
 	// float f = float(p) / (n - 1);
 	// glm::vec3 c = glm::normalize(glm::mix(c1, c2, f));
 	// cerr << "assigning colors (" << i << "/" << n << ", p = " << p << ", f = " << f << ")\n";
 	auto color = colors.getColorByIndex(p);
-	getNodeArray().setNodeColor2(i, color);
-	while (p >= getClusterCount()) {
-	  cerr << "adding cluster\n";
-	  int cluster_id = addCluster();
-	  setClusterColor(cluster_id, color);
+	// getNodeArray().setNodeColor2(i, color);
+	int cluster_id = getNodeArray().getClusterById(p);
+	if (cluster_id == -1) {
+	  cluster_id = getNodeArray().createCluster(p);
+	  cerr << "created cluster " << p << " => " << cluster_id << endl;
+	  // setClusterColor(cluster_id, color);
 	}
-	setNodeCluster(i, p);
+	// setNodeCluster(i, p);
+	addChild(cluster_id, i);
       }
       is_first = false;
     }
-    
+
+#if 0
+    auto old_graph = g;
     g = c.partition2graph_binary();
     c = Community(g, -1, precision);
+    delete old_graph;
     
     cerr << "  modularity increased from " << mod << " to " << new_mod << endl;
     mod = new_mod;
-  } while (improvement);  
+#else
+    break;
+#endif
+  } while (improvement);
+
+  delete g;
 
   incVersion();
-#endif
 }
 
 unsigned int
@@ -1125,8 +1135,8 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
       nodes->updateNodeAppearance(n2);
       setNodeAge(n2, initial_node_age); // this is first edge
     }
-    updateOutdegree(n1, 1.0f); // weight);
-    updateIndegree(n2, 1.0f); // weight);
+    updateOutdegree(n1, weight);
+    updateIndegree(n2, weight);
   }
   updateNodeCoverage(n1, coverage);
   updateNodeCoverage(n2, coverage);
