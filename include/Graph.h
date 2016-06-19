@@ -32,6 +32,7 @@ struct node_tertiary_data_s {
   float age = 0.0;
   unsigned short flags = NODE_SELECTED;
   unsigned short label_visibility_val = 0;
+  float louvain_in = 0.0f, louvain_tot = 0.0f;
   
   void setNodeFixedPosition(int i, bool t) {
     if (t) flags |= NODE_FIXED_POSITION;
@@ -487,6 +488,16 @@ class Graph : public GraphInterface {
     }
   }
 
+  void setLouvainIn(int n, float in) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    node_geometry3[n].louvain_in = in;
+  }
+
+  void setLouvainTot(int n, float tot) {
+    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+    node_geometry3[n].louvain_tot = tot;
+  }
+
   int getNodeDepth(int n) const {
     int l = 0;
     for (int p = node_geometry3[n].parent_node; p != -1; p = node_geometry3[p].parent_node) l++;
@@ -542,6 +553,10 @@ class Graph : public GraphInterface {
   void applyGravity(float gravity, std::vector<node_position_data_s> & v) const;
   void applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v) const;
   void applyAge();
+
+  double modularity() const; // calculate the modularity of the communities
+  double modularityGain(int node, int comm, double dnodecomm, double w_degree) const;
+  void initializeLouvain(int n);
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
