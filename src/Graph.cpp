@@ -216,28 +216,42 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     bool visible = true;
-    auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
     bool closed = false;
-    for (int p = td1.parent_node; p != -1; ) {
+    for (int p = getNodeTertiaryData(tail).parent_node; p != -1; ) {
       auto & ptd = node_geometry3[p];
       closed |= !ptd.isOpen();
       p = ptd.parent_node;
     }
     if (closed) continue;
-    for (int p = td2.parent_node; p != -1; ) {
+    for (int p = getNodeTertiaryData(head).parent_node; p != -1; ) {
       auto & ptd = node_geometry3[p];
       closed |= !ptd.isOpen();
       p = ptd.parent_node;
     }
     if (closed) continue;
+
+    auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
+    bool fixed1 = td1.isFixed();
+    bool fixed2 = td2.isFixed();
+    if (fixed1 && fixed2) continue;
+
     auto & pd1 = v[tail], & pd2 = v[head];
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
     float l = glm::length(d);
+
     if (l < EPSILON) continue;
-    bool fixed1 = td1.isFixed();
-    bool fixed2 = td2.isFixed();
-    if (fixed1 && fixed2) continue;      
+
+    d *= 1 / l;
+      
+    float w1 = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
+    float w2 = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
+
+    if (td1.child_count) l -= w1;
+    if (td2.child_count) l -= w2;
+
+    if (l < EPSILON) continue;
+
     assert(td1.parent_node == td2.parent_node);
 
     float degree1 = td1.outdegree, degree2 = td2.indegree;
@@ -248,10 +262,8 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     // d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
-    d *= alpha * idf;
+    l *= alpha * idf;
     
-    float w1 = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
-    float w2 = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
     float k;
     if (fixed1) {
       k = 1.0f;
@@ -260,8 +272,8 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     } else {
       k = w1 / (w1 + w2);
     }
-    pos2 -= d * k;
-    pos1 += d * (1 - k);
+    pos2 -= d * l * k;
+    pos1 += d * l * (1 - k);
   }
 }
 
@@ -483,85 +495,38 @@ Graph::getGraphNodeId(int graph_id) const {
   return -1;
 }
 
-#include "BinaryGraph.h"
-
 void
 Graph::createClusters() {
   double precision = 0.000001;
   vector<int> actual_nodes;
-
-#if 1
-  GraphInterface * actual_graph = this;
   for (int v = 0; v < nodes->size(); v++) {
     actual_nodes.push_back(v);
   }
-#else
-  cerr << "creating arrays, precision = " << precision << "\n";
-  
-  double total_weight = 0;
-  vector<unsigned long long> degrees;
-  vector<unsigned int> links;
-  vector<float> weights;
-  cerr << "populating arrays\n";
-  for (int v = 0; v < nodes->size(); v++) {
-    unsigned int degree = 0;
-    int edge = getNodeFirstEdge(v);
-    while (edge != -1) {
-      edge_data_s & ed = getEdgeAttributes(edge);
-      
-      int succ = getEdgeTargetNode(edge);
-      assert(succ >= 0 && succ < nodes->size());
-
-      links.push_back(succ);
-      weights.push_back(ed.weight);
-      total_weight += ed.weight;
-      degree++;
-      
-      edge = getNextNodeEdge(edge);
-    }
-    degrees.push_back(degree);
-    actual_nodes.push_back(v);
-  }
-  cerr << "accumulating\n";
-
-  for (int i = 1; i < degrees.size(); i++) {
-    degrees[i] += degrees[i - 1];
-  }
-
-  cerr << "accumulation done, degrees.size() = " << degrees.size() << ", .back() = " << degrees.back() << ", nodes = " << nodes->size() << ", edges = " << getEdgeCount() << endl;
-
-  assert(degrees.size() == nodes->size());
-  assert(degrees.back() == getEdgeCount() ||
-	 degrees.back() == 2 * getEdgeCount());
-
-  GraphInterface * actual_graph = new BinaryGraph(nodes->size(), weights.size(), total_weight, degrees, links, weights);
-
-#endif
   
   cerr << "creating communities\n";
 
   ColorProvider colors(ColorProvider::CHART2);
     
-  Louvain c(actual_graph, -1, precision);
-  double mod = c.modularity(), new_mod;
+  Louvain c(this, -1, precision);
+  double mod = modularity(), new_mod;
   int level = 0;
   int display_level = -1;
   bool improvement = true;
   bool is_first = true;
-  GraphInterface * g = actual_graph;
   do {
     cerr << "level " << level << ":\n";
     cerr << "  network size: " 
 	 << c.getGraph().getNodeCount() << " nodes" << endl;
     improvement = c.oneLevel();
-    new_mod = c.modularity();
-    // if (++level == display_level) g.display();
-    if (display_level == -1) c.displayPartition();
+    new_mod = modularity();
+    level++;
+    // if (level == display_level) g.display();
+    // if (display_level == -1) c.displayPartition();
 
     if (is_first) {
-      auto partition = c.getRenumberedPartition();
-      unsigned int n = 0;
-      for (auto a : partition) if (a + 1 >= n) n = a + 1;
+      auto partition = c.getPartition();
+      // unsigned int n = 0;
+      // for (auto a : partition) if (a + 1 >= n) n = a + 1;
       assert(partition.size() == nodes->size());
 
       glm::vec3 c1(1.0, 0.0, 0.0), c2(1.0, 1.0, 0.0);
@@ -571,10 +536,10 @@ Graph::createClusters() {
 	// float f = float(p) / (n - 1);
 	// glm::vec3 c = glm::normalize(glm::mix(c1, c2, f));
 	// cerr << "assigning colors (" << i << "/" << n << ", p = " << p << ", f = " << f << ")\n";
-	auto color = colors.getColorByIndex(p);
 	// getNodeArray().setNodeColor2(i, color);
 	int community_id = getNodeArray().getCommunityById(p);
 	if (community_id == -1) {
+	  // auto color = colors.getColorByIndex(p);
 	  community_id = getNodeArray().createCommunity(p);
 	  cerr << "created cluster " << p << " => " << community_id << endl;
 	  // setClusterColor(cluster_id, color);
@@ -596,8 +561,6 @@ Graph::createClusters() {
     break;
 #endif
   } while (improvement);
-
-  // delete g;
 
   incVersion();
 }
@@ -1237,7 +1200,7 @@ Graph::neighbors2(int node) {
   for (auto it = begin_edges(); it != end; ++it) {
     if (it->tail == node && it->head != node) {
       r.push_back(std::pair<int, float>(it->head, it->weight));
-    } else if (it->tail == node && it->head != node) {
+    } else if (it->head == node && it->tail != node) {
       r.push_back(std::pair<int, float>(it->tail, it->weight));
     }
   }
@@ -1245,3 +1208,39 @@ Graph::neighbors2(int node) {
   return r;
 }
  
+void
+Graph::initializeLouvain(int n) {
+  if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+  auto & td = node_geometry3[n];
+  td.louvain_in = nb_selfloops(n);
+  td.louvain_tot = weighted_degree(n);
+}
+
+double
+Graph::modularity() const {
+  double q = 0.0;
+  double total_weight = getTotalWeight();
+
+  size_t size = getNodeArray().size();
+  for (int i = 0; i < size; i++) {
+    auto & td = getNodeTertiaryData(i);
+    if (td.louvain_tot > 0) {
+      q += td.louvain_in / total_weight - (td.louvain_tot / total_weight) * (td.louvain_tot / total_weight);
+    }
+  }
+  
+  return q;
+}
+
+double
+Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) const {
+  assert(node >= 0 && node < getNodeArray().size());
+  auto & td_comm = getNodeTertiaryData(comm);
+  
+  double totc = td_comm.louvain_tot;
+  double degc = w_degree;
+  double m2 = getTotalWeight();
+  double dnc = dnodecomm;
+  
+  return (dnc - totc * degc / m2);
+}
