@@ -166,7 +166,10 @@ class Graph : public GraphInterface {
   // double calculateTotalEnergy() const;
 
   void addChild(int parent, int child);
-  void removeChild(int child);
+  void addChild(int parent, int child, double dnodecomm);
+  int removeChild(int child);
+  int removeChild(int child, double dnodecomm);
+  
   void removeAllChildren();
 
   bool isNodeVisible(int node) const;

@@ -515,14 +515,14 @@ Graph::createClusters() {
   bool is_first = true;
   do {
     cerr << "level " << level << ":\n";
-    cerr << "  network size: " 
-	 << c.getGraph().getNodeCount() << " nodes" << endl;
+    cerr << "  network size: " << c.getGraph().getNodeCount() << " nodes" << endl;
     improvement = c.oneLevel();
     new_mod = modularity();
     level++;
     // if (level == display_level) g.display();
     // if (display_level == -1) c.displayPartition();
 
+#if 0
     if (is_first) {
       auto partition = c.getPartition();
       // unsigned int n = 0;
@@ -548,6 +548,7 @@ Graph::createClusters() {
       }
       is_first = false;
     }
+#endif
 
 #if 0
     auto old_graph = g;
@@ -1145,7 +1146,7 @@ Graph::addChild(int parent, int child) {
   assert(node_geometry3[child].parent_node == parent);
 }
 
-void
+int
 Graph::removeChild(int child) {
   if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
   int parent = node_geometry3[child].parent_node;
@@ -1172,7 +1173,38 @@ Graph::removeChild(int child) {
 
     assert(nodes->isDynamic());
     incVersion();
-  }        
+  }
+  return parent;
+}
+
+void
+Graph::addChild(int parent, int child, double dnodecomm) {
+  addChild(parent, child);
+
+  if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
+  auto & td = node_geometry3[parent];
+  td.louvain_tot += weighted_degree(child);
+  td.louvain_in += 2*dnodecomm + nb_selfloops(child);
+}
+
+int
+Graph::removeChild(int child, double dnodecomm) {
+  int parent = removeChild(child);
+
+  if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
+  auto & td = node_geometry3[parent];
+  td.louvain_tot -= weighted_degree(child);
+  td.louvain_in -= 2*dnodecomm + nb_selfloops(child);
+
+  return parent;
+}
+
+void
+Graph::initializeLouvain(int n) {
+  if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
+  auto & td = node_geometry3[n];
+  td.louvain_tot = weighted_degree(n);
+  td.louvain_in = nb_selfloops(n);
 }
 
 void
@@ -1208,14 +1240,6 @@ Graph::neighbors2(int node) {
   return r;
 }
  
-void
-Graph::initializeLouvain(int n) {
-  if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-  auto & td = node_geometry3[n];
-  td.louvain_in = nb_selfloops(n);
-  td.louvain_tot = weighted_degree(n);
-}
-
 double
 Graph::modularity() const {
   double q = 0.0;
