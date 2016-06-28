@@ -166,9 +166,9 @@ class Graph : public GraphInterface {
   // double calculateTotalEnergy() const;
 
   void addChild(int parent, int child);
-  void addChild(int parent, int child, double dnodecomm);
+  void addChild(int parent, int child, float dnodecomm);
   int removeChild(int child);
-  int removeChild(int child, double dnodecomm);
+  int removeChild(int child, float dnodecomm);
   
   void removeAllChildren();
 
@@ -322,7 +322,7 @@ class Graph : public GraphInterface {
     return ws;
   }
 
-  std::vector<std::pair<int, float> > neighbors2(int node) override;
+  std::vector<std::pair<int, float> > getAllNeighbors(int node) const;
   
   size_t getNodeCount() const override { return getNodeArray().size(); }
   size_t getEdgeCount() const { return edge_attributes.size(); }
@@ -489,16 +489,6 @@ class Graph : public GraphInterface {
     } else {
       return null_geometry3;
     }
-  }
-
-  void setLouvainIn(int n, float in) {
-    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].louvain_in = in;
-  }
-
-  void setLouvainTot(int n, float tot) {
-    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    node_geometry3[n].louvain_tot = tot;
   }
 
   int getNodeDepth(int n) const {

@@ -519,36 +519,6 @@ Graph::createClusters() {
     improvement = c.oneLevel();
     new_mod = modularity();
     level++;
-    // if (level == display_level) g.display();
-    // if (display_level == -1) c.displayPartition();
-
-#if 0
-    if (is_first) {
-      auto partition = c.getPartition();
-      // unsigned int n = 0;
-      // for (auto a : partition) if (a + 1 >= n) n = a + 1;
-      assert(partition.size() == nodes->size());
-
-      glm::vec3 c1(1.0, 0.0, 0.0), c2(1.0, 1.0, 0.0);
-      for (auto i : actual_nodes) {
-	assert(i >= 0 && i < partition.size());
-	int p = partition[i];
-	// float f = float(p) / (n - 1);
-	// glm::vec3 c = glm::normalize(glm::mix(c1, c2, f));
-	// cerr << "assigning colors (" << i << "/" << n << ", p = " << p << ", f = " << f << ")\n";
-	// getNodeArray().setNodeColor2(i, color);
-	int community_id = getNodeArray().getCommunityById(p);
-	if (community_id == -1) {
-	  // auto color = colors.getColorByIndex(p);
-	  community_id = getNodeArray().createCommunity(p);
-	  cerr << "created cluster " << p << " => " << community_id << endl;
-	  // setClusterColor(cluster_id, color);
-	}
-	addChild(community_id, i);
-      }
-      is_first = false;
-    }
-#endif
 
 #if 0
     auto old_graph = g;
@@ -1177,8 +1147,9 @@ Graph::removeChild(int child) {
   return parent;
 }
 
+// insert the node in comm with which it shares dnodecomm links
 void
-Graph::addChild(int parent, int child, double dnodecomm) {
+Graph::addChild(int parent, int child, float dnodecomm) {
   addChild(parent, child);
 
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
@@ -1187,8 +1158,9 @@ Graph::addChild(int parent, int child, double dnodecomm) {
   td.louvain_in += 2*dnodecomm + nb_selfloops(child);
 }
 
+// remove the node from its current community with which it has dnodecomm links
 int
-Graph::removeChild(int child, double dnodecomm) {
+Graph::removeChild(int child, float dnodecomm) {
   int parent = removeChild(child);
 
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
@@ -1225,7 +1197,7 @@ Graph::removeAllChildren() {
 }
 
 std::vector<std::pair<int, float> >
-Graph::neighbors2(int node) {
+Graph::getAllNeighbors(int node) const {
   std::vector<std::pair<int, float> > r;
 
   auto end = end_edges();
