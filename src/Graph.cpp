@@ -497,41 +497,25 @@ Graph::getGraphNodeId(int graph_id) const {
 
 void
 Graph::createClusters() {
-  double precision = 0.000001;
-  vector<int> actual_nodes;
-  for (int v = 0; v < nodes->size(); v++) {
-    actual_nodes.push_back(v);
-  }
-  
   cerr << "creating communities\n";
 
+  double precision = 0.000001;
   ColorProvider colors(ColorProvider::CHART2);
     
   Louvain c(this, -1, precision);
-  double mod = modularity(), new_mod;
+  double mod = modularity();
   int level = 0;
-  int display_level = -1;
-  bool improvement = true;
+  bool is_improved = true;
   bool is_first = true;
   do {
-    cerr << "level " << level << ":\n";
-    cerr << "  network size: " << c.getGraph().getNodeCount() << " nodes" << endl;
-    improvement = c.oneLevel();
-    new_mod = modularity();
+    is_improved = c.oneLevel();
+    double new_mod = modularity();
     level++;
-
-#if 0
-    auto old_graph = g;
-    g = c.partition2graph_binary();
-    c = Community(g, -1, precision);
-    delete old_graph;
     
-    cerr << "  modularity increased from " << mod << " to " << new_mod << endl;
+    cerr << "l " << level << ": " << ", size: " << c.size() << ", modularity increase: " << mod << " to " << new_mod << endl;
     mod = new_mod;
-#else
     break;
-#endif
-  } while (improvement);
+  } while (is_improved);
 
   incVersion();
 }
@@ -1154,8 +1138,8 @@ Graph::addChild(int parent, int child, float dnodecomm) {
 
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   auto & td = node_geometry3[parent];
-  td.louvain_tot += weighted_degree(child);
-  td.louvain_in += 2*dnodecomm + nb_selfloops(child);
+  td.louvain_tot += weightedDegree(child);
+  td.louvain_in += 2*dnodecomm + numberOfSelfLoops(child);
 }
 
 // remove the node from its current community with which it has dnodecomm links
@@ -1165,8 +1149,8 @@ Graph::removeChild(int child, float dnodecomm) {
 
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   auto & td = node_geometry3[parent];
-  td.louvain_tot -= weighted_degree(child);
-  td.louvain_in -= 2*dnodecomm + nb_selfloops(child);
+  td.louvain_tot -= weightedDegree(child);
+  td.louvain_in -= 2*dnodecomm + numberOfSelfLoops(child);
 
   return parent;
 }
@@ -1175,8 +1159,8 @@ void
 Graph::initializeLouvain(int n) {
   if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
   auto & td = node_geometry3[n];
-  td.louvain_tot = weighted_degree(n);
-  td.louvain_in = nb_selfloops(n);
+  td.louvain_tot = weightedDegree(n);
+  td.louvain_in = numberOfSelfLoops(n);
 }
 
 void
@@ -1215,7 +1199,7 @@ Graph::getAllNeighbors(int node) const {
 double
 Graph::modularity() const {
   double q = 0.0;
-  double total_weight = getTotalWeight();
+  double total_weight = getTotalWeightedIndegree();
 
   size_t size = getNodeArray().size();
   for (int i = 0; i < size; i++) {
@@ -1235,7 +1219,7 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
   
   double totc = td_comm.louvain_tot;
   double degc = w_degree;
-  double m2 = getTotalWeight();
+  double m2 = getTotalWeightedIndegree();
   double dnc = dnodecomm;
   
   return (dnc - totc * degc / m2);
