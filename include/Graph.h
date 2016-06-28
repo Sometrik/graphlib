@@ -299,17 +299,17 @@ class Graph : public GraphInterface {
   }
 
   // return the weighted degree of the node
-  float weighted_degree(int n) override {
+  float weightedDegree(int n) override {
     if (node_geometry3.size() <= n) return 0.0f;
     return node_geometry3[n].weighted_indegree + node_geometry3[n].weighted_outdegree;    
   }
 
-  unsigned int nb_neighbors(int n) override {
+  unsigned int numberOfNeighbors(int n) override {
     if (node_geometry3.size() <= n) return 0;
     return node_geometry3[n].indegree + node_geometry3[n].outdegree;
   }
 
-  float nb_selfloops(int node) override {
+  float numberOfSelfLoops(int node) override {
     int edge = getNodeFirstEdge(node);
     float ws = 0.0f;
     while (edge != -1) {
@@ -323,8 +323,10 @@ class Graph : public GraphInterface {
   }
 
   std::vector<std::pair<int, float> > getAllNeighbors(int node) const;
-  
+
+#if 0
   size_t getNodeCount() const override { return getNodeArray().size(); }
+#endif
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
   
@@ -553,7 +555,6 @@ class Graph : public GraphInterface {
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
-  double getTotalWeight() const override { return getTotalWeightedOutdegree(); }
   double getTotalWeightedOutdegree() const { return total_weighted_outdegree; }
   double getTotalWeightedIndegree() const { return total_weighted_indegree; }
   unsigned int getTotalOutdegree() const { return total_outdegree; }
