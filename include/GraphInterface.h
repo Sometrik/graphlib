@@ -9,21 +9,18 @@
 class GraphInterface : public MBRObject {
  public:
   virtual ~GraphInterface() { }
-  
-  virtual size_t getNodeCount() const = 0;
-  virtual double getTotalWeight() const = 0;
-
+    
   // return the number of self loops of the node
-  virtual float nb_selfloops(int node) = 0;
+  virtual float numberOfSelfLoops(int node) = 0;
 
   // return the weighted degree of the node
-  virtual float weighted_degree(int node) = 0;
+  virtual float weightedDegree(int node) = 0;
   
   // return the number of neighbors (degree) of the node
-  virtual unsigned int nb_neighbors(int node) = 0;
+  virtual unsigned int numberOfNeighbors(int node) = 0;
   
   // return indices to neighbours as well as weights of the corresponding edges
-  virtual std::vector<std::pair<int, float> > neighbors2(int node) = 0;  
+  virtual std::vector<std::pair<int, float> > getAllNeighbors(int node) const = 0;  
 };
 
 #endif
