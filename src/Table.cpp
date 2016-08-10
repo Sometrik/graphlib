@@ -1,6 +1,6 @@
 #include "Table.h"
 
-#include "../system/StringUtils.h"
+#include <StringUtils.h>
 
 #include "TextColumn.h"
 #include "CompressedTextColumn.h"
