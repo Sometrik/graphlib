@@ -1,12 +1,78 @@
-#include "BasicSimplifier.h"
+#include "GroupSimplifier.h"
 
 #include <Graph.h>
 #include <iostream>
 
 using namespace std;
 
+void
+GroupSimplifier::breakNodePair(Graph & target_graph, int node_id) {
+  auto it = node_pairs.find(node_id);
+  if (it != node_pairs.end()) {
+    target_graph.removeChild(node_id);
+    int other_id = it->second;
+    node_pairs.erase(it);
+
+    auto it_b = onedegree_nodes.find(node_id);
+    if (it_b != onedegree_nodes.end()) {
+      onedegree_nodes.erase(it_b);
+    }
+    
+    auto it2 = node_pairs.find(other_id);
+    assert(it2 != node_pairs.end());
+    if (it2 != node_pairs.end()) {
+      target_graph.removeChild(other_id);
+      node_pairs.erase(it2);
+
+      auto it2_b = onedegree_nodes.find(other_id);
+      if (it2_b != onedegree_nodes.end()) {
+	onedegree_nodes.erase(it2_b);
+      } else {
+	// if a pair is broken, we add the other node to first one's group
+	int o = target_graph.getNodeArray().getOneDegreeNode(node_id);
+	target_graph.addChild(o, other_id);
+	onedegree_nodes[other_id] = node_id;
+      }
+    }
+  }
+}
+
+void
+GroupSimplifier::breakOneDegreeNode(Graph & target_graph, int node_id) {
+  breakNodePair(target_graph, node_id);
+  
+  auto it = onedegree_nodes.find(node_id);
+  if (it != onedegree_nodes.end()) {
+    target_graph.removeChild(node_id);
+    onedegree_nodes.erase(it);
+  }
+}
+
+void
+GroupSimplifier::breakZeroDegreeNode(Graph & target_graph, int node_id) {
+  auto it = zerodegree_nodes.find(node_id);
+  if (it != zerodegree_nodes.end()) {
+    // cerr << "DEBUG: removing node " << np.first << " from zero degree node (A)\n";
+    target_graph.removeChild(node_id);
+    zerodegree_nodes.erase(it);
+  }
+}
+
 bool
-BasicSimplifier::updateData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+GroupSimplifier::canPair(int n1, int n2, const node_tertiary_data_s & td1, const node_tertiary_data_s & td2) const {
+  if (td1.indegree == 0 && td1.outdegree == 0 && td2.indegree == 0 && td2.outdegree == 0) {
+    return true;
+  } else {
+    auto it1 = onedegree_nodes.find(n1), it2 = onedegree_nodes.find(n2);
+    if (it1 != onedegree_nodes.end() && it2 != onedegree_nodes.end() && it1->second == it2->second) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
+GroupSimplifier::updateData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
   if (target_graph.getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {
     cerr << "invalid time range for updateData: " << start_time << " - " << end_time << endl;
     return false;
@@ -145,6 +211,82 @@ BasicSimplifier::updateData(Graph & target_graph, time_t start_time, time_t end_
 	    target_graph.updateEdgeWeight(it2->second, new_weight - ed.weight);
 	  }
 	} else {
+	  if (create_groups) {
+	    if (td1.indegree == 0 && td1.outdegree == 0) {
+	      // bool has_zero = zerodegree_nodes.count(np.first) != 0;
+	      if (np.first == np.second) { // && !has_zero) {
+		assert(!zerodegree_nodes.count(np.first));
+		int z = nodes.createZeroDegreeGroup();
+		// cerr << "DEBUG: adding node " << np.first << " to zero degree node (id = " << z << ")\n";
+		target_graph.addChild(z, np.first);
+		zerodegree_nodes.insert(np.first);
+	      } else { // if (np.first != np.second && has_zero) {
+		breakZeroDegreeNode(target_graph, np.first);
+	      }
+	      if (np.first != np.second) {
+		if (canPair(np.first, np.second, td1, td2)) {
+		  breakZeroDegreeNode(target_graph, np.second);
+		  assert(node_pairs.find(np.first) == node_pairs.end());
+		  assert(node_pairs.find(np.second) == node_pairs.end());
+		  int o = nodes.createPairsGroup();
+		  // cerr << "adding to pairs node\n";
+		  target_graph.addChild(o, np.first);
+		  target_graph.addChild(o, np.second);
+		  node_pairs[np.first] = np.second;
+		  node_pairs[np.second] = np.first;
+		} else {
+		  assert(!onedegree_nodes.count(np.first));
+		  assert(!node_pairs.count(np.first));
+		  // cerr << "adding to onedegree node (A)\n";
+		  breakOneDegreeNode(target_graph, np.second);
+		  breakNodePair(target_graph, np.second);
+		  int o = nodes.getOneDegreeNode(np.second);
+		  target_graph.addChild(o, np.first);
+		  onedegree_nodes[np.first] = np.second;
+		}
+	      }
+	    } else {
+	      breakNodePair(target_graph, np.first);
+	    }
+	    if (np.first != np.second) {
+	      if (td2.indegree == 0 && td2.outdegree == 0) {
+		breakZeroDegreeNode(target_graph, np.second);	      
+		if (td1.indegree == 0 && td1.outdegree == 0) {
+		  // pair was created
+		} else if (!onedegree_nodes.count(np.second)) {
+		  if (node_pairs.count(np.second)) {
+		    cerr << "GroupSimplifiero: error with pairs!\n";
+		  } else {
+		    // cerr << "adding child " << np.second << " to onedegree node (B) [td1.i = " << td1.indegree << ", td1.o = " << td1.outdegree << "]\n";
+		    assert(node_pairs.find(np.second) == node_pairs.end());
+		    breakOneDegreeNode(target_graph, np.first);
+		    breakNodePair(target_graph, np.first);
+		    int o = nodes.getOneDegreeNode(np.first);
+		    target_graph.addChild(o, np.second);
+		    onedegree_nodes[np.second] = np.first;
+		  }
+		}
+	      } else {
+		breakNodePair(target_graph, np.second);
+	      }
+
+	      auto od1 = onedegree_nodes.find(np.first), od2 = onedegree_nodes.find(np.second);
+	      auto pd1 = node_pairs.find(np.first), pd2 = node_pairs.find(np.second);
+	      bool have_same_base = od1 != onedegree_nodes.end() && od2 != onedegree_nodes.end() && od1->second == od2->second && ((pd1 == node_pairs.end() && pd2 == node_pairs.end()) || (pd1 != node_pairs.end() && pd2 != node_pairs.end() && pd1->second == np.second && pd2->second == np.first));
+	    
+	      if (have_same_base) {
+		node_pairs[np.first] = np.second;
+		node_pairs[np.second] = np.first;
+	      } else {
+		if (td1.indegree != 0 || td1.outdegree != 0) {
+		  breakOneDegreeNode(target_graph, np.first);
+		}
+		if (td2.indegree != 0 || td2.outdegree != 0) {
+		  breakOneDegreeNode(target_graph, np.second);
+		}
+	      }
+	    }
+	  }
 	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, target_graph.getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
 	}
       }
