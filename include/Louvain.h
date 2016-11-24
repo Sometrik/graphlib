@@ -8,7 +8,7 @@ class Graph;
 
 class Louvain {
  public:
-  Louvain(Graph * _g, int _max_num_passes, double _min_modularity);
+  Louvain(Graph * _g, int _max_num_passes, double _min_modularity, bool _create_node_clusters = true, bool _create_edge_clusters = false);
  
   // return the neighboring communities of a node
   // and the number of links from the node to each community
@@ -28,13 +28,15 @@ class Louvain {
 
  private:
   Graph * g;
-  std::vector<int> nodes;
+  std::vector<int> nodes, edges;
   
   // number of passes or -1 to do as many passes as needed to increase modularity
   int max_num_passes;
 
   // minimum improvement for doing another pass
   double min_modularity;
+
+  bool create_node_clusters, create_edge_clusters;
 };
 
 #endif

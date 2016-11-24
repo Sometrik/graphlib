@@ -7,19 +7,36 @@
 
 using namespace std;
 
-Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity)
+Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
+		 bool _create_node_clusters, bool _create_edge_clusters)
   : g(_g),
     max_num_passes(_max_num_passes),
-    min_modularity(_min_modularity)
+    min_modularity(_min_modularity),
+    create_node_clusters(_create_node_clusters),
+    create_edge_clusters(_create_edge_clusters)
 {
-  auto end = g->end_visible_nodes();
-  for (auto it = g->begin_visible_nodes(); it != end; ++it) {
-    if (getNodeCommunity(*it) == -1) {
-      nodes.push_back(*it);
-      int community_id = g->getNodeArray().createCommunity(*it);
-      g->addChild(community_id, *it, 0);
+  if (create_node_clusters) {
+    auto end = g->end_visible_nodes();
+    for (auto it = g->begin_visible_nodes(); it != end; ++it) {
+      if (getNodeCommunity(*it) == -1) {
+	nodes.push_back(*it);
+	int community_id = g->getNodeArray().createCommunity(*it);
+	g->addChild(community_id, *it, 0);
+      }
     }
   }
+#if 0
+  if (create_edge_clusters) {
+    auto end = g->end_edges();
+    for (auto it = g->begin_edges(); it != end; ++it) {
+      if (getEdgeCommunity(*it) == -1) {
+	edges.push_back(*it);
+	int community_id = g->getNodeArray().createCommunity(*it);
+	g->addEdgeChild(community_id, *it, 0);
+      }
+    }
+  }
+#endif
 }
 
 int
