@@ -50,4 +50,11 @@ class GroupSimplifier : public GraphFilter {
   time_t min_time = 0, max_time = 0;
 };
 
+class GroupSimplifierFactory : public GraphFilterFactory {
+ public:
+  GroupSimplifierFactory() { }
+
+  virtual std::shared_ptr<GraphFilter> create() { return std::make_shared<GroupSimplifier>(); }
+};
+
 #endif

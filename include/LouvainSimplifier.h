@@ -16,10 +16,6 @@ class LouvainSimplifier : public GraphFilter {
   void reset() {
     seen_nodes.clear();
     seen_edges.clear();
-    onedegree_nodes.clear();
-    zerodegree_nodes.clear();
-    node_pairs.clear();
-    node_triplets.clear();
     current_pos = -1;
     num_links = 0;
     num_hashtags = 0;
@@ -39,14 +35,16 @@ class LouvainSimplifier : public GraphFilter {
  private:
   std::unordered_set<int> seen_nodes;
   std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
-  std::unordered_map<int, int> onedegree_nodes;
-  std::unordered_set<int> zerodegree_nodes;
-  std::unordered_map<int, int> node_pairs;
-  std::unordered_map<int, std::pair<int, int> > node_triplets;
   int current_pos = -1;
   unsigned int num_links = 0, num_hashtags = 0;
   time_t min_time = 0, max_time = 0;
-  bool create_groups = true;
+};
+
+class LouvainSimplifierFactory : public GraphFilterFactory {
+ public:
+  LouvainSimplifierFactory() { }
+
+  virtual std::shared_ptr<GraphFilter> create() { return std::make_shared<LouvainSimplifier>(); }
 };
 
 #endif

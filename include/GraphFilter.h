@@ -16,4 +16,12 @@ class GraphFilter {
   virtual bool hasPosition() const { return false; }
 };
 
+class GraphFilterFactory {
+ public:
+  GraphFilterFactory() { }
+  virtual ~GraphFilterFactory() { }
+
+  virtual std::shared_ptr<GraphFilter> create() = 0;
+};
+
 #endif

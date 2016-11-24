@@ -34,4 +34,11 @@ class BasicSimplifier : public GraphFilter {
   time_t min_time = 0, max_time = 0;
 };
 
+class BasicSimplifierFactory : public GraphFilterFactory {
+ public:
+  BasicSimplifierFactory() { }
+
+  virtual std::shared_ptr<GraphFilter> create() { return std::make_shared<BasicSimplifier>(); }
+};
+
 #endif
