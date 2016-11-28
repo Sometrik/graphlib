@@ -1,5 +1,7 @@
 #include "UndirectedGraph.h"
 
+#include <GraphFilter.h>
+
 using namespace std;
 
 UndirectedGraph::UndirectedGraph(int _id) : Graph(_id) {
@@ -20,6 +22,7 @@ UndirectedGraph::createSimilar() const {
   graph->setLabelVisibility(getLabelVisibility());
   graph->setLineWidth(getLineWidth());
   graph->setNodeArray(nodes);
+  if (getFilter().get()) graph->setFilter(getFilter()->dup());
   
   return graph;
 }
