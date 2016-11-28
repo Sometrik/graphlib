@@ -1022,8 +1022,30 @@ Graph::applyAge() {
 
 bool
 Graph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
-  assert(0);
-  return false;
+  if (getFilter().get()) {
+    return getFilter()->updateData(*this, start_time, end_time, start_sentiment, end_sentiment, source_graph, stats, is_first_level, base_graph);
+  } else {
+    assert(0);
+    return false;
+  }
+}
+
+void
+Graph::reset() {
+  if (getFilter().get()) getFilter()->reset();
+  else {
+    assert(0);
+  }
+}
+
+bool
+Graph::hasPosition() const {
+  if (getFilter().get()) {
+    return getFilter()->hasPosition();
+  } else {
+    assert(0);
+    return false;
+  }
 }
 
 bool

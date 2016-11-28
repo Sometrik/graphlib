@@ -19,6 +19,7 @@
 #define NODE_FIXED_POSITION	4
 #define NODE_IS_OPEN		8
 
+class GraphFilter;
 class Graph;
 class DisplayInfo;
 
@@ -185,10 +186,11 @@ class Graph : public GraphInterface {
   virtual Graph * simplify() const { return 0; }
   virtual std::shared_ptr<Graph> createSimilar() const = 0;
   virtual Graph * copy() const = 0;
-  virtual bool hasPosition() const { return false; }
   virtual bool isDirected() const { return false; }
-  virtual bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph = 0);
-  virtual void reset() { }
+
+  bool hasPosition() const;
+  bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph = 0);
+  void reset();
 
   void extractLocationGraph(Graph & target_graph);
 
@@ -552,6 +554,9 @@ class Graph : public GraphInterface {
   double modularity() const; // calculate the modularity of the communities
   double modularityGain(int node, int comm, double dnodecomm, double w_degree) const;
   void initializeLouvain(int n);
+
+  void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
+  const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
@@ -635,6 +640,7 @@ class Graph : public GraphInterface {
   glm::vec4 node_color, edge_color, face_color;
   float initial_node_age = 0.0f;
   std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
+  std::shared_ptr<GraphFilter> filter;
   
   static int next_id;
 };
