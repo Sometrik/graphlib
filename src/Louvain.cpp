@@ -24,6 +24,8 @@ Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
 	g->addChild(community_id, *it, 0);
       }
     }
+  } else {
+    assert(0);
   }
 #if 0
   if (create_edge_clusters) {
@@ -82,10 +84,11 @@ Louvain::oneLevel() {
     nodes[rand_pos] = tmp;
   }
 
+  cerr << "max_num_passes = " << max_num_passes << endl;
+  
   // repeat until there is no improvement in modularity, or the improvement is smaller than epsilon, or maximum number of passes have been done  
   for (int num_passes = 0; max_num_passes == -1 || num_passes < max_num_passes; num_passes++) {
     int num_moves = 0;
-    num_passes++;
 
     // for each node: remove the node from its community and insert it in the best community
     for (int node : nodes) {
@@ -124,10 +127,17 @@ Louvain::oneLevel() {
       is_improved = true;
     }
 
-    if (!num_moves || modularity - prev_modularity < min_modularity) {
+    cerr << "num moves = " << num_moves << endl;
+      
+    if (!num_moves) {
+      cerr << "stopping due to no moves\n";
       break;
-    }    
+    } if (modularity - prev_modularity < min_modularity) {
+      cerr << "modularity diff too small, min = " << min_modularity << "\n";
+      break;
+    }
   }
+
 
   return is_improved;
 }
