@@ -15,6 +15,7 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <map>
+#include <memory>
 
 #define GF_TEMPORAL_GRAPH	1
 #define GF_HAS_SPATIAL_DATA	4
@@ -45,6 +46,8 @@ struct node_data_s {
   std::string label;
   int group_node;
 };
+
+class GraphFilter;
 
 class NodeArray : public ReadWriteObject {
  public:
@@ -289,6 +292,9 @@ class NodeArray : public ReadWriteObject {
     return community_id;
   }
 
+  void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
+  const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
+
  protected:
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
   void updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); }
@@ -309,6 +315,7 @@ class NodeArray : public ReadWriteObject {
   std::map<int, int> communities;
   unsigned int flags = 0;
   Personality personality = NONE;
+  std::shared_ptr<GraphFilter> filter;
 };
 
 #endif
