@@ -217,20 +217,26 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     bool visible = true;
     bool closed = false;
-    for (int p = getNodeTertiaryData(tail).parent_node; p != -1; ) {
-      auto & ptd = node_geometry3[p];
-      closed |= !ptd.isOpen();
-      p = ptd.parent_node;
-    }
-    if (closed) continue;
-    for (int p = getNodeTertiaryData(head).parent_node; p != -1; ) {
-      auto & ptd = node_geometry3[p];
-      closed |= !ptd.isOpen();
-      p = ptd.parent_node;
-    }
-    if (closed) continue;
 
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
+    
+    if (!td1.isGroupLeader()) {
+      for (int p = getNodeTertiaryData(tail).parent_node; p != -1; ) {
+	auto & ptd = node_geometry3[p];
+	closed |= !ptd.isGroupOpen();
+	p = ptd.parent_node;
+      }
+      if (closed) continue;
+    }
+    if (!td2.isGroupLeader()) {
+      for (int p = getNodeTertiaryData(head).parent_node; p != -1; ) {
+	auto & ptd = node_geometry3[p];
+	closed |= !ptd.isGroupOpen();
+	p = ptd.parent_node;
+      }
+      if (closed) continue;
+    }
+
     bool fixed1 = td1.isFixed();
     bool fixed2 = td2.isFixed();
     if (fixed1 && fixed2) continue;
@@ -1022,8 +1028,8 @@ Graph::applyAge() {
 
 bool
 Graph::updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
-  if (getFilter().get()) {
-    return getFilter()->updateData(*this, start_time, end_time, start_sentiment, end_sentiment, source_graph, stats, is_first_level, base_graph);
+  if (getNodeArray().getFilter().get()) {
+    return getNodeArray().getFilter()->updateData(*this, start_time, end_time, start_sentiment, end_sentiment, source_graph, stats, is_first_level, base_graph);
   } else {
     assert(0);
     return false;
@@ -1032,7 +1038,7 @@ Graph::updateData(time_t start_time, time_t end_time, float start_sentiment, flo
 
 void
 Graph::reset() {
-  if (getFilter().get()) getFilter()->reset();
+  if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
   else {
     assert(0);
   }
@@ -1040,8 +1046,8 @@ Graph::reset() {
 
 bool
 Graph::hasPosition() const {
-  if (getFilter().get()) {
-    return getFilter()->hasPosition();
+  if (getNodeArray().getFilter().get()) {
+    return getNodeArray().getFilter()->hasPosition();
   } else {
     assert(0);
     return false;
@@ -1061,6 +1067,7 @@ Graph::isNodeVisible(int node) const {
 int
 Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long coverage) {
   assert(n1 != -1 && n2 != -1);
+  assert(weight >= 0);
   int edge = (int)edge_attributes.size();
 
   if (!isNodeVisible(n1)) {
@@ -1100,11 +1107,13 @@ Graph::addChild(int parent, int child) {
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
 
+#if 0
   if (!isNodeVisible(parent)) {
     // PROBLEM: parent doesn't actually become visible, if the added child has no edges or children with edges
     nodes->updateNodeAppearance(parent);
     setNodeAge(parent, initial_node_age);
   }
+#endif
   
   assert(node_geometry3[child].parent_node == -1);
   assert(node_geometry3[child].next_child == -1);
@@ -1199,6 +1208,9 @@ Graph::removeAllChildren() {
       nd.position = getNodePosition(i);
       td.parent_node = -1;
     }
+    td.next_child = -1;
+    td.louvain_tot = 0.0;
+    td.louvain_in = 0.0;
   }
 }
 
@@ -1222,6 +1234,7 @@ double
 Graph::modularity() const {
   double q = 0.0;
   double total_weight = getTotalWeightedIndegree();
+  assert(total_weight >= 0);
 
   size_t size = getNodeArray().size();
   for (int i = 0; i < size; i++) {
