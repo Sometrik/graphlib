@@ -18,8 +18,8 @@
 #define NODE_LABEL_VISIBLE	2
 #define NODE_FIXED_POSITION	4
 #define NODE_IS_OPEN		8
+#define NODE_IS_GROUP_LEADER	16
 
-class GraphFilter;
 class Graph;
 class DisplayInfo;
 
@@ -42,7 +42,7 @@ struct node_tertiary_data_s {
   }
   
   bool toggleNode(bool t) {
-    if ((t && !isOpen()) || (!t && isOpen())) {
+    if ((t && !isGroupOpen()) || (!t && isGroupOpen())) {
       if (t) flags |= NODE_IS_OPEN;
       else flags &= ~NODE_IS_OPEN;
       return true;
@@ -51,10 +51,21 @@ struct node_tertiary_data_s {
     }
   }
 
-  bool isOpen() const { return flags & NODE_IS_OPEN; }  
+  bool setIsGroupLeader(bool t) {
+    if ((t && !isGroupLeader()) || (!t && isGroupLeader())) {
+      if (t) flags |= NODE_IS_GROUP_LEADER;
+      else flags &= ~NODE_IS_GROUP_LEADER;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool isGroupOpen() const { return flags & NODE_IS_OPEN; }  
   bool isFixed() const { return flags & NODE_FIXED_POSITION; }
   bool isSelected() const { return flags & NODE_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
+  bool isGroupLeader() const { return flags & NODE_IS_GROUP_LEADER; }
 
   bool setLabelVisibility(bool t) {
     if ((t && !isLabelVisible()) || (!t && isLabelVisible())) {
@@ -178,6 +189,11 @@ class Graph : public GraphInterface {
   void setNodeAge(int node, float age) {
     if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
     node_geometry3[node].age = age;
+  }
+
+  void setIsGroupLeader(int node, bool t) {
+    if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
+    node_geometry3[node].setIsGroupLeader(t);
   }
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
@@ -554,9 +570,6 @@ class Graph : public GraphInterface {
   double modularity() const; // calculate the modularity of the communities
   double modularityGain(int node, int comm, double dnodecomm, double w_degree) const;
   void initializeLouvain(int n);
-
-  void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
-  const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
@@ -640,7 +653,6 @@ class Graph : public GraphInterface {
   glm::vec4 node_color, edge_color, face_color;
   float initial_node_age = 0.0f;
   std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
-  std::shared_ptr<GraphFilter> filter;
   
   static int next_id;
 };
