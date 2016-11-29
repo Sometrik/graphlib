@@ -23,7 +23,6 @@ DirectedGraph::createSimilar() const {
   graph->setLabelVisibility(getLabelVisibility());
   graph->setLineWidth(getLineWidth());
   graph->setNodeArray(nodes);
-  if (getFilter().get()) graph->setFilter(getFilter()->dup());
   
   return graph;
 }
