@@ -136,6 +136,7 @@ LouvainSimplifier::updateData(Graph & target_graph, time_t start_time, time_t en
 	  updateNodeSize(np.second);
 #endif
 	  if (target_graph.getNodeArray().hasTemporalCoverage()) {
+	    assert(0);
 	    auto & ed = target_graph.getEdgeAttributes(it2->second);
 	    ed.coverage |= coverage;
 	    float new_weight = 0;
@@ -147,6 +148,9 @@ LouvainSimplifier::updateData(Graph & target_graph, time_t start_time, time_t en
 	  }
 	} else {	  
 	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, target_graph.getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
+#if 0
+	  seen_edges[np.second][np.first] = target_graph.addEdge(np.second, np.first, -1, 1.0f / 64.0f, 0, target_graph.getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
+#endif
 	}
       }
     }  
@@ -167,20 +171,49 @@ LouvainSimplifier::updateData(Graph & target_graph, time_t start_time, time_t en
     
     double precision = 0.000001;
 
+    cerr << "doing Louvain\n";
+    
     Louvain c(&target_graph, -1, precision);
     double mod = target_graph.modularity();
     int level = 0;
     bool is_improved = true;
     bool is_first = true;
-    do {
+    for (int level = 1; level <= 1 && is_improved; level++) {
       is_improved = c.oneLevel();
       double new_mod = target_graph.modularity();
       level++;
       
-      cerr << "l " << level << ": " << ", size: " << c.size() << ", modularity increase: " << mod << " to " << new_mod << endl;
+      cerr << "l " << level << ": size: " << c.size() << ", modularity increase: " << mod << " to " << new_mod << endl;
       mod = new_mod;
-      break;
-    } while (is_improved);
+    }
+
+    unsigned int visible_nodes = 0, toplevel_nodes = 0;
+    auto end = target_graph.end_visible_nodes();
+    for (auto it = target_graph.begin_visible_nodes(); it != end; ++it) {
+      visible_nodes++;
+      auto & td = target_graph.getNodeTertiaryData(*it);
+      if (td.parent_node == -1) {
+	toplevel_nodes++;
+	if (td.child_count == 1) {
+	  // target_graph.removeChild(td.first_child);
+	}
+	int best_d = 0;
+	int best_node = -1;
+	for (int n = td.first_child; n != -1; ) {
+	  auto & ctd = target_graph.getNodeTertiaryData(n);
+	  if (best_node == -1 || ctd.indegree > best_d) {
+	    best_node = n;
+	    best_d = ctd.indegree;
+	  }
+	  target_graph.setIsGroupLeader(n, false);
+	  n = ctd.next_child;
+	}
+	if (best_node != -1) {
+	  target_graph.setIsGroupLeader(best_node, true);
+	}
+      }
+    }
+    cerr << "after louvain: visible = " << visible_nodes << ", toplevel = " << toplevel_nodes << endl;
   }
 
   return is_changed;
