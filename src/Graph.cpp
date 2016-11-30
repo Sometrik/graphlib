@@ -540,7 +540,7 @@ Graph::getSuitableFinalGraphCount() const {
 }
 
 bool
-Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
+Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
   if (nodes->getPersonality() != NodeArray::SOCIAL_MEDIA || !nodes->isTemporal()) {
     return false;
   }
@@ -595,7 +595,7 @@ Graph::updateSelection2(time_t start_time, time_t end_time, float start_sentimen
     assert(g.get());
     Graph * base_graph = final_graphs[0].get();
     assert(base_graph);
-    if (g->updateData(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
+    if (g->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
       g->incVersion();
       setLocationGraphValid(false);
       assert(nodes->isDynamic());

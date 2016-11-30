@@ -481,7 +481,7 @@ class Graph : public GraphInterface {
   ConstVisibleNodeIterator end_visible_nodes() const { return ConstVisibleNodeIterator(); }
   
   int getGraphNodeId(int graph_id) const;
-  bool updateSelection2(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
+  bool updateSelection(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
 
   const RawStatistics & getStatistics() const { return statistics; }
   RawStatistics & getStatistics() { return statistics; }
