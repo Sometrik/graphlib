@@ -144,15 +144,16 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     glm::vec2 offset;
     unsigned short flags = 0;
 
-    flags |= LABEL_FLAG_MIDDLE;
-
     glm::vec4 color1 = black, color2 = white;
     if (td.child_count) {
+      float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       color1 = glm::vec4(0.0, 0.1, 0.2, 1.0);
+      offset += glm::vec2(0, 0.5 * size);
       flags |= LABEL_FLAG_CENTER;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       offset += glm::vec2(0, -3.2 * size);
+      flags |= LABEL_FLAG_MIDDLE;
       flags |= LABEL_FLAG_CENTER;
     }
         
@@ -270,8 +271,8 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     // d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
-    // l *= (level == 0 ? alpha : alpha / 96.0f) * idf;
-    l *= alpha * idf;
+    l *= (level == 0 ? alpha : alpha / 48.0f) * idf;
+    // l *= alpha * idf;
     
     float k;
     if (fixed1) {
@@ -1203,19 +1204,21 @@ void
 Graph::removeAllChildren() {
   assert(nodes->isDynamic());
   for (int i = 0; i < nodes->size(); i++) {
-    auto & nd = nodes->getNodeData(i);
-    auto & td = node_geometry3[i];
-    if (td.child_count) {
-      td.child_count = 0;
-      td.first_child = -1;
+    if (i < node_geometry3.size()) {
+      auto & nd = nodes->getNodeData(i);
+      auto & td = node_geometry3[i];
+      if (td.child_count) {
+        td.child_count = 0;
+        td.first_child = -1;
+      }
+      if (td.parent_node != -1) {
+        nd.position = getNodePosition(i);
+        td.parent_node = -1;
+      }
+      td.next_child = -1;
+      td.louvain_tot = 0.0;
+      td.louvain_in = 0.0;
     }
-    if (td.parent_node != -1) {
-      nd.position = getNodePosition(i);
-      td.parent_node = -1;
-    }
-    td.next_child = -1;
-    td.louvain_tot = 0.0;
-    td.louvain_in = 0.0;
   }
 }
 
