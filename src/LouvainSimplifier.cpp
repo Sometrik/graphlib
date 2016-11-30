@@ -7,9 +7,9 @@
 using namespace std;
 
 bool
-LouvainSimplifier::updateData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
   if (target_graph.getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {
-    cerr << "invalid time range for updateData: " << start_time << " - " << end_time << endl;
+    cerr << "invalid time range for apply: " << start_time << " - " << end_time << endl;
     return false;
   }
   

@@ -14,7 +14,7 @@ class LouvainSimplifier : public GraphFilter {
 
   std::shared_ptr<GraphFilter> dup() const override { return std::make_shared<LouvainSimplifier>(); }
 
-  bool updateData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) override;
+  bool apply(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) override;
   void reset() override {
     seen_nodes.clear();
     seen_edges.clear();

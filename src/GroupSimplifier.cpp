@@ -72,7 +72,7 @@ GroupSimplifier::canPair(int n1, int n2, const node_tertiary_data_s & td1, const
 }
 
 bool
-GroupSimplifier::updateData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+GroupSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
   if (target_graph.getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {
     cerr << "invalid time range for updateData: " << start_time << " - " << end_time << endl;
     return false;
