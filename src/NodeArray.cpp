@@ -2,7 +2,7 @@
 
 #include <glm/gtc/packing.hpp>
 #include <Color.h>
-#include "../../personal/system/StringUtils.h"
+#include <StringUtils.h>
 
 #include <algorithm>
 

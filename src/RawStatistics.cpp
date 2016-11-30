@@ -1,6 +1,6 @@
 #include "RawStatistics.h"
 
-#include "../system/StringUtils.h"
+#include <StringUtils.h>
 #include "StatisticsData.h"
 #include "AppRegistry.h"
 
