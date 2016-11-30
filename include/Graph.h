@@ -340,7 +340,7 @@ class Graph : public GraphInterface {
     return ws;
   }
 
-  std::vector<std::pair<int, float> > getAllNeighbors(int node) const;
+  std::vector<std::pair<int, float> > getAllNeighbors(int node) const override;
 
 #if 0
   size_t getNodeCount() const override { return getNodeArray().size(); }
