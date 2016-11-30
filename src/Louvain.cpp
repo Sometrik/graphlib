@@ -23,7 +23,9 @@ Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
     for (auto & n : nodes) {
       if (getNodeCommunity(n) == -1) {
 	int community_id = g->getNodeArray().createCommunity(n);
+	// g->getNodeArray().setPosition(community_id, g->getNodePosition(n));
 	g->addChild(community_id, n, 0);
+	g->getNodeArray().setPosition(n, glm::vec3());
       }
     }
   } else {
