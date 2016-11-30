@@ -18,10 +18,12 @@ Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
   if (create_node_clusters) {
     auto end = g->end_visible_nodes();
     for (auto it = g->begin_visible_nodes(); it != end; ++it) {
-      if (getNodeCommunity(*it) == -1) {
-	nodes.push_back(*it);
-	int community_id = g->getNodeArray().createCommunity(*it);
-	g->addChild(community_id, *it, 0);
+      nodes.push_back(*it);
+    }
+    for (auto & n : nodes) {
+      if (getNodeCommunity(n) == -1) {
+	int community_id = g->getNodeArray().createCommunity(n);
+	g->addChild(community_id, n, 0);
       }
     }
   } else {
