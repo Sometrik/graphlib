@@ -2,7 +2,6 @@
 #define _DIRECTEDGRAPH_H_
 
 #include <Graph.h>
-#include <GraphFilter.h>
 
 class DirectedGraph : public Graph {
  public:
