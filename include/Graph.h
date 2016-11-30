@@ -205,7 +205,7 @@ class Graph : public GraphInterface {
   virtual bool isDirected() const { return false; }
 
   bool hasPosition() const;
-  bool updateData(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph = 0);
+  bool applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph = 0);
   void reset();
 
   void extractLocationGraph(Graph & target_graph);
