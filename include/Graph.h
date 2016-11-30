@@ -342,9 +342,6 @@ class Graph : public GraphInterface {
 
   std::vector<std::pair<int, float> > getAllNeighbors(int node) const override;
 
-#if 0
-  size_t getNodeCount() const override { return getNodeArray().size(); }
-#endif
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
   
