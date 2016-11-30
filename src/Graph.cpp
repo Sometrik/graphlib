@@ -1,6 +1,6 @@
 #include "Graph.h"
 
-#include "../system/StringUtils.h"
+#include <StringUtils.h>
 
 #include "DisplayInfo.h"
 #include "ColorProvider.h"
@@ -185,6 +185,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
     int tail = it->tail, head = it->head;
+    int level = 0;
     assert(tail >= 0 && head >= 0);
     if (flatten) {
       int l1 = 0, l2 = 0;
@@ -213,6 +214,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
       assert(key < processed_edges.size());
       if (processed_edges[key]) continue;
       processed_edges[key] = true;
+      level = l1;
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     bool visible = true;
@@ -268,6 +270,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     // d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
+    // l *= (level == 0 ? alpha : alpha / 96.0f) * idf;
     l *= alpha * idf;
     
     float k;
@@ -986,9 +989,11 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
     if (!td.isFixed()) {
       auto & pd = v[*it];
       float factor = 1.0f;
+#if 1
       if (td.parent_node >= 0) {
-	factor = 96.0f;
+	factor = 28.0f;
       }
+#endif
       float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
       const glm::vec3 & pos = pd.position;
       float d = glm::length(pos);
