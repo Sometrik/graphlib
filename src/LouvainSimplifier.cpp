@@ -51,6 +51,7 @@ LouvainSimplifier::updateData(Graph & target_graph, time_t start_time, time_t en
 
     assert(it->face != -1);
     if (it->face != -1) {
+      assert(it->face >= 0 && it->face < source_graph.getFaceCount());
       auto & fd = source_graph.getFaceAttributes(it->face);
       t = fd.timestamp;
       se = fd.sentiment;
