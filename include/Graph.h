@@ -14,7 +14,7 @@
 
 #define FACE_LABEL_VISIBLE	1
 
-#define NODE_SELECTED		1
+#define NODE_IS_SELECTED	1
 #define NODE_LABEL_VISIBLE	2
 #define NODE_FIXED_POSITION	4
 #define NODE_IS_OPEN		8
@@ -31,7 +31,7 @@ struct node_tertiary_data_s {
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
   float age = 0.0;
-  unsigned short flags = NODE_SELECTED;
+  unsigned short flags = NODE_IS_SELECTED;
   unsigned short label_visibility_val = 0;
   float louvain_in = 0.0f, louvain_tot = 0.0f;
   
@@ -63,7 +63,7 @@ struct node_tertiary_data_s {
 
   bool isGroupOpen() const { return flags & NODE_IS_OPEN; }  
   bool isFixed() const { return flags & NODE_FIXED_POSITION; }
-  bool isSelected() const { return flags & NODE_SELECTED; }
+  bool isSelected() const { return flags & NODE_IS_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
   bool isGroupLeader() const { return flags & NODE_IS_GROUP_LEADER; }
 

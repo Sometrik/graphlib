@@ -223,23 +223,19 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
 
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
     
-    if (!td1.isGroupLeader()) {
-      for (int p = getNodeTertiaryData(tail).parent_node; p != -1; ) {
-	auto & ptd = node_geometry3[p];
-	closed |= !ptd.isGroupOpen();
-	p = ptd.parent_node;
-      }
-      if (closed) continue;
+    for (int p = getNodeTertiaryData(tail).parent_node; p != -1; ) {
+      auto & ptd = node_geometry3[p];
+      closed |= !ptd.isGroupOpen();
+      p = ptd.parent_node;
     }
-    if (!td2.isGroupLeader()) {
-      for (int p = getNodeTertiaryData(head).parent_node; p != -1; ) {
-	auto & ptd = node_geometry3[p];
-	closed |= !ptd.isGroupOpen();
-	p = ptd.parent_node;
-      }
-      if (closed) continue;
+    if (closed) continue;
+    for (int p = getNodeTertiaryData(head).parent_node; p != -1; ) {
+      auto & ptd = node_geometry3[p];
+      closed |= !ptd.isGroupOpen();
+      p = ptd.parent_node;
     }
-
+    if (closed) continue;
+    
     bool fixed1 = td1.isFixed();
     bool fixed2 = td2.isFixed();
     if (fixed1 && fixed2) continue;
@@ -420,12 +416,12 @@ Graph::selectNodes(int input_node, int depth) {
   if (input_node == -1) {
     has_node_selection = false;
     for (int n = 0; n < node_geometry3.size(); n++) {
-      node_geometry3[n].flags |= NODE_SELECTED;
+      node_geometry3[n].flags |= NODE_IS_SELECTED;
     }
   } else {
     has_node_selection = true;
     for (int n = 0; n < node_geometry3.size(); n++) {
-      node_geometry3[n].flags &= ~NODE_SELECTED;
+      node_geometry3[n].flags &= ~NODE_IS_SELECTED;
     }
     
     if (input_node >= 0) { // can be -2 to select none
@@ -450,7 +446,7 @@ Graph::selectNodes(int input_node, int depth) {
 	  seen_nodes.insert(node_id);
 
 	  if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
-	  node_geometry3[node_id].flags |= NODE_SELECTED;
+	  node_geometry3[node_id].flags |= NODE_IS_SELECTED;
 	  
 	  if (node_depth < depth) {
 	    map<int, set<int> >::iterator node_edges = all_edges.find(node_id);
@@ -988,18 +984,27 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & td = getNodeTertiaryData(*it);
     if (!td.isFixed()) {
-      auto & pd = v[*it];
-      float factor = 1.0f;
-#if 1
-      if (td.parent_node >= 0) {
-	factor = 28.0f;
+      bool closed = false;
+      for (int p = td.parent_node; p != -1; ) {
+	auto & ptd = node_geometry3[p];
+	closed |= !ptd.isGroupOpen();
+	p = ptd.parent_node;
       }
+
+      if (!closed) {
+	auto & pd = v[*it];
+	float factor = 1.0f;
+#if 1
+	if (td.parent_node >= 0) {
+	  factor = 28.0f;
+	}
 #endif
-      float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
-      const glm::vec3 & pos = pd.position;
-      float d = glm::length(pos);
-      if (d > 0.001) {
-	pd.position -= pos * (factor * k * sqrtf(d) / d * weight);
+	float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
+	const glm::vec3 & pos = pd.position;
+	float d = glm::length(pos);
+	if (d > 0.001) {
+	  pd.position -= pos * (factor * k * sqrtf(d) / d * weight);
+	}
       }
     }
   }
