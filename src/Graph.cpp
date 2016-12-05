@@ -543,6 +543,7 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
 
   unsigned int count = getSuitableFinalGraphCount();
   if (final_graphs.size() != count) {
+    cerr << "creating final graphs\n";
     if (!final_graphs.empty()) {
       final_graphs.front()->removeAllChildren();
     }
@@ -566,7 +567,7 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
       addFinalGraph(g2);
       addFinalGraph(g3);
       addFinalGraph(g4);
-    } else {
+    } else {      
       auto g1 = createSimilar();
       assert(g1.get());
       addFinalGraph(g1);
@@ -585,6 +586,8 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
     
   statistics.setSentimentRange(start_sentiment, end_sentiment);
 
+  assert(final_graphs.size() == 1);
+  
   bool changed = false;
   for (unsigned int i = 0; i < final_graphs.size(); i++) {
     auto & g = final_graphs[i];
@@ -1223,6 +1226,7 @@ Graph::removeAllChildren() {
       td.next_child = -1;
       td.louvain_tot = 0.0;
       td.louvain_in = 0.0;
+      td.setIsGroupLeader(false);
     }
   }
 }
