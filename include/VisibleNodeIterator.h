@@ -85,8 +85,15 @@ class ConstVisibleNodeIterator {
 	  parent_nodes.pop_back();
 	  if (!processed_nodes[n]) {
 	    processed_nodes[n] = true;
-	    if (node_ptr + n < node_end && node_ptr[n].parent_node != -1) parent_nodes.push_back(node_ptr[n].parent_node);
-	    current_node = n;
+	    bool visible = true;
+	    if (node_ptr + n < node_end) {
+	      int p = node_ptr[n].parent_node;
+	      if (p != -1) {
+		if (!node_ptr[p].isGroupOpen() && !node_ptr[n].isGroupLeader()) visible = false;
+		parent_nodes.push_back(p);
+	      }
+	    }
+	    if (visible) current_node = n;
 	  }
 	}
       }
