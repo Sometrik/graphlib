@@ -904,7 +904,11 @@ Graph::getNodeKey(int node_id) const {
 
 void
 Graph::invalidateVisibleNodes() {
+#if 0
   final_graphs.clear();
+#else
+  if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
+#endif
   for (auto & gd : nested_graphs) {
     gd.second->invalidateVisibleNodes();      
   }
