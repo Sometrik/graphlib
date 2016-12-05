@@ -147,9 +147,11 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     glm::vec4 color1 = black, color2 = white;
     if (td.child_count) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      color1 = glm::vec4(0.0, 0.1, 0.2, 1.0);
-      offset += glm::vec2(0, 0.5 * size);
+      color1 = glm::vec4(0.5, 0.5, 0.5, 1.0);
+      // offset += glm::vec2(0, 0.5 * size);
+      pos += glm::vec3(0.0, size, 0.0);
       flags |= LABEL_FLAG_CENTER;
+      flags |= LABEL_FLAG_MIDDLE;
     } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       offset += glm::vec2(0, -3.2 * size);
@@ -594,7 +596,9 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
     assert(g.get());
     Graph * base_graph = final_graphs[0].get();
     assert(base_graph);
+    cerr << "trying to apply filter: st = " << int(start_time) << ", et = " << int(end_time) << ", ss = " << start_sentiment << ", es = " << end_sentiment << "\n";
     if (g->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
+      cerr << "filter changed the graph\n";
       g->incVersion();
       setLocationGraphValid(false);
       assert(nodes->isDynamic());
