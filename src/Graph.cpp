@@ -907,6 +907,7 @@ Graph::invalidateVisibleNodes() {
 #if 0
   final_graphs.clear();
 #else
+  final_graphs.clear();
   if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
 #endif
   for (auto & gd : nested_graphs) {
@@ -1064,6 +1065,7 @@ Graph::reset() {
   else {
     assert(0);
   }
+  final_graphs.clear();
 }
 
 bool
@@ -1125,7 +1127,10 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
 
 void
 Graph::addChild(int parent, int child) {
+  assert(parent >= 0 && parent < nodes->size());
+  assert(child >= 0 && child < nodes->size());
   assert(parent != child);
+  
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
 
@@ -1139,7 +1144,8 @@ Graph::addChild(int parent, int child) {
   
   assert(node_geometry3[child].parent_node == -1);
   assert(node_geometry3[child].next_child == -1);
-  node_geometry3[child].next_child = node_geometry3[parent].first_child;
+  
+  node_geometry3[child].next_child = node_geometry3[parent].first_child;  
   node_geometry3[parent].first_child = child;
   node_geometry3[child].parent_node = parent;
   node_geometry3[parent].child_count++;
@@ -1150,6 +1156,7 @@ Graph::addChild(int parent, int child) {
 
   assert(nodes->isDynamic());
   incVersion();
+  
   assert(node_geometry3[child].parent_node == parent);
 }
 
@@ -1188,9 +1195,13 @@ Graph::removeChild(int child) {
 void
 Graph::addChild(int parent, int child, float dnodecomm) {
   addChild(parent, child);
-
+  
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
+
+  assert(parent >= 0 && parent < nodes->size());
+  
   auto & td = node_geometry3[parent];
+
   td.louvain_tot += weightedDegree(child);
   td.louvain_in += 2*dnodecomm + numberOfSelfLoops(child);
 }
@@ -1210,6 +1221,7 @@ Graph::removeChild(int child, float dnodecomm) {
 
 void
 Graph::initializeLouvain(int n) {
+  assert(0);
   if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
   auto & td = node_geometry3[n];
   td.louvain_tot = weightedDegree(n);
