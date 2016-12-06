@@ -550,6 +550,7 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
       final_graphs.front()->removeAllChildren();
     }
     final_graphs.clear();
+    if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
     if (count == 5) {
       auto g0 = createSimilar();
       auto g1 = createSimilar();
@@ -734,26 +735,26 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     }
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
     if (td.child_count) {
+      bool is_open = false;
       if (td.child_count >= 2) {
 	auto d = display.project(pos) - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
 	float l = glm::length(d);
-	if (l >= 100.0f) {
-	  if (td.toggleNode(true)) {
-	    nodes->resume();
-	    structure_changed = true;
-	  }
-	  labels_changed |= td.setLabelVisibility(false);
+	is_open = l >= 100.0f;	
+	if (l >= 10.0f) {
+	  labels_changed |= td.setLabelVisibility(true);	    
 	} else {
-	  structure_changed |= td.toggleNode(false);
-	  if (l >= 10.0f) {
-	    labels_changed |= td.setLabelVisibility(true);	    
-	  } else {
-	    labels_changed |= td.setLabelVisibility(false);
-	  }
+	  labels_changed |= td.setLabelVisibility(false);
 	}
       } else {
-	structure_changed |= td.toggleNode(true);
 	labels_changed |= td.setLabelVisibility(false);
+      }
+      if (is_open) {
+	if (td.toggleNode(true)) {
+	  nodes->resume();
+	  structure_changed = true;
+	}
+      } else {
+	structure_changed |= td.toggleNode(false);	
       }
     } else {
       float priority = 1000;
@@ -1217,15 +1218,6 @@ Graph::removeChild(int child, float dnodecomm) {
   td.louvain_in -= 2*dnodecomm + numberOfSelfLoops(child);
 
   return parent;
-}
-
-void
-Graph::initializeLouvain(int n) {
-  assert(0);
-  if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-  auto & td = node_geometry3[n];
-  td.louvain_tot = weightedDegree(n);
-  td.louvain_in = numberOfSelfLoops(n);
 }
 
 void

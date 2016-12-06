@@ -566,7 +566,6 @@ class Graph : public GraphInterface {
 
   double modularity() const; // calculate the modularity of the communities
   double modularityGain(int node, int comm, double dnodecomm, double w_degree) const;
-  void initializeLouvain(int n);
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
