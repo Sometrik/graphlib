@@ -28,12 +28,6 @@ class LouvainSimplifier : public GraphFilter {
   }
   bool hasPosition() const override { return current_pos != -1; }
   
- protected:
-  void breakNodePair(Graph & target_graph, int node_id);
-  void breakOneDegreeNode(Graph & target_graph, int node_id);
-  void breakZeroDegreeNode(Graph & target_graph, int node_id);
-  bool canPair(int n1, int n2, const node_tertiary_data_s & td1, const node_tertiary_data_s & td2) const;
-
  private:
   std::unordered_set<int> seen_nodes;
   std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
