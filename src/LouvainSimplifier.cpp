@@ -32,7 +32,10 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
     cerr << "restarting update, begin = " << begin.get() << ", cp = " << current_pos << ", end = " << end.get() << ", source = " << &source_graph << ", edges = " << source_graph.getEdgeCount() << endl;
   } else {
     cerr << "continuing update, begin = " << begin.get() << ", cp = " << current_pos << ", end = " << end.get() << ", source = " << &source_graph << ", edges = " << source_graph.getEdgeCount() << endl;
-    for (int i = 0; i < current_pos; i++) ++it;
+    for (int i = 0; i < current_pos; i++) {
+      assert(it != end);
+      ++it;
+    }
   }
 
   auto & nodes = target_graph.getNodeArray();
@@ -175,10 +178,16 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
     cerr << "doing Louvain\n";
     
     Louvain c(&target_graph, -1, precision);
+
+    cerr << "Louvain created\n";
+    
     double mod = target_graph.modularity();
     int level = 0;
     bool is_improved = true;
     bool is_first = true;
+
+    cerr << "initial modularity = " << mod << endl;
+    
     for (int level = 1; level <= 1 && is_improved; level++) {
       is_improved = c.oneLevel();
       double new_mod = target_graph.modularity();
