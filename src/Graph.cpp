@@ -130,6 +130,8 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     labels.push_back({ pos, glm::vec2(), fd.label_texture, flags, black, white });
   }
 
+  vector<Label> primary_labels;
+  
   auto nodes_end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != nodes_end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
@@ -152,15 +154,19 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
       pos += glm::vec3(0.0, size, 0.0);
       flags |= LABEL_FLAG_CENTER;
       flags |= LABEL_FLAG_MIDDLE;
-    } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
+
+      labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
+  } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       offset += glm::vec2(0, -3.2 * size);
       flags |= LABEL_FLAG_MIDDLE;
       flags |= LABEL_FLAG_CENTER;
-    }
-        
-    labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
+
+      primary_labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
+    }        
   }
+  
+  labels.insert(labels.end(), primary_labels.begin(), primary_labels.end());
 }
 
 unsigned int
