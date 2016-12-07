@@ -601,10 +601,8 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
   for (unsigned int i = 0; i < final_graphs.size(); i++) {
     auto & g = final_graphs[i];
     assert(g.get());
-    Graph * base_graph = final_graphs[0].get();
-    assert(base_graph);
     cerr << "trying to apply filter: st = " << int(start_time) << ", et = " << int(end_time) << ", ss = " << start_sentiment << ", es = " << end_sentiment << "\n";
-    if (g->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics, i == 0, base_graph)) {
+    if (g->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
       cerr << "filter changed the graph\n";
       g->incVersion();
       setLocationGraphValid(false);
@@ -1057,9 +1055,9 @@ Graph::applyAge() {
 }
 
 bool
-Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) {
   if (getNodeArray().getFilter().get()) {
-    return getNodeArray().getFilter()->apply(*this, start_time, end_time, start_sentiment, end_sentiment, source_graph, stats, is_first_level, base_graph);
+    return getNodeArray().getFilter()->apply(*this, start_time, end_time, start_sentiment, end_sentiment, source_graph, stats);
   } else {
     assert(0);
     return false;

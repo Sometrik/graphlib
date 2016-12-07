@@ -6,14 +6,12 @@
 using namespace std;
 
 bool
-BasicSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats, bool is_first_level, Graph * base_graph) {
+BasicSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) {
   if (target_graph.getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {
     cerr << "invalid time range for apply: " << start_time << " - " << end_time << endl;
     return false;
   }
-  
-  assert(base_graph);
-  
+    
   auto & sid = source_graph.getNodeArray().getTable()["source"];
   auto & soid = source_graph.getNodeArray().getTable()["id"];
   auto & user_type = source_graph.getNodeArray().getTable()["type"];
@@ -75,30 +73,16 @@ BasicSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time,
       long long first_user_soid = soid.getInt64(np.first);
       long long target_user_soid = soid.getInt64(np.second);
       
-      auto td1 = base_graph->getNodeTertiaryData(np.first); // data is copied, since the backing array might change
-      auto td2 = base_graph->getNodeTertiaryData(np.second);
-      
-      if (!is_first_level) {
-	if (td1.indegree < target_graph.getMinSignificance()) {
-	  skipped_count++;
-	  continue;
-	}
-	if (td2.indegree < target_graph.getMinSignificance()) {
-	  skipped_count++;
-	  continue;
-	}
-      }
-
       is_changed = true;
 
       auto & target_nd_old = nodes.getNodeData(np.second);
       NodeType target_type = target_nd_old.type;
 
-      if (is_first_level && is_first) {
+      if (is_first) {
 	stats.addActivity(t, first_user_sid, first_user_soid, lang, app_id, filter_id, PoliticalParty(political_party.getInt(np.first)));
       }
       
-      if (is_first_level && !seen_nodes.count(np.second)) {
+      if (!seen_nodes.count(np.second)) {
 	seen_nodes.insert(np.second);
 	UserType ut = UserType(user_type.getInt(np.second));
 	if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
@@ -112,7 +96,7 @@ BasicSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time,
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
       } else {
-	if (is_first_level && target_type == NODE_ANY) {
+	if (target_type == NODE_ANY) {
 	  stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
 	}
 
@@ -153,13 +137,11 @@ BasicSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time,
 
   // cerr << "updated graph data, nodes = " << nodes.size() << ", edges = " << getEdgeCount() << ", min_sig = " << target_graph.getMinSignificance() << ", skipped = " << skipped_count << ", first = " << is_first_level << endl;
 
-  if (is_first_level) {
-    stats.setTimeRange(min_time, max_time);
-    stats.setNumRawNodes(nodes.size());
-    stats.setNumRawEdges(source_graph.getEdgeCount());
-    // stats.setNumPosts(num_posts);
-    // stats.setNumActiveUsers(num_active_users);
-  }
+  stats.setTimeRange(min_time, max_time);
+  stats.setNumRawNodes(nodes.size());
+  stats.setNumRawEdges(source_graph.getEdgeCount());
+  // stats.setNumPosts(num_posts);
+  // stats.setNumActiveUsers(num_active_users);
 
   return is_changed;
 }
