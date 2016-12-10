@@ -4,6 +4,9 @@
 #include <memory>
 #include <ctime>
 
+#include <unordered_set>
+#include <unordered_map>
+
 class Graph;
 class RawStatistics;
 
@@ -14,8 +17,24 @@ class GraphFilter {
 
   virtual std::shared_ptr<GraphFilter> dup() const = 0;
   virtual bool apply(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) = 0;
-  virtual void reset() { }
-  virtual bool hasPosition() const { return false; }
+  virtual void reset() {
+    current_pos = -1;
+    min_time = max_time = 0;
+    num_links = num_hashtags = 0;
+    seen_nodes.clear();
+    seen_edges.clear();
+  }
+  virtual bool hasPosition() const { return current_pos != -1; }
+  
+ protected:
+  bool processTemporalData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats);
+
+ private:
+  int current_pos = -1;
+  std::unordered_set<int> seen_nodes;
+  std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
+  time_t min_time = 0, max_time = 0;
+  unsigned int num_links = 0, num_hashtags = 0;
 };
 
 class GraphFilterFactory {
