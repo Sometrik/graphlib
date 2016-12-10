@@ -526,7 +526,7 @@ Graph::createClusters() {
     double new_mod = modularity();
     level++;
     
-    cerr << "l " << level << ": " << ", size: " << c.size() << ", modularity increase: " << mod << " to " << new_mod << endl;
+    cerr << "l " << level << ": modularity increase: " << mod << " to " << new_mod << endl;
     mod = new_mod;
     break;
   } while (is_improved);
@@ -1253,10 +1253,19 @@ Graph::getAllNeighbors(int node) const {
 
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
-    if (it->tail == node && it->head != node) {
-      r.push_back(std::pair<int, float>(it->head, it->weight));
-    } else if (it->head == node && it->tail != node) {
-      r.push_back(std::pair<int, float>(it->tail, it->weight));
+    int head = it->head, tail = it->tail;
+    assert(tail < node_geometry3.size());
+    assert(head < node_geometry3.size());
+    while (head != -1 && tail != -1) {
+      if (tail == node && head != node) {
+	r.push_back(std::pair<int, float>(head, it->weight));
+	break;
+      } else if (head == node && tail != node) {
+	r.push_back(std::pair<int, float>(tail, it->weight));
+	break;
+      }
+      tail = node_geometry3[tail].parent_node;
+      head = node_geometry3[head].parent_node;
     }
   }
 
