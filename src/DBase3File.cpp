@@ -2,10 +2,6 @@
 
 #include "utf8.h"
 
-#ifndef _WIN32
-#include "../system/IConv.h"
-#endif
-
 #include <cstring>
 #include <cassert>
 #include <shapefil.h>
@@ -35,20 +31,12 @@ public:
   std::string readStringAttribute(int rec, int field) {
     const char * tmp = DBFReadStringAttribute(h, rec, field);
     if (tmp) {
-#ifdef _WIN32
       string output;
       while (!tmp) {
 	utf8::append((unsigned char)*tmp, back_inserter(output));
 	tmp++;
       }
       return output;
-#else
-      IConv iconv("ISO8859-1", "UTF-8");
-      string tmp2;
-      if (iconv.convert(tmp, tmp2)) {
-      return tmp2;
-      }
-#endif
     }
     return "";
   }
