@@ -1,7 +1,7 @@
 #ifndef _READWRITEOBJECT_H_
 #define _READWRITEOBJECT_H_
 
-#include "../system/Mutex.h"
+#include <Mutex.h>
 
 class ReadWriteObject {
  public:
