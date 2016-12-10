@@ -138,7 +138,10 @@ GroupSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time,
       short target_user_sid = sid.getInt(np.second);
       long long first_user_soid = soid.getInt64(np.first);
       long long target_user_soid = soid.getInt64(np.second);
-      
+
+      auto td1 = target_graph.getNodeTertiaryData(np.first); // data is copied, since the backing array might change
+      auto td2 = target_graph.getNodeTertiaryData(np.second);
+ 
       is_changed = true;
 
       auto & target_nd_old = nodes.getNodeData(np.second);
