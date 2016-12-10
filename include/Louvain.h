@@ -16,8 +16,6 @@ class Louvain {
   
   // compute the communities for each node that has no parent
   bool oneLevel();
-
-  size_t size() const { return nodes.size(); }
   
   Graph & getGraph() { return *g; }
   const Graph & getGraph() const { return *g; }
@@ -28,7 +26,6 @@ class Louvain {
 
  private:
   Graph * g;
-  std::vector<int> nodes, edges;
   
   // number of passes or -1 to do as many passes as needed to increase modularity
   int max_num_passes;
