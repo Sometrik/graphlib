@@ -15,40 +15,16 @@ Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
     create_node_clusters(_create_node_clusters),
     create_edge_clusters(_create_edge_clusters)
 {
-  if (create_node_clusters) {
-    auto end = g->end_visible_nodes();
-    for (auto it = g->begin_visible_nodes(); it != end; ++it) {
-      nodes.push_back(*it);
-    }
-    for (auto & n : nodes) {
-      if (getNodeCommunity(n) == -1) {
-	int community_id = g->getNodeArray().createCommunity(n);
-	// g->getNodeArray().setPosition(community_id, g->getNodePosition(n));
-	g->addChild(community_id, n, 0);
-	// g->getNodeArray().setPosition(n, glm::vec3());
-      }
-    }
-  } else {
-    assert(0);
-  }
-#if 0
-  if (create_edge_clusters) {
-    auto end = g->end_edges();
-    for (auto it = g->begin_edges(); it != end; ++it) {
-      if (getEdgeCommunity(*it) == -1) {
-	edges.push_back(*it);
-	int community_id = g->getNodeArray().createCommunity(*it);
-	g->addEdgeChild(community_id, *it, 0);
-      }
-    }
-  }
-#endif
 }
 
 int
 Louvain::getNodeCommunity(int node) const {
-  auto & td = getGraph().getNodeTertiaryData(node);
-  return td.parent_node;
+  while ( 1 ) {
+    auto & td = getGraph().getNodeTertiaryData(node);
+    if (td.parent_node == -1) break;
+    node = td.parent_node;
+  }
+  return node;
 }
 
 unordered_map<int, float>
@@ -77,6 +53,38 @@ Louvain::neighboringCommunities(int node) const {
 
 bool
 Louvain::oneLevel() {
+  std::vector<int> nodes, edges;
+
+  if (create_node_clusters) {
+    auto end = g->end_visible_nodes();
+    for (auto it = g->begin_visible_nodes(); it != end; ++it) {
+      // if (getNodeCommunity(*it) == -1) {
+      if (getGraph().getNodeTertiaryData(*it).parent_node == -1) {
+	nodes.push_back(*it);
+      }
+    }
+    for (auto & n : nodes) {
+      int community_id = g->getNodeArray().createCommunity(n);
+      // g->getNodeArray().setPosition(community_id, g->getNodePosition(n));
+      g->addChild(community_id, n, 0);
+      // g->getNodeArray().setPosition(n, glm::vec3());
+    }
+  } else {
+    assert(0);
+  }
+#if 0
+  if (create_edge_clusters) {
+    auto end = g->end_edges();
+    for (auto it = g->begin_edges(); it != end; ++it) {
+      if (getEdgeCommunity(*it) == -1) {
+	edges.push_back(*it);
+	int community_id = g->getNodeArray().createCommunity(*it);
+	g->addEdgeChild(community_id, *it, 0);
+      }
+    }
+  }
+#endif
+  
   bool is_improved = false;
   double modularity = getGraph().modularity();
 
