@@ -25,6 +25,8 @@ class GraphFilter {
     seen_edges.clear();
   }
   virtual bool hasPosition() const { return current_pos != -1; }
+
+  void keepHashtags(bool t) { keep_hashtags = t; }
   
  protected:
   bool processTemporalData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats);
@@ -35,6 +37,7 @@ class GraphFilter {
   std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
   time_t min_time = 0, max_time = 0;
   unsigned int num_links = 0, num_hashtags = 0;
+  bool keep_hashtags = false;
 };
 
 class GraphFilterFactory {
