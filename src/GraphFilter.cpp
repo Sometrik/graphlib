@@ -94,13 +94,18 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	// stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
       }
 
+      float weight = 1.0f;
       if (target_type == NODE_HASHTAG) {
 	stats.addHashtag(name_column.getText(np.second));
 	num_hashtags++;
+	weight = 0.25f;
       } else if (target_type == NODE_URL) {
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
-      } else {
+	weight = 0.25f;
+      }
+      
+      if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || target_type != NODE_URL)) {
 	if (target_type == NODE_ANY) {
 	  stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
 	}
@@ -134,11 +139,9 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	    new_weight /= 64.0f;
 	    target_graph.updateEdgeWeight(it2->second, new_weight - ed.weight);
 	  }
-	} else {	  
-	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, 1.0f / 64.0f, 0, target_graph.getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
-#if 0
-	  seen_edges[np.second][np.first] = target_graph.addEdge(np.second, np.first, -1, 1.0f / 64.0f, 0, target_graph.getNodeArray().hasTemporalCoverage() ? coverage : 1.0f);
-#endif
+	} else {
+	  bool tc = target_graph.getNodeArray().hasTemporalCoverage();
+	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, tc ? 1.0f / 64.0f : weight, 0, tc ? coverage : 1.0f);
 	}
       }
     }  
