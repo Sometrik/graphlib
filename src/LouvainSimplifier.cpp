@@ -50,13 +50,13 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 	if (td.child_count == 1) {
 	  // target_graph.removeChild(td.first_child);
 	}
-	int best_d = 0;
+	float best_d = 0;
 	int best_node = -1;
 	for (int n = td.first_child; n != -1; ) {
 	  auto & ctd = target_graph.getNodeTertiaryData(n);
-	  if (best_node == -1 || ctd.indegree > best_d) {
+	  if (best_node == -1 || ctd.weighted_indegree > best_d) {
 	    best_node = n;
-	    best_d = ctd.indegree;
+	    best_d = ctd.weighted_indegree;
 	  }
 	  target_graph.setIsGroupLeader(n, false);
 	  n = ctd.next_child;
