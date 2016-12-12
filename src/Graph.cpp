@@ -137,12 +137,21 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
     if (!(td.isLabelVisible() && pd.label_texture)) continue;
-    
-    auto pos = pd.position;
-    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      pos += nodes->getNodeData(p).position;
-    }
 
+    auto pos = pd.position;
+    bool parent_visible = true;				 
+    for (int p = td.parent_node; p != -1; ) {
+      auto & ptd = getNodeTertiaryData(p);
+      if (!ptd.isGroupOpen()) {
+	pos = getNodeArray().getNodeData(p).position;
+	parent_visible = false;
+      } else {
+	pos += getNodeArray().getNodeData(p).position;
+      }
+      p = ptd.parent_node;
+    }
+    assert(parent_visible || td.isGroupLeader());
+    
     glm::vec2 offset;
     unsigned short flags = 0;
 
@@ -198,7 +207,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   processed_edges.resize(num_nodes * num_nodes);			
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
-    if (it->weight < 0.5) continue;
+    if (it->weight < 1.0f) continue;
     int tail = it->tail, head = it->head;
     int level = 0;
     assert(tail >= 0 && head >= 0);
@@ -736,9 +745,19 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       continue;
     }
     auto pos = pd.position;
-    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      pos += nodes->getNodeData(p).position;
+    bool parent_visible = true;				 
+    for (int p = td.parent_node; p != -1; ) {
+      auto & ptd = getNodeTertiaryData(p);
+      if (!ptd.isGroupOpen()) {
+	pos = getNodeArray().getNodeData(p).position;
+	parent_visible = false;
+      } else {
+	pos += getNodeArray().getNodeData(p).position;
+      }
+      p = ptd.parent_node;
     }
+    assert(parent_visible || td.isGroupLeader());
+
     if (!display.isPointVisible(pos)) {
       labels_changed |= td.setLabelVisibility(false);
       continue;
@@ -1239,14 +1258,19 @@ Graph::removeAllChildren() {
     if (i < node_geometry3.size()) {
       auto & nd = nodes->getNodeData(i);
       auto & td = node_geometry3[i];
-      if (td.child_count) {
-        td.child_count = 0;
-        td.first_child = -1;
-      }
       if (td.parent_node != -1) {
-        nd.position = getNodePosition(i);
-        td.parent_node = -1;
+	nd.position = getNodePosition(i);
+	td.parent_node = -1;
       }
+      td.setLabelVisibility(false);
+    }
+  }
+  for (int i = 0; i < nodes->size(); i++) {
+    if (i < node_geometry3.size()) {
+      auto & nd = nodes->getNodeData(i);
+      auto & td = node_geometry3[i];
+      td.child_count = 0;
+      td.first_child = -1;
       td.next_child = -1;
       td.louvain_tot = 0.0;
       td.louvain_in = 0.0;
@@ -1257,7 +1281,7 @@ Graph::removeAllChildren() {
 
 std::unordered_map<int, float>
 Graph::getAllNeighbors(int node) const {
-  std::unordered_mapr<int, float> r;
+  std::unordered_map<int, float> r;
 
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
