@@ -5,7 +5,7 @@
 
 class LouvainSimplifier : public GraphFilter {
  public:
-  LouvainSimplifier(int _max_levels) : max_levels(_max_levels) { }
+  LouvainSimplifier(int _max_levels);
 
   std::shared_ptr<GraphFilter> dup() const override { return std::make_shared<LouvainSimplifier>(max_levels); }
 
