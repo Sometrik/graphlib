@@ -8,7 +8,7 @@ using namespace std;
 
 LouvainSimplifier::LouvainSimplifier(int _max_levels) : max_levels(_max_levels) {
   keepHashtags(true);
-  keepLinks(true);
+  keepLinks(false);
 }
 
 bool
