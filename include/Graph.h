@@ -1,7 +1,7 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
-#include "GraphInterface.h"
+#include "MBRObject.h"
 #include "RawStatistics.h"
 #include "NodeArray.h"
 #include "graph_color.h"
@@ -145,7 +145,7 @@ class GraphRefR;
 class GraphRefW;
 class Label;
 
-class Graph : public GraphInterface {
+class Graph : public MBRObject {
  public:
   friend class GraphRefR;
   friend class GraphRefW;
