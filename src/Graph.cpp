@@ -149,16 +149,21 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     glm::vec4 color1 = black, color2 = white;
     if (td.child_count) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      color1 = glm::vec4(0.5, 0.5, 0.5, 1.0);
+      color1 = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
       // offset += glm::vec2(0, 0.5 * size);
       pos += glm::vec3(0.0, size, 0.0);
       flags |= LABEL_FLAG_CENTER;
       flags |= LABEL_FLAG_MIDDLE;
 
       labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
-  } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
+    } else if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
+      color1 = glm::vec4(0.0f, 0.0f, 0.0f, 0.25f);
+      flags |= LABEL_FLAG_MIDDLE;
+      flags |= LABEL_FLAG_CENTER;
+      labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
+    } else if (getNodeArray().getLabelStyle() == LABEL_DARK_BOX) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-      offset += glm::vec2(0, -3.2 * size);
+      offset += glm::vec2(0.0f, -3.2f * size);
       flags |= LABEL_FLAG_MIDDLE;
       flags |= LABEL_FLAG_CENTER;
 
@@ -761,6 +766,8 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       } else {
 	structure_changed |= td.toggleNode(false);	
       }
+    } else if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
+      labels_changed |= td.setLabelVisibility(true);
     } else {
       float priority = 1000;
       if (has_priority_column) {
@@ -1248,9 +1255,9 @@ Graph::removeAllChildren() {
   }
 }
 
-std::vector<std::pair<int, float> >
+std::unordered_map<int, float>
 Graph::getAllNeighbors(int node) const {
-  std::vector<std::pair<int, float> > r;
+  std::unordered_mapr<int, float> r;
 
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
@@ -1259,10 +1266,10 @@ Graph::getAllNeighbors(int node) const {
     assert(head < node_geometry3.size());
     while (head != -1 && tail != -1) {
       if (tail == node && head != node) {
-	r.push_back(std::pair<int, float>(head, it->weight));
+	r[head] += it->weight;
 	break;
       } else if (head == node && tail != node) {
-	r.push_back(std::pair<int, float>(tail, it->weight));
+	r[tail] += it->weight;
 	break;
       }
       tail = node_geometry3[tail].parent_node;

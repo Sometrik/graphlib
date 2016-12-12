@@ -340,7 +340,7 @@ class Graph : public GraphInterface {
     return ws;
   }
 
-  std::vector<std::pair<int, float> > getAllNeighbors(int node) const override;
+  std::unordered_map<int, float> getAllNeighbors(int node) const;
 
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
