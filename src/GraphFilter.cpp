@@ -95,20 +95,19 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       }
 
       float weight = 1.0f;
-      if (target_type == NODE_HASHTAG) {
+      if (target_type == NODE_ANY) {
+	stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
+      } else if (target_type == NODE_HASHTAG) {
 	stats.addHashtag(name_column.getText(np.second));
 	num_hashtags++;
-	weight = 0.25f;
+	weight = 0.49f;
       } else if (target_type == NODE_URL) {
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
-	weight = 0.25f;
+	weight = 0.49f;
       }
       
       if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || target_type != NODE_URL)) {
-	if (target_type == NODE_ANY) {
-	  stats.addReceivedActivity(t, target_user_sid, target_user_soid, app_id, filter_id);
-	}
 
 	long long coverage = 0;
 	if (target_graph.getNodeArray().hasTemporalCoverage()) {
