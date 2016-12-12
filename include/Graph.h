@@ -317,17 +317,17 @@ class Graph : public MBRObject {
   }
 
   // return the weighted degree of the node
-  float weightedDegree(int n) override {
+  float weightedDegree(int n) {
     if (node_geometry3.size() <= n) return 0.0f;
     return node_geometry3[n].weighted_indegree + node_geometry3[n].weighted_outdegree;    
   }
 
-  unsigned int numberOfNeighbors(int n) override {
+  unsigned int numberOfNeighbors(int n) {
     if (node_geometry3.size() <= n) return 0;
     return node_geometry3[n].indegree + node_geometry3[n].outdegree;
   }
 
-  float numberOfSelfLoops(int node) override {
+  float numberOfSelfLoops(int node) {
     int edge = getNodeFirstEdge(node);
     float ws = 0.0f;
     while (edge != -1) {
