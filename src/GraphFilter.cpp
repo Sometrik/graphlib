@@ -100,11 +100,11 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       } else if (target_type == NODE_HASHTAG) {
 	stats.addHashtag(name_column.getText(np.second));
 	num_hashtags++;
-	weight = 0.49f;
+	weight = 0.95f;
       } else if (target_type == NODE_URL) {
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
-	weight = 0.49f;
+	weight = 0.95f;
       }
       
       if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || target_type != NODE_URL)) {
