@@ -92,6 +92,12 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	UserType ut = UserType(user_type.getInt(np.second));
 	if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
 	// stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
+	int type_node_id = -1;
+	if (ut == MALE) type_node_id = nodes.createMaleNode();
+	else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
+	if (type_node_id != -1) {
+	  target_graph.addEdge(np.first, type_node_id, -1, 0.95f, 0, 1.0f);
+	}
       }
 
       float weight = 1.0f;
