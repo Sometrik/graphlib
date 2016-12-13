@@ -294,6 +294,20 @@ class NodeArray : public ReadWriteObject {
     return community_id;
   }
 
+  int getLanguageById(short id) const {
+    auto it = languages.find(id);
+    if (it != languages.end()) return it->second;
+    return -1;
+  }
+
+  int createLanguage(short id) {
+    int community_id = getLanguageById(id);
+    if (community_id != -1) return language_id;
+    communities[id] = community_id = add(NODE_ATTRIBUTE);
+    setRandomPosition(community_id);
+    return community_id;
+  }
+
   int getMaleNode() const { return male_node_id; }
   int getFemaleNode() const { return female_node_id; }
 
@@ -337,6 +351,7 @@ class NodeArray : public ReadWriteObject {
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
   std::unordered_map<int, int> communities;
+  std::unordered_map<short, int> languages;
   unsigned int flags = 0;
   Personality personality = NONE;
   std::shared_ptr<GraphFilter> filter;
