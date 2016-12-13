@@ -302,7 +302,7 @@ class NodeArray : public ReadWriteObject {
 
   int createLanguage(short id) {
     int community_id = getLanguageById(id);
-    if (community_id != -1) return language_id;
+    if (community_id != -1) return community_id;
     communities[id] = community_id = add(NODE_ATTRIBUTE);
     setRandomPosition(community_id);
     return community_id;
