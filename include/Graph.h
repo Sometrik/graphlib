@@ -19,6 +19,7 @@
 #define NODE_FIXED_POSITION	4
 #define NODE_IS_OPEN		8
 #define NODE_IS_GROUP_LEADER	16
+#define NODE_IS_INITIALIZED	32
 
 class Graph;
 class DisplayInfo;
@@ -60,12 +61,23 @@ struct node_tertiary_data_s {
       return false;
     }
   }
+  
+  bool setIsInitialized(bool t) {
+    if ((t && !isInitialized()) || (!t && isInitialized())) {
+      if (t) flags |= NODE_IS_INITIALIZED;
+      else flags &= ~NODE_IS_INITIALIZED;
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   bool isGroupOpen() const { return flags & NODE_IS_OPEN; }  
   bool isFixed() const { return flags & NODE_FIXED_POSITION; }
   bool isSelected() const { return flags & NODE_IS_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
   bool isGroupLeader() const { return flags & NODE_IS_GROUP_LEADER; }
+  bool isInitialized() const { return flags & NODE_IS_INITIALIZED; }
 
   bool setLabelVisibility(bool t) {
     if ((t && !isLabelVisible()) || (!t && isLabelVisible())) {
@@ -194,6 +206,11 @@ class Graph : public MBRObject {
   void setIsGroupLeader(int node, bool t) {
     if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
     node_geometry3[node].setIsGroupLeader(t);
+  }
+
+  void setIsInitialized(int node, bool t) {
+    if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
+    node_geometry3[node].setIsInitialized(t);
   }
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
@@ -358,7 +375,8 @@ class Graph : public MBRObject {
   void setKeywords(const std::string & k) { keywords = k; }
   const std::string & getKeywords() const { return keywords; }
   
-  virtual void randomizeGeometry(bool use_2d = false);
+  void randomizeGeometry(bool use_2d = false);
+  void randomizeChildGeometry(int node_id, bool use_2d = false);
   void refreshLayouts();
 
   void setId(int _id) { id = _id; }

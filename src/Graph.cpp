@@ -112,6 +112,20 @@ Graph::randomizeGeometry(bool use_2d) {
 }
 
 void
+Graph::randomizeChildGeometry(int node_id, bool use_2d) {
+  assert(!nodes->hasSpatialData());
+  assert(node_id >= 0);
+  if (node_id < node_geometry3.size()) {
+    auto & td = node_geometry3[node_id];
+    for (int c = td.first_child; c != -1; ) {
+      getNodeArray().setRandomPosition(c, use_2d);
+      auto & td2 = node_geometry3[c];
+      c = td2.next_child;
+    }
+  }
+}
+
+void
 Graph::getVisibleLabels(vector<Label> & labels) const {  
   const table::Column & user_type = getNodeArray().getTable()["type"];
   auto & size_method = nodes->getNodeSizeMethod();
@@ -779,6 +793,9 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       }
       if (is_open) {
 	if (td.toggleNode(true)) {
+	  if (!td.isInitialized()) {
+	    randomizeChildGeometry(*it, true);
+	  }
 	  nodes->resume();
 	  structure_changed = true;
 	}
@@ -1275,6 +1292,7 @@ Graph::removeAllChildren() {
       td.louvain_tot = 0.0;
       td.louvain_in = 0.0;
       td.setIsGroupLeader(false);
+      td.setIsInitialized(false);
     }
   }
 }
