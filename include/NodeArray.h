@@ -29,6 +29,8 @@
 #define DEFAULT_PROFILE	0
 #define PENDING_PROFILE	1
 #define BOT_PROFILE	2
+#define MALE_NODE	3
+#define FEMALE_NODE	4
 
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
@@ -292,6 +294,27 @@ class NodeArray : public ReadWriteObject {
     return community_id;
   }
 
+  int getMaleNode() const { return male_node_id; }
+  int getFemaleNode() const { return female_node_id; }
+
+  int createMaleNode() {
+    if (male_node_id == -1) {
+      male_node_id = add(NODE_ATTRIBUTE);
+      setNodeTexture(male_node_id, MALE_NODE);
+      setRandomPosition(male_node_id);
+    }
+    return male_node_id;
+  }
+
+  int createFemaleNode() {
+    if (female_node_id == -1) {
+      female_node_id = add(NODE_ATTRIBUTE);
+      setNodeTexture(female_node_id, FEMALE_NODE);
+      setRandomPosition(female_node_id);
+    }
+    return female_node_id;
+  }
+
   void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
   const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
 
@@ -310,6 +333,7 @@ class NodeArray : public ReadWriteObject {
   float alpha = 0.0f;
   int srid = 0, version = 1;
   int zerodegree_node_id = -1, pairs_node_id = -1;
+  int male_node_id = -1, female_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
   std::map<int, int> communities;
