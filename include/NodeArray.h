@@ -336,7 +336,7 @@ class NodeArray : public ReadWriteObject {
   int male_node_id = -1, female_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
-  std::map<int, int> communities;
+  std::unordered_map<int, int> communities;
   unsigned int flags = 0;
   Personality personality = NONE;
   std::shared_ptr<GraphFilter> filter;
