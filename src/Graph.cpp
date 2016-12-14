@@ -706,7 +706,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   auto & size_method = nodes->getNodeSizeMethod();
   auto & label_method = nodes->getLabelMethod();
-  bool labels_changed = false, structure_changed = false;
+  bool labels_changed = false;
 
   bool has_priority_column = !label_method.getPriorityColumn().empty();
   auto & node_priority_column = nodes->getTable()[label_method.getPriorityColumn()];
@@ -784,7 +784,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	td.setIsInitialized(true);
       }
     }
-    structure_changed = true;
+    incVersion();
   }
 
   for (int i = 0; i < getFaceCount(); i++) {
@@ -834,11 +834,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   }
   
   if (labels_changed) incLabelVersion();
-  if (structure_changed) {
-    cerr << "graph structure changed in updateVisibilities()" << endl;
-    assert(nodes->isDynamic());
-    incVersion();
-  }
 
   return labels_changed;
 }
