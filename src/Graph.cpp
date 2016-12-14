@@ -781,6 +781,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       if (!td.isInitialized()) {
 	randomizeChildGeometry(best_child, true);
 	resume();
+	td.setIsInitialized(true);
       }
     }
     structure_changed = true;
