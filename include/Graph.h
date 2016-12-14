@@ -21,9 +21,6 @@
 #define NODE_IS_GROUP_LEADER	16
 #define NODE_IS_INITIALIZED	32
 
-class Graph;
-class DisplayInfo;
-
 struct node_tertiary_data_s {
   int first_edge = -1;
   int indegree = 0, outdegree = 0;
@@ -156,6 +153,8 @@ struct face_data_s {
 class GraphRefR;
 class GraphRefW;
 class Label;
+class GraphFilter;
+class DisplayInfo;
 
 class Graph : public MBRObject {
  public:
@@ -618,7 +617,10 @@ class Graph : public MBRObject {
   void incVersion() { version++; }
 
   unsigned int calcVisibleNodeCount() const;
-  
+
+  void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
+  const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
+
  protected:
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
@@ -663,6 +665,7 @@ class Graph : public MBRObject {
   glm::vec4 node_color, edge_color, face_color;
   float initial_node_age = 0.0f;
   std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
+  std::shared_ptr<GraphFilter> filter;
   
   static int next_id;
 };

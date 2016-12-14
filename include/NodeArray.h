@@ -49,8 +49,6 @@ struct node_data_s {
   int group_node;
 };
 
-class GraphFilter;
-
 class NodeArray : public ReadWriteObject {
  public:
   enum Personality {
@@ -329,9 +327,6 @@ class NodeArray : public ReadWriteObject {
     return female_node_id;
   }
 
-  void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
-  const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
-
  protected:
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
   void updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); }
@@ -354,7 +349,6 @@ class NodeArray : public ReadWriteObject {
   std::unordered_map<short, int> languages;
   unsigned int flags = 0;
   Personality personality = NONE;
-  std::shared_ptr<GraphFilter> filter;
 };
 
 #endif
