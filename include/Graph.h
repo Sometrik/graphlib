@@ -17,9 +17,8 @@
 #define NODE_IS_SELECTED	1
 #define NODE_LABEL_VISIBLE	2
 #define NODE_FIXED_POSITION	4
-#define NODE_IS_OPEN		8
-#define NODE_IS_GROUP_LEADER	16
-#define NODE_IS_INITIALIZED	32
+#define NODE_IS_GROUP_LEADER	8
+#define NODE_IS_INITIALIZED	16
 
 struct node_tertiary_data_s {
   int first_edge = -1;
@@ -37,16 +36,6 @@ struct node_tertiary_data_s {
     if (t) flags |= NODE_FIXED_POSITION;
     else flags &= ~NODE_FIXED_POSITION;
     // doesn't affect anything directly, so no need to update version
-  }
-  
-  bool toggleNode(bool t) {
-    if ((t && !isGroupOpen()) || (!t && isGroupOpen())) {
-      if (t) flags |= NODE_IS_OPEN;
-      else flags &= ~NODE_IS_OPEN;
-      return true;
-    } else {
-      return false;
-    }
   }
 
   bool setIsGroupLeader(bool t) {
@@ -69,7 +58,6 @@ struct node_tertiary_data_s {
     }
   }
 
-  bool isGroupOpen() const { return flags & NODE_IS_OPEN; }  
   bool isFixed() const { return flags & NODE_FIXED_POSITION; }
   bool isSelected() const { return flags & NODE_IS_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
@@ -220,8 +208,7 @@ class Graph : public MBRObject {
   virtual Graph * copy() const = 0;
   virtual bool isDirected() const { return false; }
 
-  bool hasPosition() const;
-  bool applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats);
+  bool applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
   void reset();
 
   void extractLocationGraph(Graph & target_graph);
@@ -489,7 +476,7 @@ class Graph : public MBRObject {
     return it;
   }
 
-  ConstVisibleNodeIterator begin_visible_nodes() const { return ConstVisibleNodeIterator(&(edge_attributes.front()), &(edge_attributes.back()) + 1, &(node_geometry3.front()), &(node_geometry3.back()) + 1, nodes->size()); }
+  ConstVisibleNodeIterator begin_visible_nodes() const { return ConstVisibleNodeIterator(&(edge_attributes.front()), &(edge_attributes.back()) + 1, &(node_geometry3.front()), &(node_geometry3.back()) + 1, nodes->size(), active_child_node); }
   ConstVisibleNodeIterator end_visible_nodes() const { return ConstVisibleNodeIterator(); }
   
   int getGraphNodeId(int graph_id) const;
@@ -621,11 +608,15 @@ class Graph : public MBRObject {
   void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
   const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
 
+  int getActiveChildNode() const { return active_child_node; }
+
  protected:
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
 
   void incLabelVersion() { label_version++; }
+
+  bool setActiveChildNode(int id);
 
   table::Table faces;
   std::vector<face_data_s> face_attributes;
@@ -666,6 +657,7 @@ class Graph : public MBRObject {
   float initial_node_age = 0.0f;
   std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
   std::shared_ptr<GraphFilter> filter;
+  int active_child_node = -1;
   
   static int next_id;
 };

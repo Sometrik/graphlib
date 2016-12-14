@@ -156,7 +156,7 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     bool parent_visible = true;				 
     for (int p = td.parent_node; p != -1; ) {
       auto & ptd = getNodeTertiaryData(p);
-      if (!ptd.isGroupOpen()) {
+      if (p != active_child_node) {
 	pos = getNodeArray().getNodeData(p).position;
 	parent_visible = false;
       } else {
@@ -256,22 +256,15 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
     bool visible = true;
-    bool closed = false;
 
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
-    
-    for (int p = getNodeTertiaryData(tail).parent_node; p != -1; ) {
-      auto & ptd = node_geometry3[p];
-      closed |= !ptd.isGroupOpen();
-      p = ptd.parent_node;
+
+    bool open = false;
+    if (getNodeTertiaryData(tail).parent_node == active_child_node &&
+	getNodeTertiaryData(head).parent_node == active_child_node) {
+      open = true;
     }
-    if (closed) continue;
-    for (int p = getNodeTertiaryData(head).parent_node; p != -1; ) {
-      auto & ptd = node_geometry3[p];
-      closed |= !ptd.isGroupOpen();
-      p = ptd.parent_node;
-    }
-    if (closed) continue;
+    if (!open) continue;
     
     bool fixed1 = td1.isFixed();
     bool fixed2 = td2.isFixed();
@@ -569,14 +562,14 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
   if (!final_graph.get()) {
     cerr << "creating final graph\n";
     final_graph.reset();
-    if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
+    if (getFilter().get()) getFilter()->reset();
     auto g1 = createSimilar();
     assert(g1.get());
     setFinalGraph(g1);
     statistics.clear();
-  } else if (!final_graph->hasPosition()) {
+  } else if (getFilter().get() && !getFilter()->hasPosition()) {
     cerr << "RESETTING EVERYTHING!\n";
-    if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
+    if (getFilter().get()) getFilter()->reset();
     if (final_graph->hasNodeSelection()) {
       selectNodes(-2);
     } else {
@@ -591,7 +584,7 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
   bool changed = false;
   assert(final_graph.get());
   cerr << "trying to apply filter: st = " << int(start_time) << ", et = " << int(end_time) << ", ss = " << start_sentiment << ", es = " << end_sentiment << "\n";
-  if (final_graph->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
+  if (applyFilter(start_time, end_time, start_sentiment, end_sentiment)) {
     cerr << "filter changed the graph\n";
     final_graph->incVersion();
     setLocationGraphValid(false);
@@ -698,6 +691,16 @@ static bool comparePriority(const label_data_s & a, const label_data_s & b) {
 }
 
 bool
+Graph::setActiveChildNode(int id) {
+  if (id != active_child_node) {
+    active_child_node = id;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool
 Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   vector<label_data_s> all_labels;
   auto & size_method = nodes->getNodeSizeMethod();
@@ -707,6 +710,9 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   bool has_priority_column = !label_method.getPriorityColumn().empty();
   auto & node_priority_column = nodes->getTable()[label_method.getPriorityColumn()];
   auto & face_priority_column = getFaceData()[label_method.getPriorityColumn()];
+
+  int best_child = -1;
+  float best_score = 0.0f;
   
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
@@ -721,7 +727,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     bool parent_visible = true;				 
     for (int p = td.parent_node; p != -1; ) {
       auto & ptd = getNodeTertiaryData(p);
-      if (!ptd.isGroupOpen()) {
+      if (p != active_child_node) {
 	pos = getNodeArray().getNodeData(p).position;
 	parent_visible = false;
       } else {
@@ -738,10 +744,14 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
     if (td.child_count) {
       bool is_open = false;
+      float score = 0.0f;
       if (td.child_count >= 2) {
-	auto d = display.project(pos) - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
+	auto ppos = display.project(pos);
+	auto d = ppos - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
+	auto d2 = ppos - glm::vec3(display.getViewport()[0] / 2.0f, display.getViewport()[1], 0.0f);
 	float l = glm::length(d);
-	is_open = l >= 100.0f;	
+	is_open = l >= 100.0f;
+	score = glm::length(d2);
 	if (l >= 10.0f) {
 	  labels_changed |= td.setLabelVisibility(true);	    
 	} else {
@@ -750,16 +760,11 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       } else {
 	labels_changed |= td.setLabelVisibility(false);
       }
-      if (is_open) {
-	if (td.toggleNode(true)) {
-	  if (!td.isInitialized()) {
-	    randomizeChildGeometry(*it, true);
-	  }
-	  nodes->resume();
-	  structure_changed = true;
-	}
+      if (is_open && (best_child == -1 || score > best_score)) {
+	best_child = *it;
+	best_score = score;
       } else {
-	structure_changed |= td.toggleNode(false);	
+	// structure_changed |= td.toggleNode(false);	
       }
     } else if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
       labels_changed |= td.setLabelVisibility(true);
@@ -771,7 +776,18 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, priority, *it });
     }
   }
-    
+
+  if (setActiveChildNode(best_child)) {
+    if (best_child != -1) {
+      auto & td = node_geometry3[best_child];
+      if (!td.isInitialized()) {
+	randomizeChildGeometry(best_child, true);
+      }
+    }
+    nodes->resume();
+    structure_changed = true;
+  }
+
   for (int i = 0; i < getFaceCount(); i++) {
     auto & fd = getFaceAttributes(i);
     if (!display.isPointVisible(fd.centroid)) {
@@ -912,7 +928,9 @@ Graph::getNodeKey(int node_id) const {
 
 void
 Graph::invalidateVisibleNodes() {
-  if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
+  if (final_graph.get()) final_graph->removeAllChildren();
+  final_graph.reset();
+  if (getFilter().get()) getFilter()->reset();
   for (auto & gd : nested_graphs) {
     gd.second->invalidateVisibleNodes();      
   }
@@ -973,14 +991,9 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & td = getNodeTertiaryData(*it);
     if (!td.isFixed()) {
-      bool closed = false;
-      for (int p = td.parent_node; p != -1; ) {
-	auto & ptd = node_geometry3[p];
-	closed |= !ptd.isGroupOpen();
-	p = ptd.parent_node;
-      }
+      bool open = td.parent_node == active_child_node;
 
-      if (!closed) {
+      if (open) {
 	auto & pd = v[*it];
 	float factor = 1.0f;
 #if 1
@@ -1027,9 +1040,9 @@ Graph::applyAge() {
 }
 
 bool
-Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) {
-  if (getNodeArray().getFilter().get()) {
-    return getNodeArray().getFilter()->apply(*this, start_time, end_time, start_sentiment, end_sentiment, source_graph, stats);
+Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
+  if (getFilter().get() && final_graph.get()) {
+    return getFilter()->apply(*final_graph, start_time, end_time, start_sentiment, end_sentiment, *this, statistics);
   } else {
     assert(0);
     return false;
@@ -1038,17 +1051,7 @@ Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, fl
 
 void
 Graph::reset() {
-  if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();  
-}
-
-bool
-Graph::hasPosition() const {
-  if (getNodeArray().getFilter().get()) {
-    return getNodeArray().getFilter()->hasPosition();
-  } else {
-    assert(0);
-    return false;
-  }
+  if (getFilter().get()) getFilter()->reset();  
 }
 
 bool

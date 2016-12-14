@@ -7,13 +7,15 @@ class ConstVisibleNodeIterator {
 			   const edge_data_s * _edge_end,
 			   const node_tertiary_data_s * _node_ptr,
 			   const node_tertiary_data_s * _node_end,
-			   size_t _num_nodes)
+			   size_t _num_nodes,
+			   int _active_node_id)
     : stage(_edge_ptr < _edge_end ? EDGE_TAIL : END),
     edge_ptr(_edge_ptr),
     edge_end(_edge_end),
     node_ptr(_node_ptr),
     node_end(_node_end),
-    num_nodes(_num_nodes)
+    num_nodes(_num_nodes),
+    active_node_id(_active_node_id)
   {
     processed_nodes.resize(num_nodes);
     fetchNextNode();
@@ -25,7 +27,8 @@ class ConstVisibleNodeIterator {
     edge_end(0),
     node_ptr(0),
     node_end(0),
-    num_nodes(0) { }
+    num_nodes(0),
+    active_node_id(-1) { }
 
   const int & operator*() const { return current_node; }
   const int * get() const { return &current_node; }
@@ -50,7 +53,7 @@ class ConstVisibleNodeIterator {
 	  if (node_ptr + n < node_end) {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
-	      if (!node_ptr[p].isGroupOpen() && !node_ptr[n].isGroupLeader()) visible = false;
+	      if (p != active_node_id && !node_ptr[n].isGroupLeader()) visible = false;
 	      parent_nodes.push_back(p);
 	    }
 	  }
@@ -65,7 +68,7 @@ class ConstVisibleNodeIterator {
 	  if (node_ptr + n < node_end) {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
-	      if (!node_ptr[p].isGroupOpen() && !node_ptr[n].isGroupLeader()) visible = false;
+	      if (p != active_node_id && !node_ptr[n].isGroupLeader()) visible = false;
 	      parent_nodes.push_back(p);
 	    }
 	  }
@@ -89,7 +92,7 @@ class ConstVisibleNodeIterator {
 	    if (node_ptr + n < node_end) {
 	      int p = node_ptr[n].parent_node;
 	      if (p != -1) {
-		if (!node_ptr[p].isGroupOpen() && !node_ptr[n].isGroupLeader()) visible = false;
+		if (p != active_node_id && !node_ptr[n].isGroupLeader()) visible = false;
 		parent_nodes.push_back(p);
 	      }
 	    }
@@ -109,6 +112,7 @@ class ConstVisibleNodeIterator {
   std::vector<int> parent_nodes;
   size_t num_nodes;
   int current_node;
+  int active_node_id;
 };
 
 #endif
