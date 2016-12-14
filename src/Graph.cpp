@@ -212,7 +212,7 @@ void
 Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   unsigned int visible_nodes = calcVisibleNodeCount();
   double avg_edge_weight = total_edge_weight / getEdgeCount();
-  float alpha = getNodeArray().getAlpha();
+  float alpha = getAlpha();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
   unsigned int num_nodes = nodes->size();
@@ -514,7 +514,8 @@ Graph::getLocationGraphs() const {
 void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
-  getNodeArray().resume();
+  resume();
+  if (final_graph.get()) final_graph->resume();
   for (auto & gd : nested_graphs) {
     gd.second->refreshLayouts();
   }
@@ -590,8 +591,8 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
     setLocationGraphValid(false);
     assert(nodes->isDynamic());
     incVersion();
-    getNodeArray().resume();
-    final_graph->getNodeArray().resume();
+    resume();
+    final_graph->resume();
     changed = true;
   }
   
@@ -671,7 +672,7 @@ Graph::calculateEdgeCentrality() {
   assert(nodes->isDynamic());
   incVersion();
   randomizeGeometry();
-  getNodeArray().resume();
+  resume();
 }
 
 struct label_data_s {
@@ -783,7 +784,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	randomizeChildGeometry(best_child, true);
       }
     }
-    nodes->resume();
+    resume();
     structure_changed = true;
   }
 
@@ -983,7 +984,7 @@ Graph::updateFaceAppearance() {
 
 void
 Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const {
-  float k = nodes->getAlpha() * gravity;
+  float k = getAlpha() * gravity;
   if (k < EPSILON) return;
   
   auto end = end_visible_nodes();
@@ -1280,7 +1281,7 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
 
 
 void
-NodeArray::resume() {
+Graph::resume() {
   if (active_child_node == -1) {
     getNodeArray().setTopLevelAlpha(INITIAL_ALPHA);
   } else {
@@ -1289,7 +1290,7 @@ NodeArray::resume() {
 }
 
 void
-NodeArray::updateAlpha() {
+Graph::updateAlpha() {
   if (active_child_node == -1) {
     getNodeArray().updateTopLevelAlpha();
   } else {
