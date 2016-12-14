@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <unordered_set>
 
 using namespace std;
 
@@ -150,6 +151,17 @@ Louvain::oneLevel() {
     }
   }
 
+  std::unordered_set<int> clusters;
 
+  for (int node : nodes) {
+    clusters.insert(getNodeCommunity(node));
+  }
+
+  current_clusters.clear();
+  current_clusters.reserve(clusters.size());
+  for (auto id : clusters) {
+    current_clusters.push_back(id);
+  }
+  
   return is_improved;
 }
