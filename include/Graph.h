@@ -658,6 +658,7 @@ class Graph : public MBRObject {
   std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
   std::shared_ptr<GraphFilter> filter;
   int active_child_node = -1;
+  bool manually_selected_active_child = false;
   
   static int next_id;
 };
