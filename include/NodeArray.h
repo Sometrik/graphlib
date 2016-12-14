@@ -46,7 +46,7 @@ struct node_data_s {
   short texture, label_texture;
   NodeType type;
   std::string label;
-  int group_node;
+  float alpha;
 };
 
 class NodeArray : public ReadWriteObject {
@@ -83,7 +83,7 @@ class NodeArray : public ReadWriteObject {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, "", -1 });
+    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, "", 0.0f });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -220,31 +220,6 @@ class NodeArray : public ReadWriteObject {
   int getSRID() const { return srid; }
   void setSRID(int _srid) { srid = _srid; }
 
-  int getZeroDegreeGroup() const { return zerodegree_node_id; }
-  int createZeroDegreeGroup() {
-    if (zerodegree_node_id == -1) {
-      zerodegree_node_id = add();
-      setRandomPosition(zerodegree_node_id);
-    }
-    return zerodegree_node_id;
-  }
-  int getPairsGroup() const { return pairs_node_id; }
-  int createPairsGroup() {
-    if (pairs_node_id == -1) {
-      pairs_node_id = add();
-      setRandomPosition(pairs_node_id);
-    }
-    return pairs_node_id;
-  }
-  int getOneDegreeNode(int node_id) {
-    auto & nd = node_geometry[node_id];
-    if (nd.group_node != -1) return nd.group_node;
-    int group_node = add(); // nd is no longer valid after add
-    node_geometry[node_id].group_node = group_node;
-    setRandomPosition(group_node);
-    return group_node;
-  }
-
   int addArcGeometry(const ArcData2D & data) {
     int arc_id = 1 + int(arc_geometry.size());
     arc_geometry.push_back(data);
@@ -341,7 +316,6 @@ class NodeArray : public ReadWriteObject {
   LabelStyle label_style = LABEL_PLAIN;
   float alpha = 0.0f;
   int srid = 0, version = 1;
-  int zerodegree_node_id = -1, pairs_node_id = -1;
   int male_node_id = -1, female_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
   std::string node_color_column;
