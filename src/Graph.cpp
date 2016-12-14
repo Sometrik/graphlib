@@ -522,9 +522,6 @@ void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
   getNodeArray().resume();
-  for (auto & g : final_graphs) {
-    g->getNodeArray().resume();
-  }
   for (auto & gd : nested_graphs) {
     gd.second->refreshLayouts();
   }
@@ -563,57 +560,24 @@ Graph::createClusters() {
   incVersion();
 }
 
-unsigned int
-Graph::getSuitableFinalGraphCount() const {
-  if (nodes->size() >= 100 && 0) {
-    return 5;
-  } else {
-    return 1;
-  }
-}
-
 bool
 Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
   if (nodes->getPersonality() != NodeArray::SOCIAL_MEDIA || !nodes->isTemporal()) {
     return false;
   }
 
-  unsigned int count = getSuitableFinalGraphCount();
-  if (final_graphs.size() != count) {
-    cerr << "creating final graphs\n";
-    if (!final_graphs.empty()) {
-      final_graphs.front()->removeAllChildren();
-    }
-    final_graphs.clear();
+  if (!final_graph.get()) {
+    cerr << "creating final graph\n";
+    final_graph.reset();
     if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
-    if (count == 5) {
-      auto g0 = createSimilar();
-      auto g1 = createSimilar();
-      auto g2 = createSimilar();
-      auto g3 = createSimilar();
-      auto g4 = createSimilar();
-      g1->setMinSignificance(2.0f);
-      g1->setMinScale(3.2f);
-      g2->setMinSignificance(4.0f);
-      g2->setMinScale(0.8f);
-      g3->setMinSignificance(8.0f);
-      g3->setMinScale(0.2f);
-      g4->setMinSignificance(16.0f);
-      g4->setMinScale(0.05f);
-      addFinalGraph(g0);
-      addFinalGraph(g1);
-      addFinalGraph(g2);
-      addFinalGraph(g3);
-      addFinalGraph(g4);
-    } else {      
-      auto g1 = createSimilar();
-      assert(g1.get());
-      addFinalGraph(g1);
-    }
+    auto g1 = createSimilar();
+    assert(g1.get());
+    setFinalGraph(g1);
     statistics.clear();
-  } else if (!final_graphs.front()->hasPosition()) {
+  } else if (!final_graph->hasPosition()) {
     cerr << "RESETTING EVERYTHING!\n";
-    if (final_graphs.front()->hasNodeSelection()) {
+    if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
+    if (final_graph->hasNodeSelection()) {
       selectNodes(-2);
     } else {
       selectNodes();
@@ -623,24 +587,19 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
   }
     
   statistics.setSentimentRange(start_sentiment, end_sentiment);
-
-  assert(final_graphs.size() == 1);
   
   bool changed = false;
-  for (unsigned int i = 0; i < final_graphs.size(); i++) {
-    auto & g = final_graphs[i];
-    assert(g.get());
-    cerr << "trying to apply filter: st = " << int(start_time) << ", et = " << int(end_time) << ", ss = " << start_sentiment << ", es = " << end_sentiment << "\n";
-    if (g->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
-      cerr << "filter changed the graph\n";
-      g->incVersion();
-      setLocationGraphValid(false);
-      assert(nodes->isDynamic());
-      incVersion();
-      getNodeArray().resume();
-      g->getNodeArray().resume();
-      changed = true;
-    }
+  assert(final_graph.get());
+  cerr << "trying to apply filter: st = " << int(start_time) << ", et = " << int(end_time) << ", ss = " << start_sentiment << ", es = " << end_sentiment << "\n";
+  if (final_graph->applyFilter(start_time, end_time, start_sentiment, end_sentiment, *this, statistics)) {
+    cerr << "filter changed the graph\n";
+    final_graph->incVersion();
+    setLocationGraphValid(false);
+    assert(nodes->isDynamic());
+    incVersion();
+    getNodeArray().resume();
+    final_graph->getNodeArray().resume();
+    changed = true;
   }
   
   return changed;         
@@ -953,12 +912,7 @@ Graph::getNodeKey(int node_id) const {
 
 void
 Graph::invalidateVisibleNodes() {
-#if 0
-  final_graphs.clear();
-#else
-  final_graphs.clear();
   if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
-#endif
   for (auto & gd : nested_graphs) {
     gd.second->invalidateVisibleNodes();      
   }
@@ -970,33 +924,7 @@ Graph::setNodeTexture(const skey & key, int texture) {
   if (it2 != getNodeArray().getNodeCache().end()) {
     getNodeArray().setNodeTexture(it2->second, texture);
   }
-  for (auto & g : final_graphs) {
-    g->setNodeTexture(key, texture);
-  }
-}
-
-std::shared_ptr<Graph>
-Graph::getFinal(float scale) {
-  for (int i = int(final_graphs.size()) - 1; i >= 0; i--) {
-    auto & g = final_graphs[i];
-    if (i == 0 || (scale > 0.0f && g->getEdgeCount() > 0 && scale < g->getMinScale())) {
-      // cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << ")\n";
-      return g;
-    }
-  }
-  return std::shared_ptr<Graph>(0);
-}
-
-const std::shared_ptr<const Graph>
-Graph::getFinal(float scale) const {
-  for (int i = int(final_graphs.size()) - 1; i >= 0; i--) {
-    auto & g = final_graphs[i];
-    if (i == 0 || (scale > 0.0f && g->getEdgeCount() > 0 && scale < g->getMinScale())) {
-      // cerr << "final for scale " << scale << " of graph " << getId() << ": " << (i + 1) << " / " << final_graphs.size() << " (min_scale = " << g->getMinScale() << ", min_sig = " << g->getMinSignificance() << ", edges = " << g->getEdgeCount() << ")\n";
-      return g;
-    }
-  }
-  return std::shared_ptr<Graph>(0);
+  if (final_graph.get()) final_graph->setNodeTexture(key, texture);
 }
 
 void
@@ -1110,11 +1038,7 @@ Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, fl
 
 void
 Graph::reset() {
-  if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();
-  else {
-    assert(0);
-  }
-  final_graphs.clear();
+  if (getNodeArray().getFilter().get()) getNodeArray().getFilter()->reset();  
 }
 
 bool

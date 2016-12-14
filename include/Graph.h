@@ -435,24 +435,22 @@ class Graph : public MBRObject {
   void createClusters();
   void calculateEdgeCentrality();
       
-  Graph & getActualGraph(float scale) {
-    auto g = getFinal(scale);
+  Graph & getActualGraph() {
+    auto g = getFinal();
     return g.get() ? *g : *this;
   }
-  const Graph & getActualGraph(float scale) const {
-    auto g = getFinal(scale);
+  const Graph & getActualGraph() const {
+    auto g = getFinal();
     return g.get() ? *g : *this;
   }
   
-  std::shared_ptr<Graph> getFinal(float scale);
-  const std::shared_ptr<const Graph> getFinal(float scale) const;
+  std::shared_ptr<Graph> getFinal() { return final_graph; }
+  const std::shared_ptr<const Graph> getFinal() const { return final_graph; }
   
   std::shared_ptr<Graph> & getLocation() { return location_graph; }
   const std::shared_ptr<const Graph> getLocation() const { return location_graph; }
 
-  void addFinalGraph(std::shared_ptr<Graph> g) {
-    final_graphs.push_back(g);
-  }
+  void setFinalGraph(std::shared_ptr<Graph> g) { final_graph = g; }
   void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
 
   virtual void clear() {
@@ -622,7 +620,6 @@ class Graph : public MBRObject {
   unsigned int calcVisibleNodeCount() const;
   
  protected:
-  unsigned int getSuitableFinalGraphCount() const;
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
 
@@ -648,8 +645,7 @@ class Graph : public MBRObject {
   int highlighted_node = -1;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   bool location_graph_valid = false;
-  std::shared_ptr<Graph> location_graph;
-  std::vector<std::shared_ptr<Graph> > final_graphs;
+  std::shared_ptr<Graph> location_graph, final_graph;
   std::map<skey, int> face_cache;
   bool has_node_selection = false; 
   RawStatistics statistics;
