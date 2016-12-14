@@ -38,12 +38,10 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
       
       cerr << "l " << level << ": modularity increase: " << mod << " to " << new_mod << endl;
       mod = new_mod;
-    }
-
-    auto end = target_graph.end_visible_nodes();
-    for (auto it = target_graph.begin_visible_nodes(); it != end; ++it) {
-      auto & td = target_graph.getNodeTertiaryData(*it);
-      if (td.parent_node == -1) {
+      
+      for (auto cluster_id : c.getClusterIds()) {
+	auto & td = target_graph.getNodeTertiaryData(cluster_id);
+	assert(td.parent_node == -1);
 	float best_d = 0;
 	int best_node = -1;
 	for (int n = td.first_child; n != -1; ) {
@@ -52,12 +50,9 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 	    best_node = n;
 	    best_d = ctd.weighted_indegree;
 	  }
-	  target_graph.setIsGroupLeader(n, false);
 	  n = ctd.next_child;
 	}
-	if (best_node != -1) {
-	  target_graph.setIsGroupLeader(best_node, true);
-	}
+	target_graph.setGroupLeader(cluster_id, best_node);
       }
     }
   }
