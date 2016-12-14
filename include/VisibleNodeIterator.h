@@ -53,7 +53,7 @@ class ConstVisibleNodeIterator {
 	  if (node_ptr + n < node_end) {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
-	      if (p != active_node_id && !node_ptr[n].isGroupLeader()) visible = false;
+	      if (p != active_node_id && node_ptr[p].group_leader != n) visible = false;
 	      parent_nodes.push_back(p);
 	    }
 	  }
@@ -68,7 +68,7 @@ class ConstVisibleNodeIterator {
 	  if (node_ptr + n < node_end) {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
-	      if (p != active_node_id && !node_ptr[n].isGroupLeader()) visible = false;
+	      if (p != active_node_id && node_ptr[p].group_leader != n) visible = false;
 	      parent_nodes.push_back(p);
 	    }
 	  }
@@ -92,7 +92,7 @@ class ConstVisibleNodeIterator {
 	    if (node_ptr + n < node_end) {
 	      int p = node_ptr[n].parent_node;
 	      if (p != -1) {
-		if (p != active_node_id && !node_ptr[n].isGroupLeader()) visible = false;
+		if (p != active_node_id && node_ptr[p].group_leader != n) visible = false;
 		parent_nodes.push_back(p);
 	      }
 	    }
