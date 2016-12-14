@@ -40,16 +40,10 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
       mod = new_mod;
     }
 
-    unsigned int visible_nodes = 0, toplevel_nodes = 0;
     auto end = target_graph.end_visible_nodes();
     for (auto it = target_graph.begin_visible_nodes(); it != end; ++it) {
-      visible_nodes++;
       auto & td = target_graph.getNodeTertiaryData(*it);
       if (td.parent_node == -1) {
-	toplevel_nodes++;
-	if (td.child_count == 1) {
-	  // target_graph.removeChild(td.first_child);
-	}
 	float best_d = 0;
 	int best_node = -1;
 	for (int n = td.first_child; n != -1; ) {
@@ -66,7 +60,6 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 	}
       }
     }
-    cerr << "after louvain: visible = " << visible_nodes << ", toplevel = " << toplevel_nodes << endl;
   }
 
   return is_changed;
