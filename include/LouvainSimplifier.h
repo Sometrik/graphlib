@@ -17,7 +17,7 @@ class LouvainSimplifier : public GraphFilter {
 
 class LouvainSimplifierFactory : public GraphFilterFactory {
  public:
-  LouvainSimplifierFactory(int max_levels = 1) { }
+  LouvainSimplifierFactory(int _max_levels) : max_levels(_max_levels) { }
 
   virtual std::shared_ptr<GraphFilter> create() { return std::make_shared<LouvainSimplifier>(max_levels); }
 
