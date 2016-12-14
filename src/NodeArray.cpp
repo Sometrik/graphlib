@@ -6,9 +6,6 @@
 
 #include <algorithm>
 
-#define EPSILON 0.0000000001
-#define INITIAL_ALPHA		0.1f
-
 using namespace std;
 
 NodeArray::NodeArray() : size_method(SizeMethod::CONSTANT, 1.0f) {

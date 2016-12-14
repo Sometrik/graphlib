@@ -207,13 +207,9 @@ class NodeArray : public ReadWriteObject {
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
   
-  void setAlpha(float f) { alpha = f; }
-  void updateAlpha();
-  float getAlpha() const { return alpha; }
-  float isRunning() const { return alpha >= 0.0005f; }
-
-  void resume();
-  void stop() { alpha = 0.0f; }
+  void setTopLevelAlpha(float f) { alpha = f; }
+  float getTopLevelAlpha() const { return alpha; }
+  void updateTopLevelAlpha() { alpha *= 0.990f; }
 
   int getVersion() const { return version; }
 

@@ -17,6 +17,7 @@
 #include "Louvain.h"
 
 #define EPSILON 0.0000000001
+#define INITIAL_ALPHA		0.1f
 
 using namespace std;
 
@@ -1275,4 +1276,23 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
   double dnc = dnodecomm;
   
   return (dnc - totc * degc / m2);
+}
+
+
+void
+NodeArray::resume() {
+  if (active_child_node == -1) {
+    getNodeArray().setTopLevelAlpha(INITIAL_ALPHA);
+  } else {
+    getNodeArray().getNodeData(active_child_node).alpha = INITIAL_ALPHA;
+  }
+}
+
+void
+NodeArray::updateAlpha() {
+  if (active_child_node == -1) {
+    getNodeArray().updateTopLevelAlpha();
+  } else {
+    getNodeArray().getNodeData(active_child_node).alpha *= 0.990f;
+  }
 }

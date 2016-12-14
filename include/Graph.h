@@ -608,6 +608,19 @@ class Graph : public MBRObject {
 
   int getActiveChildNode() const { return active_child_node; }
 
+  void updateAlpha();
+  void resume();
+
+  float getAlpha() const {
+    if (active_child_node == -1) {
+      return getNodeArray().getTopLevelAlpha();
+    } else {
+      return getNodeArray().getNodeData(active_child_node).alpha;
+    }
+  }
+  float isRunning() const { return getAlpha() >= 0.0005f; }
+  // void stop() { alpha = 0.0f; }
+
  protected:
   Graph * getGraphById2(int id);
   const Graph * getGraphById2(int id) const;
