@@ -103,16 +103,6 @@ NodeArray::setNodeColor2(int i, const canvas::Color & c) {
 #endif
 
 void
-NodeArray::resume() {
-  alpha = INITIAL_ALPHA;
-}
-
-void
-NodeArray::updateAlpha() {
-  alpha *= 0.990f;
-}
-
-void
 NodeArray::setLabelTexture(const skey & key, int texture) {
   auto it2 = getNodeCache().find(key);
   if (it2 != getNodeCache().end()) {
