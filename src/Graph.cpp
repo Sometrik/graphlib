@@ -164,7 +164,6 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
       }
       p = ptd.parent_node;
     }
-    assert(parent_visible || td.isGroupLeader());
     
     glm::vec2 offset;
     unsigned short flags = 0;
@@ -735,7 +734,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       }
       p = ptd.parent_node;
     }
-    assert(parent_visible || td.isGroupLeader());
 
     if (!display.isPointVisible(pos)) {
       labels_changed |= td.setLabelVisibility(false);
@@ -1218,7 +1216,7 @@ Graph::removeAllChildren() {
       td.next_child = -1;
       td.louvain_tot = 0.0;
       td.louvain_in = 0.0;
-      td.setIsGroupLeader(false);
+      td.group_leader = -1;
       td.setIsInitialized(false);
     }
   }

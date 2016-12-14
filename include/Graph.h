@@ -17,8 +17,7 @@
 #define NODE_IS_SELECTED	1
 #define NODE_LABEL_VISIBLE	2
 #define NODE_FIXED_POSITION	4
-#define NODE_IS_GROUP_LEADER	8
-#define NODE_IS_INITIALIZED	16
+#define NODE_IS_INITIALIZED	8
 
 struct node_tertiary_data_s {
   int first_edge = -1;
@@ -31,6 +30,7 @@ struct node_tertiary_data_s {
   unsigned short flags = NODE_IS_SELECTED;
   unsigned short label_visibility_val = 0;
   float louvain_in = 0.0f, louvain_tot = 0.0f;
+  int group_leader = -1;
   
   void setNodeFixedPosition(int i, bool t) {
     if (t) flags |= NODE_FIXED_POSITION;
@@ -38,10 +38,9 @@ struct node_tertiary_data_s {
     // doesn't affect anything directly, so no need to update version
   }
 
-  bool setIsGroupLeader(bool t) {
-    if ((t && !isGroupLeader()) || (!t && isGroupLeader())) {
-      if (t) flags |= NODE_IS_GROUP_LEADER;
-      else flags &= ~NODE_IS_GROUP_LEADER;
+  bool setGroupLeader(int id) {
+    if (id != group_leader) {
+      group_leader = id;
       return true;
     } else {
       return false;
@@ -61,7 +60,6 @@ struct node_tertiary_data_s {
   bool isFixed() const { return flags & NODE_FIXED_POSITION; }
   bool isSelected() const { return flags & NODE_IS_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
-  bool isGroupLeader() const { return flags & NODE_IS_GROUP_LEADER; }
   bool isInitialized() const { return flags & NODE_IS_INITIALIZED; }
 
   bool setLabelVisibility(bool t) {
@@ -190,9 +188,9 @@ class Graph : public MBRObject {
     node_geometry3[node].age = age;
   }
 
-  void setIsGroupLeader(int node, bool t) {
+  void setGroupLeader(int node, int leader) {
     if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
-    node_geometry3[node].setIsGroupLeader(t);
+    node_geometry3[node].group_leader = leader;
   }
 
   void setIsInitialized(int node, bool t) {
