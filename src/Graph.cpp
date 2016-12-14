@@ -763,8 +763,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       if (is_open && (best_child == -1 || score > best_score)) {
 	best_child = *it;
 	best_score = score;
-      } else {
-	// structure_changed |= td.toggleNode(false);	
       }
     } else if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
       labels_changed |= td.setLabelVisibility(true);
@@ -782,9 +780,9 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       auto & td = node_geometry3[best_child];
       if (!td.isInitialized()) {
 	randomizeChildGeometry(best_child, true);
+	resume();
       }
     }
-    resume();
     structure_changed = true;
   }
 
