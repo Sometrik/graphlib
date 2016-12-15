@@ -62,12 +62,16 @@ class ConstVisibleNodeIterator {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
 	      if (!open_nodes.count(p)) {
-		int pp = node_ptr[p].parent_node;
-		if (node_ptr[p].group_leader != n || !open_nodes.count(pp)) {
-		  visible = false;
-		}
+		visible = false;
 	      }
 	      parent_nodes.push_back(p);
+	    }
+	    if (visible) {
+	      int l = node_ptr[n].group_leader;
+	      if (l != -1) {
+		processed_nodes[l] = false;
+		leader_nodes.push_back(l);
+	      }
 	    }
 	  }
 	  if (visible) current_node = n;
@@ -82,15 +86,19 @@ class ConstVisibleNodeIterator {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
 	      if (!open_nodes.count(p)) {
-		int pp = node_ptr[p].parent_node;
-		if (node_ptr[p].group_leader != n || !open_nodes.count(pp)) {
-		  visible = false;
-		}
+		visible = false;
 	      }
 	      parent_nodes.push_back(p);
 	    }
+	    if (visible) {
+	      int l = node_ptr[n].group_leader;
+	      if (l != -1) {
+		processed_nodes[l] = false;
+		leader_nodes.push_back(l);
+	      }
+	    }
 	  }
-	  if (visible) current_node = n;
+	  if (visible) current_node = n;	  
 	}
 	edge_ptr++;
 	if (edge_ptr != edge_end) {
@@ -100,7 +108,7 @@ class ConstVisibleNodeIterator {
 	}
       } else if (stage == PARENT_NODES) {
 	if (parent_nodes.empty()) {
-	  stage = END;
+	  stage = LEADER_NODES;
 	} else {
 	  int n = parent_nodes.back();
 	  parent_nodes.pop_back();
@@ -111,28 +119,44 @@ class ConstVisibleNodeIterator {
 	      int p = node_ptr[n].parent_node;
 	      if (p != -1) {
 		if (!open_nodes.count(p)) {
-		  int pp = node_ptr[p].parent_node;
-		  if (node_ptr[p].group_leader != n || !open_nodes.count(pp)) {
-		    visible = false;
-		  }
+		  visible = false;
 		}
 		parent_nodes.push_back(p);
 	      }
+	      if (visible) {
+		int l = node_ptr[n].group_leader;
+		if (l != -1) {
+		  processed_nodes[l] = false;
+		  leader_nodes.push_back(l);
+		}
+	      }
 	    }
 	    if (visible) current_node = n;
+	  }
+	}
+      } else if (stage == LEADER_NODES) {
+	if (leader_nodes.empty()) {
+	  stage = END;
+	} else {
+	  int n = leader_nodes.back();
+	  leader_nodes.pop_back();
+	  if (!processed_nodes[n]) {
+	    processed_nodes[n] = true;
+	    current_node = n;
 	  }
 	}
       }
     }
   }
   
-  enum Stage { EDGE_TAIL = 1, EDGE_HEAD, PARENT_NODES, END };
+  enum Stage { EDGE_TAIL = 1, EDGE_HEAD, PARENT_NODES, LEADER_NODES, END };
 
   Stage stage;
   const edge_data_s * edge_ptr, * edge_end;
   const node_tertiary_data_s * node_ptr, * node_end;
   std::vector<bool> processed_nodes;
   std::vector<int> parent_nodes;
+  std::vector<int> leader_nodes;
   size_t num_nodes;
   int current_node;
   int active_node_id;
