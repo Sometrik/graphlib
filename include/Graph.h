@@ -416,7 +416,6 @@ class Graph : public MBRObject {
   int getVersion() const { return version + nodes->getVersion(); }
   int getLabelVersion() const { return label_version + nodes->getVersion(); }
 
-  void createClusters();
   void calculateEdgeCentrality();
       
   Graph & getActualGraph() {

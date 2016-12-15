@@ -14,8 +14,6 @@
 #include <typeinfo>
 #include <unordered_set>
 
-#include "Louvain.h"
-
 #define EPSILON 0.0000000001
 #define INITIAL_ALPHA		0.1f
 
@@ -527,31 +525,6 @@ Graph::getGraphNodeId(int graph_id) const {
     if (gd.second->getId() == graph_id) return gd.first;
   }
   return -1;
-}
-
-void
-Graph::createClusters() {
-  cerr << "creating communities\n";
-
-  double precision = 0.000001;
-  ColorProvider colors(ColorProvider::CHART2);
-    
-  Louvain c(this, -1, precision);
-  double mod = modularity();
-  int level = 0;
-  bool is_improved = true;
-  bool is_first = true;
-  do {
-    is_improved = c.oneLevel();
-    double new_mod = modularity();
-    level++;
-    
-    cerr << "l " << level << ": modularity increase: " << mod << " to " << new_mod << endl;
-    mod = new_mod;
-    break;
-  } while (is_improved);
-
-  incVersion();
 }
 
 bool
