@@ -295,8 +295,8 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     // d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
-    l *= (level == 0 ? alpha : alpha / 48.0f) * idf;
-    // l *= alpha * idf;
+    // l *= (level == 0 ? alpha : alpha / 48.0f) * idf;
+    l *= alpha * idf;
     
     float k;
     if (fixed1) {
@@ -963,7 +963,7 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
       if (open) {
 	auto & pd = v[*it];
 	float factor = 1.0f;
-#if 1
+#if 0
 	if (td.parent_node >= 0) {
 	  factor = 28.0f;
 	}
