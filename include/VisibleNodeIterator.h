@@ -1,6 +1,9 @@
 #ifndef _VISIBLENODEITERATOR_H_
 #define _VISIBLENODEITERATOR_H_
 
+#include <unordered_set>
+#include <vector>
+
 class ConstVisibleNodeIterator {
  public:
   ConstVisibleNodeIterator(const edge_data_s * _edge_ptr,
@@ -17,6 +20,10 @@ class ConstVisibleNodeIterator {
     num_nodes(_num_nodes),
     active_node_id(_active_node_id)
   {
+    open_nodes.insert(-1);
+    for (int p = active_node_id; p != -1; p = node_ptr[p].parent_node) {
+      open_nodes.insert(p);
+    }
     processed_nodes.resize(num_nodes);
     fetchNextNode();
   }
@@ -28,7 +35,8 @@ class ConstVisibleNodeIterator {
     node_ptr(0),
     node_end(0),
     num_nodes(0),
-    active_node_id(-1) { }
+    active_node_id(-1) {
+  }
 
   const int & operator*() const { return current_node; }
   const int * get() const { return &current_node; }
@@ -53,7 +61,12 @@ class ConstVisibleNodeIterator {
 	  if (node_ptr + n < node_end) {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
-	      if (p != active_node_id && node_ptr[p].group_leader != n) visible = false;
+	      if (!open_nodes.count(p)) {
+		int pp = node_ptr[p].parent_node;
+		if (node_ptr[p].group_leader != n || !open_nodes.count(pp)) {
+		  visible = false;
+		}
+	      }
 	      parent_nodes.push_back(p);
 	    }
 	  }
@@ -68,7 +81,12 @@ class ConstVisibleNodeIterator {
 	  if (node_ptr + n < node_end) {
 	    int p = node_ptr[n].parent_node;
 	    if (p != -1) {
-	      if (p != active_node_id && node_ptr[p].group_leader != n) visible = false;
+	      if (!open_nodes.count(p)) {
+		int pp = node_ptr[p].parent_node;
+		if (node_ptr[p].group_leader != n || !open_nodes.count(pp)) {
+		  visible = false;
+		}
+	      }
 	      parent_nodes.push_back(p);
 	    }
 	  }
@@ -92,7 +110,12 @@ class ConstVisibleNodeIterator {
 	    if (node_ptr + n < node_end) {
 	      int p = node_ptr[n].parent_node;
 	      if (p != -1) {
-		if (p != active_node_id && node_ptr[p].group_leader != n) visible = false;
+		if (!open_nodes.count(p)) {
+		  int pp = node_ptr[p].parent_node;
+		  if (node_ptr[p].group_leader != n || !open_nodes.count(pp)) {
+		    visible = false;
+		  }
+		}
 		parent_nodes.push_back(p);
 	      }
 	    }
@@ -113,6 +136,7 @@ class ConstVisibleNodeIterator {
   size_t num_nodes;
   int current_node;
   int active_node_id;
+  std::unordered_set<int> open_nodes;
 };
 
 #endif
