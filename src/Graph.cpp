@@ -143,6 +143,12 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     labels.push_back({ pos, glm::vec2(), fd.label_texture, flags, black, white });
   }
 
+  std::unordered_set<int> open_nodes;
+  open_nodes.insert(-1);
+  for (int p = getActiveChildNode(); p != -1; p = getNodeTertiaryData(p).parent_node) {
+    open_nodes.insert(p);
+  }
+
   vector<Label> primary_labels;
   
   auto nodes_end = end_visible_nodes();
@@ -154,6 +160,10 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     float scale = 1.0f;
     auto pos = pd.position;
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node, scale *= 0.125f) {
+      if (!open_nodes.count(p)) {
+	scale = 1.0f;
+	pos = glm::vec3();
+      }
       pos *= 0.125f;
       pos += getNodeArray().getNodeData(p).position;
     }
@@ -625,27 +635,32 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 
   int best_child = -1;
   float best_score = 0.0f;
-  
+
+  if (node_geometry3.size() < getNodeArray().size()) node_geometry3.resize(getNodeArray().size());
+
+  std::unordered_set<int> open_nodes;
+  open_nodes.insert(-1);
+  for (int p = getActiveChildNode(); p != -1; p = getNodeTertiaryData(p).parent_node) {
+    open_nodes.insert(p);
+  }
+
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
-    if (node_geometry3.size() <= *it) node_geometry3.resize(*it + 1);
     auto & td = node_geometry3[*it];
     if (td.age < 0.0f || (!td.child_count && pd.label.empty())) {
       labels_changed |= td.setLabelVisibility(false);
       continue;
     }
+    float scale = 1.0f;
     auto pos = pd.position;
-    bool parent_visible = true;				 
-    for (int p = td.parent_node; p != -1; ) {
-      auto & ptd = getNodeTertiaryData(p);
-      if (p != active_child_node) {
-	pos = getNodeArray().getNodeData(p).position;
-	parent_visible = false;
-      } else {
-	pos += getNodeArray().getNodeData(p).position;
+    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      if (!open_nodes.count(p)) {
+	scale = 1.0f;
+	pos = glm::vec3();
       }
-      p = ptd.parent_node;
+      pos *= 0.125f;
+      pos += getNodeArray().getNodeData(p).position;    
     }
 
     if (!display.isPointVisible(pos)) {
