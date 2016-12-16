@@ -648,7 +648,59 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
-    if (td.age < 0.0f || (!td.child_count && pd.label.empty())) {
+    if (!td.child_count) {
+      continue;
+    } else if (td.child_count == 1) {
+      labels_changed |= td.setLabelVisibility(false);
+      continue;
+    }
+    float scale = 1.0f;
+    auto pos = pd.position;
+    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+      if (!open_nodes.count(p)) {
+	scale = 1.0f;
+	pos = glm::vec3();
+      }
+      pos *= 0.125f;
+      pos += getNodeArray().getNodeData(p).position;    
+    }
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+
+    auto ppos = display.project(pos);
+    auto d = ppos - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
+    auto d2 = ppos - glm::vec3(display.getViewport()[0] / 2.0f, display.getViewport()[1], 0.0f);
+    float l = glm::length(d);
+    bool is_open = l >= 100.0f;
+    float score = glm::length(d2);
+    if (l >= 10.0f) {
+      labels_changed |= td.setLabelVisibility(true);	    
+    } else {
+      labels_changed |= td.setLabelVisibility(false);
+    }
+    if (is_open && (best_child == -1 || score > best_score)) {
+      best_child = *it;
+      best_score = score;
+    }
+  }
+
+  if (setActiveChildNode(best_child)) {
+    if (best_child != -1) {
+      auto & td = node_geometry3[best_child];
+      if (!td.isInitialized()) {
+	randomizeChildGeometry(best_child, true);
+	resume();
+	td.setIsInitialized(true);
+      }
+    }
+    incVersion();
+  }
+
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & pd = getNodeArray().getNodeData(*it);
+    auto & td = node_geometry3[*it];
+    if (td.child_count) {
+      continue;
+    } else if (td.age < 0.0f || pd.label.empty()) {
       labels_changed |= td.setLabelVisibility(false);
       continue;
     }
@@ -668,29 +720,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       continue;
     }
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-    if (td.child_count) {
-      bool is_open = false;
-      float score = 0.0f;
-      if (td.child_count >= 2) {
-	auto ppos = display.project(pos);
-	auto d = ppos - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
-	auto d2 = ppos - glm::vec3(display.getViewport()[0] / 2.0f, display.getViewport()[1], 0.0f);
-	float l = glm::length(d);
-	is_open = l >= 100.0f;
-	score = glm::length(d2);
-	if (l >= 10.0f) {
-	  labels_changed |= td.setLabelVisibility(true);	    
-	} else {
-	  labels_changed |= td.setLabelVisibility(false);
-	}
-      } else {
-	labels_changed |= td.setLabelVisibility(false);
-      }
-      if (is_open && (best_child == -1 || score > best_score)) {
-	best_child = *it;
-	best_score = score;
-      }
-    } else if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
+    if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
       labels_changed |= td.setLabelVisibility(true);
     } else {
       float priority = 1000;
@@ -699,18 +729,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       }
       all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, priority, *it });
     }
-  }
-
-  if (setActiveChildNode(best_child)) {
-    if (best_child != -1) {
-      auto & td = node_geometry3[best_child];
-      if (!td.isInitialized()) {
-	randomizeChildGeometry(best_child, true);
-	resume();
-	td.setIsInitialized(true);
-      }
-    }
-    incVersion();
   }
 
   for (int i = 0; i < getFaceCount(); i++) {
