@@ -16,8 +16,7 @@
 
 #define NODE_IS_SELECTED	1
 #define NODE_LABEL_VISIBLE	2
-#define NODE_FIXED_POSITION	4
-#define NODE_IS_INITIALIZED	8
+#define NODE_IS_INITIALIZED	4
 
 struct node_tertiary_data_s {
   int first_edge = -1;
@@ -32,12 +31,6 @@ struct node_tertiary_data_s {
   float louvain_in = 0.0f, louvain_tot = 0.0f;
   int group_leader = -1;
   
-  void setNodeFixedPosition(int i, bool t) {
-    if (t) flags |= NODE_FIXED_POSITION;
-    else flags &= ~NODE_FIXED_POSITION;
-    // doesn't affect anything directly, so no need to update version
-  }
-
   bool setGroupLeader(int id) {
     if (id != group_leader) {
       group_leader = id;
@@ -57,7 +50,6 @@ struct node_tertiary_data_s {
     }
   }
 
-  bool isFixed() const { return flags & NODE_FIXED_POSITION; }
   bool isSelected() const { return flags & NODE_IS_SELECTED; }
   bool isLabelVisible() const { return flags & NODE_LABEL_VISIBLE; }
   bool isInitialized() const { return flags & NODE_IS_INITIALIZED; }

@@ -268,10 +268,6 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     }
     if (!open) continue;
     
-    bool fixed1 = td1.isFixed();
-    bool fixed2 = td2.isFixed();
-    if (fixed1 && fixed2) continue;
-
     auto & pd1 = v[tail], & pd2 = v[head];
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
     glm::vec3 d = pos2 - pos1;
@@ -302,14 +298,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     // l *= (level == 0 ? alpha : alpha / 48.0f) * idf;
     l *= alpha * idf;
     
-    float k;
-    if (fixed1) {
-      k = 1.0f;
-    } else if (fixed2) {
-      k = 0.0f;
-    } else {
-      k = w1 / (w1 + w2);
-    }
+    float k = w1 / (w1 + w2);
     pos2 -= d * l * k;
     pos1 += d * l * (1 - k);
   }
@@ -928,23 +917,15 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & td = getNodeTertiaryData(*it);
-    if (!td.isFixed()) {
-      bool open = td.parent_node == active_child_node;
-
-      if (open) {
-	auto & pd = v[*it];
-	float factor = 1.0f;
-#if 0
-	if (td.parent_node >= 0) {
-	  factor = 28.0f;
-	}
-#endif
-	float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
-	const glm::vec3 & pos = pd.position;
-	float d = glm::length(pos);
-	if (d > 0.001) {
-	  pd.position -= pos * (factor * k * sqrtf(d) / d * weight);
-	}
+    bool open = td.parent_node == active_child_node;
+    
+    if (open) {
+      auto & pd = v[*it];
+      float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
+      const glm::vec3 & pos = pd.position;
+      float d = glm::length(pos);
+      if (d > 0.001) {
+	pd.position -= pos * (k * sqrtf(d) / d * weight);
       }
     }
   }
