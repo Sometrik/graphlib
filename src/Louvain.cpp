@@ -89,6 +89,7 @@ Louvain::oneLevel() {
   bool is_improved = false;
   double modularity = getGraph().modularity();
 
+#if 0
   // shuffle nodes
   for (int i = 0; i < nodes.size()-1; i++) {
     int rand_pos = rand() % (nodes.size()-i)+i;
@@ -96,6 +97,7 @@ Louvain::oneLevel() {
     nodes[i] = nodes[rand_pos];
     nodes[rand_pos] = tmp;
   }
+#endif
 
   cerr << "max_num_passes = " << max_num_passes << endl;
   
