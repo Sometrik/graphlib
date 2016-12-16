@@ -348,10 +348,7 @@ class Graph : public MBRObject {
   
   Rect2d & getFaceMBR(int i) { return face_attributes[i].mbr; }
   const glm::vec2 & getFaceCentroid(int i) const { return face_attributes[i].centroid; }
-        
-  bool hasNodeSelection() const { return has_node_selection; }
-  void selectNodes(int node_id = -1, int depth = 0);
-  
+          
   void clearHighlight() {
     highlighted_node = -1;
   }
@@ -443,7 +440,6 @@ class Graph : public MBRObject {
     // do not clear nested graphs, unless we clear nodes also
 
     highlighted_node = -1;
-    has_node_selection = false;
     total_indegree = total_outdegree = 0;
     total_edge_weight = total_weighted_indegree = total_weighted_outdegree = 0.0;
   }
@@ -552,12 +548,6 @@ class Graph : public MBRObject {
   const std::unordered_map<int, std::shared_ptr<Graph> > & getNestedGraphs() const { return nested_graphs; }
   void updateFaceAppearance();
     
-  float getMinSignificance() const { return min_significance; }
-  float getMinScale() const { return min_scale; }
-  
-  void setMinSignificance(float s) { min_significance = s; }
-  void setMinScale(float s) { min_scale = s; }
-
   void relaxLinks(std::vector<node_position_data_s> & v) const;
   void applyGravity(float gravity, std::vector<node_position_data_s> & v) const;
   void applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v) const;
@@ -650,13 +640,11 @@ class Graph : public MBRObject {
   bool location_graph_valid = false;
   std::shared_ptr<Graph> location_graph, final_graph;
   std::map<skey, int> face_cache;
-  bool has_node_selection = false; 
   RawStatistics statistics;
   std::string keywords;
   int server_search_id = 0;
   bool is_loaded = false;
   float line_width = 1.0f;
-  float min_significance = 0.0f, min_scale = 0.0f;
   std::vector<node_tertiary_data_s> node_geometry3;
   double total_weighted_outdegree = 0, total_weighted_indegree = 0;
   unsigned int total_outdegree = 0, total_indegree = 0;

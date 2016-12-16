@@ -151,17 +151,11 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     auto & td = getNodeTertiaryData(*it);
     if (!(td.isLabelVisible() && pd.label_texture)) continue;
 
+    float scale = 1.0f;
     auto pos = pd.position;
-    bool parent_visible = true;				 
-    for (int p = td.parent_node; p != -1; ) {
-      auto & ptd = getNodeTertiaryData(p);
-      if (p != active_child_node) {
-	pos = getNodeArray().getNodeData(p).position;
-	parent_visible = false;
-      } else {
-	pos += getNodeArray().getNodeData(p).position;
-      }
-      p = ptd.parent_node;
+    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node, scale *= 0.125f) {
+      pos *= 0.125f;
+      pos += getNodeArray().getNodeData(p).position;
     }
     
     glm::vec2 offset;
@@ -172,7 +166,7 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       color1 = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
       // offset += glm::vec2(0, 0.5 * size);
-      pos += glm::vec3(0.0, size, 0.0);
+      pos += glm::vec3(0.0, size * scale, 0.0);
       flags |= LABEL_FLAG_CENTER;
       flags |= LABEL_FLAG_MIDDLE;
 
@@ -439,57 +433,6 @@ static bool compareCameraDistance(const pair<int, float> & a, const pair<int, fl
   return a.second > b.second;
 }
 
-void
-Graph::selectNodes(int input_node, int depth) {
-  if (input_node == -1) {
-    has_node_selection = false;
-    for (int n = 0; n < node_geometry3.size(); n++) {
-      node_geometry3[n].flags |= NODE_IS_SELECTED;
-    }
-  } else {
-    has_node_selection = true;
-    for (int n = 0; n < node_geometry3.size(); n++) {
-      node_geometry3[n].flags &= ~NODE_IS_SELECTED;
-    }
-    
-    if (input_node >= 0) { // can be -2 to select none
-      map<int, set<int> > all_edges;
-      
-      auto end = end_edges();
-      for (auto it = begin_edges(); it != end; ++it) {
-	all_edges[it->tail].insert(it->head);
-	all_edges[it->head].insert(it->tail);
-      }
-      
-      set<int> seen_nodes;
-      list<pair<int, int> > node_queue;
-      node_queue.push_back(make_pair(input_node, 0));
-      
-      while (!node_queue.empty()) {
-	int node_id = node_queue.front().first;
-	int node_depth = node_queue.front().second;
-	node_queue.pop_front();
-	
-	if (!seen_nodes.count(node_id)) {
-	  seen_nodes.insert(node_id);
-
-	  if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
-	  node_geometry3[node_id].flags |= NODE_IS_SELECTED;
-	  
-	  if (node_depth < depth) {
-	    map<int, set<int> >::iterator node_edges = all_edges.find(node_id);
-	    if (node_edges != all_edges.end()) {
-	      for (auto succ : node_edges->second) {
-		node_queue.push_back(make_pair(succ, node_depth + 1));
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-}
-
 std::vector<int>
 Graph::getNestedGraphIds() const {
   std::vector<int> v;
@@ -544,11 +487,6 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
   } else if (getFilter().get() && !getFilter()->hasPosition()) {
     cerr << "RESETTING EVERYTHING!\n";
     if (getFilter().get()) getFilter()->reset();
-    if (final_graph->hasNodeSelection()) {
-      selectNodes(-2);
-    } else {
-      selectNodes();
-    }
     
     statistics.clear();
   }
