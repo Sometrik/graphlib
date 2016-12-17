@@ -828,9 +828,19 @@ Graph::getGraphForWriting(int graph_id, const char * debug_name) {
 
 glm::vec3
 Graph::getNodePosition(int node_id) const {
+  std::unordered_set<int> open_nodes;
+  open_nodes.insert(-1);
+  for (int p = getActiveChildNode(); p != -1; p = getNodeTertiaryData(p).parent_node) {
+    open_nodes.insert(p);
+  }
+
   auto & td = getNodeTertiaryData(node_id);
   glm::vec3 pos = nodes->getNodeData(node_id).position;
   for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
+    if (!open_nodes.count(p)) {
+      pos = glm::vec3();
+    }
+    pos *= 0.125f;
     pos += nodes->getNodeData(p).position;
   }
   return pos;
