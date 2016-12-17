@@ -250,23 +250,23 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
 	  head = node_geometry3[head].parent_node;
 	}
       }
-      unsigned int key = tail * num_nodes + head;
-      assert(key < processed_edges.size());
-      if (processed_edges[key]) continue;
-      processed_edges[key] = true;
+      unsigned int key1 = tail * num_nodes + head;
+      assert(key1 < processed_edges.size());
+      if (processed_edges[key1]) continue;
+      unsigned int key2 = head * num_nodes + tail;
+      processed_edges[key1] = processed_edges[key2] = true;
       level = l1;
     }
     if (tail == head || (it->weight > -EPSILON && it->weight < EPSILON)) continue;
-    bool visible = true;
-
+    
     auto & td1 = getNodeTertiaryData(tail), & td2 = getNodeTertiaryData(head);
 
-    bool open = false;
-    if (getNodeTertiaryData(tail).parent_node == active_child_node &&
-	getNodeTertiaryData(head).parent_node == active_child_node) {
-      open = true;
+    if (getNodeTertiaryData(tail).parent_node != active_child_node) {
+      continue;
     }
-    if (!open) continue;
+    if (getNodeTertiaryData(head).parent_node != active_child_node) {
+      continue;
+    }
     
     auto & pd1 = v[tail], & pd2 = v[head];
     glm::vec3 & pos1 = pd1.position, & pos2 = pd2.position;
