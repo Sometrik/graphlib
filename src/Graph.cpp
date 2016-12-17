@@ -651,13 +651,14 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 	pos = glm::vec3();
       }
       pos *= 0.125f;
+      scale *= 0.125f;
       pos += getNodeArray().getNodeData(p).position;    
     }
-    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size()) * scale;
 
     auto ppos = display.project(pos);
     auto d = ppos - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
-    auto d2 = ppos - glm::vec3(display.getViewport()[0] / 2.0f, display.getViewport()[1], 0.0f);
+    auto d2 = ppos - glm::vec3(display.getViewport()[2] / 2.0f, display.getViewport()[3], 0.0f);
     float l = glm::length(d);
     bool is_open = l >= 100.0f;
     float score = glm::length(d2);
@@ -666,7 +667,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     } else {
       labels_changed |= td.setLabelVisibility(false);
     }
-    if (is_open && (best_child == -1 || score > best_score)) {
+    if (is_open && (best_child == -1 || score < best_score)) {
       best_child = *it;
       best_score = score;
     }
@@ -922,10 +923,12 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
     if (open) {
       auto & pd = v[*it];
       float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
+      // float weight = pow(td.size, 0.5f);
       const glm::vec3 & pos = pd.position;
       float d = glm::length(pos);
       if (d > 0.001) {
-	pd.position -= pos * (k * sqrtf(d) / d * weight);
+	// pd.position -= pos * (k * sqrtf(d) / d * weight);
+	pd.position -= pos * k * weight;
       }
     }
   }
@@ -1154,10 +1157,10 @@ Graph::getAllNeighbors(int node) const {
     assert(head < node_geometry3.size());
     while (head != -1 && tail != -1) {
       if (tail == node && head != node) {
-	r[head] += it->weight;
+	if (it->weight > r[head]) r[head] = it->weight;
 	break;
       } else if (head == node && tail != node) {
-	r[tail] += it->weight;
+	if (it->weight > r[tail]) r[tail] = it->weight;
 	break;
       }
       tail = node_geometry3[tail].parent_node;
