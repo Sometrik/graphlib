@@ -41,10 +41,10 @@ Louvain::neighboringCommunities(int node) const {
     float neigh_w = n.second;
     if (neigh != node) {
       auto it = comms.find(neigh_comm);
-      if (it != comms.end()) {
-	it->second += neigh_w;
-      } else {
+      if (it == comms.end()) {
 	comms[neigh_comm] = neigh_w;
+      } else {
+	it->second += neigh_w;
       }      
     }
   }
