@@ -31,6 +31,7 @@
 #define BOT_PROFILE	2
 #define MALE_NODE	3
 #define FEMALE_NODE	4
+#define GROUP_NODE	5
 
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
@@ -259,6 +260,7 @@ class NodeArray : public ReadWriteObject {
     int community_id = getCommunityById(id);
     if (community_id != -1) return community_id;
     communities[id] = community_id = add(NODE_COMMUNITY);
+    setNodeTexture(community_id, GROUP_NODE);
     setRandomPosition(community_id);
     return community_id;
   }
