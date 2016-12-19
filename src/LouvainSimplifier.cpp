@@ -8,7 +8,7 @@ using namespace std;
 
 LouvainSimplifier::LouvainSimplifier(int _max_levels) : max_levels(_max_levels) {
   keepHashtags(true);
-  keepLinks(false);
+  keepLinks(true);
 }
 
 bool
@@ -45,16 +45,19 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 	float best_d = 0;
 	int best_node = -1;
 	for (int n = td.first_child; n != -1; ) {
+	  auto & pd = target_graph.getNodeArray().getNodeData(n);
 	  auto & ctd = target_graph.getNodeTertiaryData(n);
-	  if (ctd.group_leader != -1) {
-	    auto & ctd2 = target_graph.getNodeTertiaryData(ctd.group_leader);
-	    if (best_node == -1 || ctd2.weighted_indegree > best_d) {
-	      best_node = ctd.group_leader;
-	      best_d = ctd2.weighted_indegree;
+	  if (pd.type != NODE_URL && pd.type != NODE_ATTRIBUTE) {
+	    if (ctd.group_leader != -1) {
+	      auto & ctd2 = target_graph.getNodeTertiaryData(ctd.group_leader);
+	      if (best_node == -1 || ctd2.weighted_indegree > best_d) {
+		best_node = ctd.group_leader;
+		best_d = ctd2.weighted_indegree;
+	      }
+	    } else if (best_node == -1 || ctd.weighted_indegree > best_d) {
+	      best_node = n;
+	      best_d = ctd.weighted_indegree;
 	    }
-	  } else if (best_node == -1 || ctd.weighted_indegree > best_d) {
-	    best_node = n;
-	    best_d = ctd.weighted_indegree;
 	  }
 	  n = ctd.next_child;
 	}
