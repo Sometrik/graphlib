@@ -181,7 +181,7 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
       flags |= LABEL_FLAG_MIDDLE;
 
       labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
-    } else if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
+    } else if (pd.type == NODE_HASHTAG) {
       color1 = glm::vec4(0.0f, 0.0f, 0.0f, 0.25f);
       flags |= LABEL_FLAG_MIDDLE;
       flags |= LABEL_FLAG_CENTER;
@@ -688,7 +688,9 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
-    if (td.child_count) {
+    if (pd.type == NODE_URL || pd.type == NODE_ATTRIBUTE) {
+      continue;
+    } else if (td.child_count) {
       continue;
     } else if (td.age < 0.0f || pd.label.empty()) {
       labels_changed |= td.setLabelVisibility(false);
@@ -710,7 +712,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       continue;
     }
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-    if (pd.type == NODE_URL || pd.type == NODE_HASHTAG) {
+    if (pd.type == NODE_HASHTAG) {
       labels_changed |= td.setLabelVisibility(true);
     } else {
       float priority = 1000;
