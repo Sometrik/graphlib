@@ -1,7 +1,7 @@
 #include "DXFLoader.h"
 
 #include "PlanarGraph.h"
-#include "../../personal/system/StringUtils.h"
+#include <StringUtils.h>
 
 #include <string>
 #include <sstream>

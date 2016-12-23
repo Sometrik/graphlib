@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "PlanarGraph.h"
-#include "../system/StringUtils.h"
+#include <StringUtils.h>
 
 using namespace std;
 

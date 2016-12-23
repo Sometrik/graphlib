@@ -6,7 +6,7 @@
 #include <fstream>
 
 #include "PlanarGraph.h"
-#include "../system/StringUtils.h"
+#include <StringUtils.h>
 
 #include <glm/glm.hpp>
 

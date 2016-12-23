@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "DirectedGraph.h"
-#include "../system/StringUtils.h"
+#include <StringUtils.h>
 
 using namespace std;
 
