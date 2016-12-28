@@ -28,6 +28,7 @@ class GraphFilter {
 
   void keepHashtags(bool t) { keep_hashtags = t; }
   void keepLinks(bool t) { keep_links = t; }
+  void keepLang(bool t) { keep_lang = t; }
   
  protected:
   bool processTemporalData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats);
@@ -40,6 +41,7 @@ class GraphFilter {
   unsigned int num_links = 0, num_hashtags = 0;
   bool keep_hashtags = false;
   bool keep_links = false;
+  bool keep_lang = false;
 };
 
 class GraphFilterFactory {
