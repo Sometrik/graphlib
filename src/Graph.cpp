@@ -1112,7 +1112,10 @@ Graph::addChild(int parent, int child, float dnodecomm) {
   
   auto & td = node_geometry3[parent];
 
-  td.louvain_tot += weightedDegree(child);
+  td.weighted_indegree += node_geometry3[child].weighted_indegree;
+  td.weighted_outdegree += node_geometry3[child].weighted_outdegree;
+  td.louvain_tot_in += node_geometry3[child].weighted_indegree;
+  td.louvain_tot_out += node_geometry3[child].weighted_outdegree;
   td.louvain_in += 2*dnodecomm + numberOfSelfLoops(child);
 }
 
@@ -1123,7 +1126,10 @@ Graph::removeChild(int child, float dnodecomm) {
 
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   auto & td = node_geometry3[parent];
-  td.louvain_tot -= weightedDegree(child);
+  td.weighted_indegree -= node_geometry3[child].weighted_indegree;
+  td.weighted_outdegree -= node_geometry3[child].weighted_outdegree;
+  td.louvain_tot_in -= node_geometry3[child].weighted_indegree;
+  td.louvain_tot_out -= node_geometry3[child].weighted_outdegree;
   td.louvain_in -= 2*dnodecomm + numberOfSelfLoops(child);
 
   return parent;
@@ -1147,10 +1153,15 @@ Graph::removeAllChildren() {
     if (i < node_geometry3.size()) {
       auto & nd = nodes->getNodeData(i);
       auto & td = node_geometry3[i];
-      td.child_count = 0;
-      td.first_child = -1;
+      if (td.child_count) {
+	td.child_count = 0;
+	td.first_child = -1;
+	td.weighted_indegree = 0.0f;
+	td.weighted_outdegree = 0.0f;	
+      }
       td.next_child = -1;
-      td.louvain_tot = 0.0;
+      td.louvain_tot_in = 0.0;
+      td.louvain_tot_out = 0.0;
       td.louvain_in = 0.0;
       td.group_leader = -1;
       td.setIsInitialized(false);
@@ -1186,14 +1197,15 @@ Graph::getAllNeighbors(int node) const {
 double
 Graph::modularity() const {
   double q = 0.0;
-  double total_weight = getTotalWeightedIndegree();
-  assert(total_weight >= 0);
+  double m = getTotalWeightedIndegree();
+  assert(m >= 0);
 
   size_t size = getNodeArray().size();
   for (int i = 0; i < size; i++) {
     auto & td = getNodeTertiaryData(i);
-    if (td.louvain_tot > 0) {
-      q += td.louvain_in / total_weight - (td.louvain_tot / total_weight) * (td.louvain_tot / total_weight);
+    if (td.louvain_tot_in + td.louvain_tot_out > 0) {
+      double tot_var = (td.louvain_tot_in + td.louvain_tot_out) / m;
+      q += td.louvain_in / m - tot_var * tot_var;
     }
   }
   
@@ -1205,7 +1217,7 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
   assert(node >= 0 && node < getNodeArray().size());
   auto & td_comm = getNodeTertiaryData(comm);
   
-  double totc = td_comm.louvain_tot;
+  double totc = td_comm.louvain_tot_in + td_comm.louvain_tot_out;
   double degc = w_degree;
   double m2 = getTotalWeightedIndegree();
   double dnc = dnodecomm;
@@ -1213,6 +1225,39 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
   return (dnc - totc * degc / m2);
 }
 
+double
+Graph::directedModularity() const {
+  double q = 0.0;
+  double m = getTotalWeightedIndegree();
+  assert(m >= 0);
+
+  size_t size = getNodeArray().size();
+  for (int i = 0; i < size; i++) {
+    auto & td = getNodeTertiaryData(i);
+    if (td.louvain_tot_in > 0 || td.louvain_tot_out > 0) {
+      double tot_out_var = (double)td.louvain_tot_out / m;
+      double tot_in_var = (double)td.louvain_tot_in / m;
+      q += td.louvain_in / m - (tot_out_var * tot_in_var);
+    }
+  }
+  
+  return q;
+}
+
+double
+Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree_out, double w_degree_in) const {
+  assert(node >= 0 && node < getNodeArray().size());
+  auto & td_comm = getNodeTertiaryData(comm);
+  
+  double totc_out = td_comm.louvain_tot_out;
+  double totc_in = td_comm.louvain_tot_in;
+  double degc_out = w_degree_out;
+  double degc_in = w_degree_in;
+  double m2 = getTotalWeightedIndegree();
+  double dnc = dnodecomm;
+  
+  return (dnc/m2 - ((degc_out*totc_in + degc_in*totc_out)/(m2*m2)));
+}
 
 void
 Graph::resume() {
@@ -1230,4 +1275,18 @@ Graph::updateAlpha() {
   } else {
     getNodeArray().getNodeData(active_child_node).alpha *= 0.990f;
   }
+}
+
+float
+Graph::numberOfSelfLoops(int node) {
+  int edge = getNodeFirstEdge(node);
+  float ws = 0.0f;
+  while (edge != -1) {
+    auto & ed = getEdgeAttributes(edge);
+    if (ed.head == node) {
+      ws += ed.weight;
+    }
+    edge = ed.next_node_edge;
+  }
+  return ws;
 }
