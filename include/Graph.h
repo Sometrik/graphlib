@@ -28,7 +28,7 @@ struct node_tertiary_data_s {
   float age = 0.0;
   unsigned short flags = NODE_IS_SELECTED;
   unsigned short label_visibility_val = 0;
-  float louvain_in = 0.0f, louvain_tot = 0.0f;
+  float louvain_in = 0.0f, louvain_tot_out = 0.0f, louvain_tot_in = 0.0f;
   int group_leader = -1;
   
   bool setGroupLeader(int id) {
@@ -79,7 +79,7 @@ edge_data_s() : weight(1.0f), tail(-1), head(-1), next_node_edge(-1), face(-1), 
 edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc, long long _coverage = 0)
 : weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc), coverage(_coverage) { }
   
-  float weight;
+  float weight, weight_divisor = 1.0f;
   int tail, head, next_node_edge, face, next_face_edge, arc, pair_edge = -1, parent_edge = -1;
   long long coverage;
 };
@@ -320,19 +320,8 @@ class Graph : public MBRObject {
     return node_geometry3[n].indegree + node_geometry3[n].outdegree;
   }
 
-  float numberOfSelfLoops(int node) {
-    int edge = getNodeFirstEdge(node);
-    float ws = 0.0f;
-    while (edge != -1) {
-      auto & ed = getEdgeAttributes(edge);
-      if (ed.head == node) {
-	ws += ed.weight;
-      }
-      edge = ed.next_node_edge;
-    }
-    return ws;
-  }
-
+  float numberOfSelfLoops(int node);
+  
   std::unordered_map<int, float> getAllNeighbors(int node) const;
 
   size_t getEdgeCount() const { return edge_attributes.size(); }
@@ -546,7 +535,10 @@ class Graph : public MBRObject {
   void applyAge();
 
   double modularity() const; // calculate the modularity of the communities
+  double directedModularity() const;
+    
   double modularityGain(int node, int comm, double dnodecomm, double w_degree) const;
+  double modularityGain(int node, int comm, double dnodecomm, double w_degree_out, double w_degree_in) const;
   
   float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
 
