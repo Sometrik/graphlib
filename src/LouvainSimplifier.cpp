@@ -6,7 +6,7 @@
 
 using namespace std;
 
-LouvainSimplifier::LouvainSimplifier(int _max_levels) : max_levels(_max_levels) {
+LouvainSimplifier::LouvainSimplifier() {
   keepHashtags(true);
   keepLinks(true);
   keepLang(true);
@@ -33,7 +33,7 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 
     cerr << "initial modularity = " << mod << endl;
     
-    for (int level = 1; level <= max_levels && is_improved; level++) {
+    for (int level = 1; is_improved; level++) {
       is_improved = c.oneLevel();
       double new_mod = target_graph.modularity();
       
