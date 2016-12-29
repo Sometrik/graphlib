@@ -1011,6 +1011,7 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   int next_node_edge = getNodeFirstEdge(n1);
   
   setNodeFirstEdge(n1, edge);
+  updateOutdegree(n1, weight);
 
   if (n1 == n2) {
     node_geometry3[n1].weighted_selfdegree += weight;
@@ -1019,7 +1020,6 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
       nodes->updateNodeAppearance(n2);
       setNodeAge(n2, initial_node_age); // this is first edge
     }
-    updateOutdegree(n1, weight);
     updateIndegree(n2, weight);
   }
   
