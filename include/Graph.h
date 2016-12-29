@@ -21,13 +21,12 @@
 struct node_tertiary_data_s {
   int first_edge = -1;
   int indegree = 0, outdegree = 0;
-  float weighted_indegree = 0.0f, weighted_outdegree = 0.0f;
+  float weighted_indegree = 0.0f, weighted_outdegree = 0.0f, weighted_selfdegree = 0.0f;
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
   float age = 0.0;
   unsigned short flags = NODE_IS_SELECTED;
   unsigned short label_visibility_val = 0;
-  float louvain_in = 0.0f, louvain_tot_out = 0.0f, louvain_tot_in = 0.0f;
   int group_leader = -1;
 
   bool hasChildren() const { return first_child != -1; }
@@ -320,7 +319,7 @@ class Graph : public MBRObject {
     return node_geometry3[n].indegree + node_geometry3[n].outdegree;
   }
 
-  float numberOfSelfLoops(int node);
+  // float numberOfSelfLoops(int node);
   
   std::unordered_map<int, float> getAllNeighbors(int node) const;
 

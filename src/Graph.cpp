@@ -1012,7 +1012,9 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   
   setNodeFirstEdge(n1, edge);
 
-  if (n1 != n2) {
+  if (n1 == n2) {
+    node_geometry3[n1].weighted_selfdegree += weight;
+  } else {
     if (!isNodeVisible(n2)) {
       nodes->updateNodeAppearance(n2);
       setNodeAge(n2, initial_node_age); // this is first edge
@@ -1110,9 +1112,7 @@ Graph::addChild(int parent, int child, float dnodecomm) {
 
   td.weighted_indegree += node_geometry3[child].weighted_indegree;
   td.weighted_outdegree += node_geometry3[child].weighted_outdegree;
-  td.louvain_tot_in += node_geometry3[child].weighted_indegree;
-  td.louvain_tot_out += node_geometry3[child].weighted_outdegree;
-  td.louvain_in += 2*dnodecomm + numberOfSelfLoops(child);
+  td.weighted_selfdegree += dnodecomm + node_geometry3[child].weighted_selfdegree;
 }
 
 // remove the node from its current community with which it has dnodecomm links
@@ -1124,10 +1124,7 @@ Graph::removeChild(int child, float dnodecomm) {
   auto & td = node_geometry3[parent];
   td.weighted_indegree -= node_geometry3[child].weighted_indegree;
   td.weighted_outdegree -= node_geometry3[child].weighted_outdegree;
-  td.louvain_tot_in -= node_geometry3[child].weighted_indegree;
-  td.louvain_tot_out -= node_geometry3[child].weighted_outdegree;
-  td.louvain_in -= 2*dnodecomm + numberOfSelfLoops(child);
-
+  td.weighted_selfdegree -= dnodecomm + node_geometry3[child].weighted_selfdegree;
   return parent;
 }
 
@@ -1153,12 +1150,10 @@ Graph::removeAllChildren() {
 	td.child_count = 0;
 	td.first_child = -1;
 	td.weighted_indegree = 0.0f;
-	td.weighted_outdegree = 0.0f;	
+	td.weighted_outdegree = 0.0f;
+	td.weighted_selfdegree = 0.0f;
       }
       td.next_child = -1;
-      td.louvain_tot_in = 0.0;
-      td.louvain_tot_out = 0.0;
-      td.louvain_in = 0.0;
       td.group_leader = -1;
       td.setIsInitialized(false);
     }
@@ -1199,9 +1194,9 @@ Graph::modularity() const {
   size_t size = getNodeArray().size();
   for (int i = 0; i < size; i++) {
     auto & td = getNodeTertiaryData(i);
-    if (td.louvain_tot_in + td.louvain_tot_out > 0) {
-      double tot_var = (td.louvain_tot_in + td.louvain_tot_out) / m;
-      q += td.louvain_in / m - tot_var * tot_var;
+    if (td.weighted_indegree + td.weighted_outdegree > 0) {
+      double tot_var = (td.weighted_indegree + td.weighted_outdegree) / m;
+      q += 2 * td.weighted_selfdegree / m - tot_var * tot_var;
     }
   }
   
@@ -1213,7 +1208,7 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
   assert(node >= 0 && node < getNodeArray().size());
   auto & td_comm = getNodeTertiaryData(comm);
   
-  double totc = td_comm.louvain_tot_in + td_comm.louvain_tot_out;
+  double totc = td_comm.weighted_indegree + td_comm.weighted_outdegree;
   double degc = w_degree;
   double m2 = getTotalWeightedIndegree();
   double dnc = dnodecomm;
@@ -1230,10 +1225,10 @@ Graph::directedModularity() const {
   size_t size = getNodeArray().size();
   for (int i = 0; i < size; i++) {
     auto & td = getNodeTertiaryData(i);
-    if (td.louvain_tot_in > 0 || td.louvain_tot_out > 0) {
-      double tot_out_var = (double)td.louvain_tot_out / m;
-      double tot_in_var = (double)td.louvain_tot_in / m;
-      q += td.louvain_in / m - (tot_out_var * tot_in_var);
+    if (td.weighted_indegree > 0 || td.weighted_outdegree > 0) {
+      double tot_out_var = (double)td.weighted_outdegree / m;
+      double tot_in_var = (double)td.weighted_indegree / m;
+      q += td.weighted_selfdegree / m - (tot_out_var * tot_in_var);
     }
   }
   
@@ -1245,8 +1240,8 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree_out,
   assert(node >= 0 && node < getNodeArray().size());
   auto & td_comm = getNodeTertiaryData(comm);
   
-  double totc_out = td_comm.louvain_tot_out;
-  double totc_in = td_comm.louvain_tot_in;
+  double totc_out = td_comm.weighted_outdegree;
+  double totc_in = td_comm.weighted_indegree;
   double degc_out = w_degree_out;
   double degc_in = w_degree_in;
   double m2 = getTotalWeightedIndegree();
