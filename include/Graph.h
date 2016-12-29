@@ -21,8 +21,7 @@
 struct node_tertiary_data_s {
   int first_edge = -1;
   int indegree = 0, outdegree = 0;
-  float weighted_indegree = 0.0f, weighted_outdegree = 0.0f, coverage_weight = 0.0f;
-  long long coverage = 0;
+  float weighted_indegree = 0.0f, weighted_outdegree = 0.0f;
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0;
   float age = 0.0;
@@ -77,13 +76,12 @@ struct node_tertiary_data_s {
 };
 
 struct edge_data_s {
-edge_data_s() : weight(1.0f), tail(-1), head(-1), next_node_edge(-1), face(-1), next_face_edge(-1), arc(0), coverage(0) { }
-edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc, long long _coverage = 0)
-: weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc), coverage(_coverage) { }
+edge_data_s() : weight(1.0f), tail(-1), head(-1), next_node_edge(-1), face(-1), next_face_edge(-1), arc(0) { }
+edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face, int _next_face_edge, int _arc)
+: weight(_weight), tail(_tail), head(_head), next_node_edge(_next_node_edge), face(_face), next_face_edge(_next_face_edge), arc(_arc) { }
   
   float weight, weight_divisor = 1.0f;
   int tail, head, next_node_edge, face, next_face_edge, arc, pair_edge = -1, parent_edge = -1;
-  long long coverage;
 };
 
 struct face_data_s {
@@ -220,7 +218,7 @@ class Graph : public MBRObject {
     }
   }
 
-  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0, long long coverage = 0);
+  int addEdge(int n1, int n2, int face = -1, float weight = 1.0f, int arc_id = 0);
 
   void connectEdgePair(int e1, int e2) {
     getEdgeAttributes(e1).pair_edge = e2;
@@ -498,19 +496,6 @@ class Graph : public MBRObject {
       
   void invalidateVisibleNodes();
 
-  void updateNodeCoverage(int n, long long coverage) {
-    if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
-    auto & nd = node_geometry3[n];
-    nd.coverage |= coverage;
-    float new_weight = 0;
-    for (int i = 0; i < 64; i++) {
-      if (nd.coverage & (1 << i)) new_weight += 1.0f;
-    }
-    new_weight /= 64.0f;
-    nd.coverage_weight = new_weight;
-    if (new_weight > max_node_coverage_weight) max_node_coverage_weight = new_weight;
-  }
-
   GraphRefR getGraphForReading(int graph_id, const char * debug_name) const;
   GraphRefW getGraphForWriting(int graph_id, const char * debug_name);
 
@@ -542,8 +527,6 @@ class Graph : public MBRObject {
   double modularityGain(int node, int comm, double dnodecomm, double w_degree) const;
   double modularityGain(int node, int comm, double dnodecomm, double w_degree_out, double w_degree_in) const;
   
-  float getMaxNodeCoverageWeight() const { return max_node_coverage_weight; }
-
   double getTotalWeightedOutdegree() const { return total_weighted_outdegree; }
   double getTotalWeightedIndegree() const { return total_weighted_indegree; }
   unsigned int getTotalOutdegree() const { return total_outdegree; }
@@ -608,7 +591,7 @@ class Graph : public MBRObject {
   std::vector<face_data_s> face_attributes;
   std::vector<edge_data_s> edge_attributes;
   double total_edge_weight = 0.0;
-  float max_edge_weight = 0.0f, max_node_coverage_weight = 0.0f;
+  float max_edge_weight = 0.0f;
   std::shared_ptr<NodeArray> nodes;
  
  private:

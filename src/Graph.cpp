@@ -934,7 +934,7 @@ Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const 
     
     if (open) {
       auto & pd = v[*it];
-      float weight = nodes->hasTemporalCoverage() ? td.coverage_weight : 1.0f;
+      float weight = 1.0f;
       // float weight = pow(td.size, 0.5f);
       const glm::vec3 & pos = pd.position;
       float d = glm::length(pos);
@@ -999,7 +999,7 @@ Graph::isNodeVisible(int node) const {
 }
 
 int
-Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long coverage) {
+Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   assert(n1 != -1 && n2 != -1);
   assert(weight >= 0);
   int edge = (int)edge_attributes.size();
@@ -1020,10 +1020,8 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc, long long covera
     updateOutdegree(n1, weight);
     updateIndegree(n2, weight);
   }
-  updateNodeCoverage(n1, coverage);
-  updateNodeCoverage(n2, coverage);
   
-  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc, coverage ));
+  edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
   total_edge_weight += fabsf(weight);
   if (weight > max_edge_weight) max_edge_weight = weight;
 
@@ -1060,8 +1058,6 @@ Graph::addChild(int parent, int child) {
   node_geometry3[child].parent_node = parent;
   node_geometry3[parent].child_count++;
   nodes->getNodeData(parent).label_texture = 0;
-  node_geometry3[parent].coverage = 0xffffffffffffffffULL;
-  node_geometry3[parent].coverage_weight = 1.0f;
   nodes->getNodeData(child).position -= nodes->getNodeData(parent).position;
 
   assert(nodes->isDynamic());

@@ -7,12 +7,7 @@
 using namespace std;
 
 bool
-GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) {
-  if (target_graph.getNodeArray().hasTemporalCoverage() && !(end_time > start_time)) {
-    cerr << "invalid time range for apply: " << start_time << " - " << end_time << endl;
-    return false;
-  }
-    
+GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t end_time, float start_sentiment, float end_sentiment, Graph & source_graph, RawStatistics & stats) {  
   auto & sid = source_graph.getNodeArray().getTable()["source"];
   auto & soid = source_graph.getNodeArray().getTable()["id"];
   auto & user_type = source_graph.getNodeArray().getTable()["type"];
@@ -96,7 +91,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	if (ut == MALE) type_node_id = nodes.createMaleNode();
 	else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
 	if (type_node_id != -1) {
-	  target_graph.addEdge(np.first, type_node_id, -1, 0.95f, 0, 1.0f);
+	  target_graph.addEdge(np.first, type_node_id, -1, 0.25f);
 	}
       }
 
@@ -114,14 +109,6 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       }
       
       if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || target_type != NODE_URL)) {
-
-	long long coverage = 0;
-	if (target_graph.getNodeArray().hasTemporalCoverage()) {
-	  assert(end_time > start_time);
-	  int time_pos = 63LL * (t - start_time) / (end_time - start_time);
-	  assert(time_pos >= 0 && time_pos < 64);
-	  coverage |= 1 << time_pos;
-	}
 	
 	unordered_map<int, unordered_map<int, int> >::iterator it1;
 	unordered_map<int, int>::iterator it2;
@@ -133,20 +120,8 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	  updateNodeSize(np.first);
 	  updateNodeSize(np.second);
 #endif
-	  if (target_graph.getNodeArray().hasTemporalCoverage()) {
-	    assert(0);
-	    auto & ed = target_graph.getEdgeAttributes(it2->second);
-	    ed.coverage |= coverage;
-	    float new_weight = 0;
-	    for (int i = 0; i < 64; i++) {
-	      if (ed.coverage & (1 << i)) new_weight += 1.0f;
-	    }
-	    new_weight /= 64.0f;
-	    target_graph.updateEdgeWeight(it2->second, new_weight - ed.weight);
-	  }
 	} else {
-	  bool tc = target_graph.getNodeArray().hasTemporalCoverage();
-	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, tc ? 1.0f / 64.0f : weight, 0, tc ? coverage : 1.0f);
+	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, weight, 0);
 	}
       }
     }  

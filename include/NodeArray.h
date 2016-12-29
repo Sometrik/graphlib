@@ -23,8 +23,7 @@
 #define GF_DYNAMIC		16
 #define GF_HAS_TEXTURES		32
 #define GF_PER_NODE_COLORS	64
-#define GF_TEMPORAL_COVERAGE	128
-#define GF_FLATTEN_HIERARCHY	256
+#define GF_FLATTEN_HIERARCHY	128
 
 #define DEFAULT_PROFILE	0
 #define PENDING_PROFILE	1
@@ -240,9 +239,6 @@ class NodeArray : public ReadWriteObject {
 
   bool hasTextures() const { return testFlags(GF_HAS_TEXTURES); }
   void setHasTextures(bool t) { updateFlags(GF_HAS_TEXTURES, t); }
-
-  bool hasTemporalCoverage() const { return testFlags(GF_TEMPORAL_COVERAGE); }
-  void setHasTemporalCoverage(bool t) { updateFlags(GF_TEMPORAL_COVERAGE, t); } 
 
   bool doFlattenHierarchy() const { return testFlags(GF_FLATTEN_HIERARCHY); }
   void setFlattenHierarchy(bool t) { updateFlags(GF_FLATTEN_HIERARCHY, t); }
