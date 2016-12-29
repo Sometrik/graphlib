@@ -639,9 +639,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     auto & td = node_geometry3[*it];
     if (!td.hasChildren()) {
       continue;
-    } else if (td.child_count == 1) {
-      labels_changed |= td.setLabelVisibility(false);
-      continue;
     }
     float scale = 1.0f;
     auto pos = pd.position;
@@ -1059,6 +1056,7 @@ Graph::addChild(int parent, int child) {
   node_geometry3[parent].first_child = child;
   node_geometry3[child].parent_node = parent;
   node_geometry3[parent].child_count++;
+  node_geometry3[parent].descendant_count += 1 + node_geometry3[child].descendant_count;
   nodes->getNodeData(parent).label_texture = 0;
   nodes->getNodeData(child).position -= nodes->getNodeData(parent).position;
 
@@ -1090,6 +1088,7 @@ Graph::removeChild(int child) {
     }
     node_geometry3[child].parent_node = node_geometry3[child].next_child = -1;
     node_geometry3[parent].child_count--;
+    node_geometry3[parent].descendant_count -= 1 + node_geometry3[child].descendant_count;
     nodes->getNodeData(parent).label_texture = 0;
     nodes->getNodeData(child).position += nodes->getNodeData(parent).position;
 
@@ -1148,11 +1147,12 @@ Graph::removeAllChildren() {
       auto & td = node_geometry3[i];
       if (td.hasChildren()) {
 	td.child_count = 0;
-	td.first_child = -1;
+      	td.first_child = -1;
 	td.weighted_indegree = 0.0f;
 	td.weighted_outdegree = 0.0f;
 	td.weighted_selfdegree = 0.0f;
       }
+      td.descendant_count = 0;
       td.next_child = -1;
       td.group_leader = -1;
       td.setIsInitialized(false);
@@ -1171,10 +1171,10 @@ Graph::getAllNeighbors(int node) const {
     assert(head < node_geometry3.size());
     while (head != -1 && tail != -1) {
       if (tail == node && head != node) {
-	if (it->weight > r[head]) r[head] = it->weight;
+	r[head] += it->weight;
 	break;
       } else if (head == node && tail != node) {
-	if (it->weight > r[tail]) r[tail] = it->weight;
+	r[tail] += it->weight;
 	break;
       }
       tail = node_geometry3[tail].parent_node;
