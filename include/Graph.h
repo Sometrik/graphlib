@@ -23,7 +23,7 @@ struct node_tertiary_data_s {
   int indegree = 0, outdegree = 0;
   float weighted_indegree = 0.0f, weighted_outdegree = 0.0f, weighted_selfdegree = 0.0f;
   int first_child = -1, next_child = -1, parent_node = -1;
-  unsigned int child_count = 0;
+  unsigned int child_count = 0, descendant_count = 0;
   float age = 0.0;
   unsigned short flags = NODE_IS_SELECTED;
   unsigned short label_visibility_val = 0;
