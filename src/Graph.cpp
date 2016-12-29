@@ -1267,17 +1267,3 @@ Graph::updateAlpha() {
     getNodeArray().getNodeData(active_child_node).alpha *= 0.990f;
   }
 }
-
-float
-Graph::numberOfSelfLoops(int node) {
-  int edge = getNodeFirstEdge(node);
-  float ws = 0.0f;
-  while (edge != -1) {
-    auto & ed = getEdgeAttributes(edge);
-    if (ed.head == node) {
-      ws += ed.weight;
-    }
-    edge = ed.next_node_edge;
-  }
-  return ws;
-}
