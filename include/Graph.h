@@ -30,6 +30,8 @@ struct node_tertiary_data_s {
   unsigned short label_visibility_val = 0;
   float louvain_in = 0.0f, louvain_tot_out = 0.0f, louvain_tot_in = 0.0f;
   int group_leader = -1;
+
+  bool hasChildren() const { return first_child != -1; }
   
   bool setGroupLeader(int id) {
     if (id != group_leader) {

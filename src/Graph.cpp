@@ -172,7 +172,7 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
     unsigned short flags = 0;
 
     glm::vec4 color1 = black, color2 = white;
-    if (td.child_count) {
+    if (td.hasChildren()) {
       float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
       color1 = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
       // offset += glm::vec2(0, 0.5 * size);
@@ -280,8 +280,8 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     float w1 = size_method.calculateSize(td1, total_indegree, total_outdegree, nodes->size());
     float w2 = size_method.calculateSize(td2, total_indegree, total_outdegree, nodes->size());
 
-    if (td1.child_count) l -= w1;
-    if (td2.child_count) l -= w2;
+    if (td1.hasChildren()) l -= w1;
+    if (td2.hasChildren()) l -= w2;
 
     if (l < EPSILON) continue;
 
@@ -637,7 +637,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
-    if (!td.child_count) {
+    if (!td.hasChildren()) {
       continue;
     } else if (td.child_count == 1) {
       labels_changed |= td.setLabelVisibility(false);
@@ -690,7 +690,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     auto & td = node_geometry3[*it];
     if (pd.type == NODE_URL || pd.type == NODE_ATTRIBUTE) {
       continue;
-    } else if (td.child_count) {
+    } else if (td.hasChildren()) {
       continue;
     } else if (td.age < 0.0f || pd.label.empty()) {
       labels_changed |= td.setLabelVisibility(false);
@@ -994,7 +994,7 @@ Graph::isNodeVisible(int node) const {
     return false;
   } else {
     // PROBLEM: node might not be visible even with children, since the children might be invisible
-    return node_geometry3[node].first_edge != -1 || node_geometry3[node].child_count > 0 || node_geometry3[node].indegree > 0;
+    return node_geometry3[node].first_edge != -1 || node_geometry3[node].hasChildren() || node_geometry3[node].indegree > 0;
   }
 }
 
@@ -1153,7 +1153,7 @@ Graph::removeAllChildren() {
     if (i < node_geometry3.size()) {
       auto & nd = nodes->getNodeData(i);
       auto & td = node_geometry3[i];
-      if (td.child_count) {
+      if (td.hasChildren()) {
 	td.child_count = 0;
 	td.first_child = -1;
 	td.weighted_indegree = 0.0f;
