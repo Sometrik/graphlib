@@ -18,6 +18,8 @@ namespace table {
   public:
   Column(const std::string & _name) : column_name(_name) { }
   Column(const char * _name) : column_name(_name) { }
+
+    Column(const Column & other) = delete;
     Column & operator= (const Column & other) = delete;
 
     virtual ~Column() { }
