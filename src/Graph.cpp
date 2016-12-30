@@ -101,12 +101,6 @@ Graph::randomizeGeometry(bool use_2d) {
   for (unsigned int i = 0; i < num_nodes; i++) {
     getNodeArray().setRandomPosition(i, use_2d);
   }
-  for (auto & gd : nested_graphs) {
-    auto & graph = gd.second;
-    if (!graph->nodes->hasSpatialData()) {
-      graph->randomizeGeometry(use_2d);       
-    }
-  }
   mbr = Rect2d(-50, -50, +50, +50);
 }
 
@@ -432,41 +426,11 @@ static bool compareCameraDistance(const pair<int, float> & a, const pair<int, fl
   return a.second > b.second;
 }
 
-std::vector<int>
-Graph::getNestedGraphIds() const {
-  std::vector<int> v;
-  for (auto & gd : nested_graphs) {
-    v.push_back(gd.second->getId());
-  }
-  return v;
-}
-
-std::vector<int>
-Graph::getLocationGraphs() const {
-  std::vector<int> v;
-  for (auto & gd : nested_graphs) {
-    auto & graph = gd.second;
-    if (graph->getLocation().get()) v.push_back(graph->getId());
-  }
-  return v;
-}
-
 void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
   resume();
   if (final_graph.get()) final_graph->resume();
-  for (auto & gd : nested_graphs) {
-    gd.second->refreshLayouts();
-  }
-}
-
-int
-Graph::getGraphNodeId(int graph_id) const {
-  for (auto & gd : nested_graphs) {
-    if (gd.second->getId() == graph_id) return gd.first;
-  }
-  return -1;
 }
 
 bool
@@ -771,40 +735,13 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   return labels_changed;
 }
 
-Graph *
-Graph::getGraphById2(int graph_id) {
-  if (graph_id == getId()) {
-    return this;
-  } else {
-    for (auto & gd : nested_graphs) {
-      Graph * r = gd.second->getGraphById2(graph_id);
-      if (r) return r;
-    }
-  }
-  return 0;
-}
-
-const Graph *
-Graph::getGraphById2(int graph_id) const {
-  if (graph_id == getId()) {
-    return this;
-  } else {
-    for (auto & gd : nested_graphs) {
-      const Graph * r = gd.second->getGraphById2(graph_id);
-      if (r) return r;
-    }
-  }
-  return 0;
-}
-
 GraphRefR
-Graph::getGraphForReading(int graph_id, const char * debug_name) const {
+Graph::lockGraphForReading(const char * debug_name) const {
   double t0 = DateTime::getCurrentTime();
-  const Graph * ptr = getGraphById2(graph_id);
-  auto graph = GraphRefR(ptr);
+  auto graph = GraphRefR(this);
   double t = DateTime::getCurrentTime() - t0;
   if (t > 0.01) {
-    cerr << "getGraphForReading() took too long (" << t << ")";
+    cerr << "lockGraphForReading() took too long (" << t << ")";
     if (debug_name) cerr << " for " << debug_name << endl;
     else cerr << endl;
   }
@@ -812,13 +749,12 @@ Graph::getGraphForReading(int graph_id, const char * debug_name) const {
 }
 
 GraphRefW
-Graph::getGraphForWriting(int graph_id, const char * debug_name) {
+Graph::lockGraphForWriting(const char * debug_name) {
   double t0 = DateTime::getCurrentTime();
-  Graph * ptr = getGraphById2(graph_id);
-  auto graph = GraphRefW(ptr); 
+  auto graph = GraphRefW(this);
   double t = DateTime::getCurrentTime() - t0;
   if (t > 0.01) {
-    cerr << "getGraphForWriting() took too long (" << t << ")";
+    cerr << "lockGraphForWriting() took too long (" << t << ")";
     if (debug_name) cerr << " for " << debug_name << endl;
     else cerr << endl;
   }
@@ -868,9 +804,6 @@ Graph::invalidateVisibleNodes() {
   if (final_graph.get()) final_graph->removeAllChildren();
   final_graph.reset();
   if (getFilter().get()) getFilter()->reset();
-  for (auto & gd : nested_graphs) {
-    gd.second->invalidateVisibleNodes();      
-  }
 }
 
 void

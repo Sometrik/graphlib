@@ -157,7 +157,6 @@ class Graph : public MBRObject {
   }
 
   std::vector<int> getLocationGraphs() const;
-  std::vector<int> getNestedGraphIds() const;
   
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
@@ -343,7 +342,10 @@ class Graph : public MBRObject {
 
   void setId(int _id) { id = _id; }
   int getId() const { return id; }
-  
+
+  void setName(const std::string & _name) { name = _name; }
+  const std::string & getName() const { return name; }
+
   void setSourceId(short s) { source_id = s; }
   short getSourceId() const { return source_id; }
 
@@ -377,9 +379,6 @@ class Graph : public MBRObject {
   void clearTextures(int clear_flags = CLEAR_ALL) {
     if (location_graph.get()) location_graph->clearTextures(clear_flags);
     nodes->clearTextures(clear_flags);
-    for (auto & gd : nested_graphs) {
-      gd.second->clearTextures(clear_flags);
-    }
     if (clear_flags & CLEAR_LABELS) {
       for (int i = 0; i < getFaceCount(); i++) {
 	face_attributes[i].label_texture = 0;
@@ -418,7 +417,6 @@ class Graph : public MBRObject {
     faces.clear();    
     face_attributes.clear();
     edge_attributes.clear();
-    // do not clear nested graphs, unless we clear nodes also
 
     highlighted_node = -1;
     total_indegree = total_outdegree = 0;
@@ -453,7 +451,6 @@ class Graph : public MBRObject {
   ConstVisibleNodeIterator begin_visible_nodes() const { return ConstVisibleNodeIterator(&(edge_attributes.front()), &(edge_attributes.back()) + 1, &(node_geometry3.front()), &(node_geometry3.back()) + 1, nodes->size(), active_child_node); }
   ConstVisibleNodeIterator end_visible_nodes() const { return ConstVisibleNodeIterator(); }
   
-  int getGraphNodeId(int graph_id) const;
   bool updateSelection(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
 
   const RawStatistics & getStatistics() const { return statistics; }
@@ -496,24 +493,9 @@ class Graph : public MBRObject {
       
   void invalidateVisibleNodes();
 
-  GraphRefR getGraphForReading(int graph_id, const char * debug_name) const;
-  GraphRefW getGraphForWriting(int graph_id, const char * debug_name);
-
-  std::string getGraphName(int graph_id) const {
-    for (auto & gd : nested_graphs) {
-      auto & graph = gd.second;
-      if (graph->getId() == graph_id) {
-	return nodes->getTable()["name"].getText(gd.first);
-      }
-    }   
-    return "";
-  }
-
-  void setNestedGraph(int node_id, const std::shared_ptr<Graph> & graph) {
-    nested_graphs[node_id] = graph;
-  }
+  GraphRefR lockGraphForReading(const char * debug_name) const;
+  GraphRefW lockGraphForWriting(const char * debug_name);
   
-  const std::unordered_map<int, std::shared_ptr<Graph> > & getNestedGraphs() const { return nested_graphs; }
   void updateFaceAppearance();
     
   void relaxLinks(std::vector<node_position_data_s> & v) const;
@@ -580,9 +562,6 @@ class Graph : public MBRObject {
   // void stop() { alpha = 0.0f; }
 
  protected:
-  Graph * getGraphById2(int id);
-  const Graph * getGraphById2(int id) const;
-
   void incLabelVersion() { label_version++; }
 
   bool setActiveChildNode(int id);
@@ -610,7 +589,7 @@ class Graph : public MBRObject {
   std::shared_ptr<Graph> location_graph, final_graph;
   std::map<skey, int> face_cache;
   RawStatistics statistics;
-  std::string keywords;
+  std::string name, keywords;
   int server_search_id = 0;
   bool is_loaded = false;
   float line_width = 1.0f;
@@ -622,7 +601,6 @@ class Graph : public MBRObject {
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
   float initial_node_age = 0.0f;
-  std::unordered_map<int, std::shared_ptr<Graph> > nested_graphs;
   std::shared_ptr<GraphFilter> filter;
   int active_child_node = -1;
   bool manually_selected_active_child = false;
