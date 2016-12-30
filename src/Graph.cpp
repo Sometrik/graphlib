@@ -1128,6 +1128,20 @@ Graph::removeChild(int child, float dnodecomm) {
 }
 
 void
+Graph::flattenChildren(int new_parent, int old_parent) {
+  if (old_parent == -1) old_parent = new_parent;
+  
+  if (node_geometry3.size() <= old_parent) node_geometry3.resize(old_parent + 1);
+  for (int n = node_geometry3[old_parent].first_child; n != -1; n = node_geometry3[n].next_child) {
+    flattenChildren(new_parent, n);
+    if (node_geometry3[n].parent_node != new_parent) {
+      removeChild(n);
+      addChild(new_parent, n);
+    }
+  }
+}
+  
+void
 Graph::removeAllChildren() {
   assert(nodes->isDynamic());
   for (int i = 0; i < nodes->size(); i++) {

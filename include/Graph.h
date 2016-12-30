@@ -169,6 +169,7 @@ class Graph : public MBRObject {
   void addChild(int parent, int child, float dnodecomm);
   int removeChild(int child);
   int removeChild(int child, float dnodecomm);
+  void flattenChildren(int new_parent, int old_parent = -1);
   
   void removeAllChildren();
 
