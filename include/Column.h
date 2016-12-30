@@ -62,12 +62,9 @@ namespace table {
     }
     
     const std::string & name() const { return column_name; }
-    bool isVisible() const { return is_visible; }
-    void setVisible(bool t) { is_visible = t; }
     
   private:
     std::string column_name;
-    bool is_visible = true;
   };
   
   class NullColumn : public Column {
