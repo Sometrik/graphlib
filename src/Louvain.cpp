@@ -155,14 +155,20 @@ Louvain::oneLevel() {
 
   std::unordered_set<int> clusters;
 
-  for (int node : nodes) {
-    clusters.insert(getNodeCommunity(node));
-  }
-
-  current_clusters.clear();
-  current_clusters.reserve(clusters.size());
-  for (auto id : clusters) {
-    current_clusters.push_back(id);
+  if (is_improved) {
+    for (int node : nodes) {
+      clusters.insert(getNodeCommunity(node));
+    }
+    
+    current_clusters.clear();
+    current_clusters.reserve(clusters.size());
+    for (auto id : clusters) {
+      current_clusters.push_back(id);
+    }
+  } else {
+    for (int node : nodes) {
+      getGraph().removeChild(node);
+    }
   }
   
   return is_improved;
