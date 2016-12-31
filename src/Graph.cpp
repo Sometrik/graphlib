@@ -1045,6 +1045,8 @@ Graph::addChild(int parent, int child, float dnodecomm) {
   td.weighted_indegree += node_geometry3[child].weighted_indegree;
   td.weighted_outdegree += node_geometry3[child].weighted_outdegree;
   td.weighted_selfdegree += dnodecomm + node_geometry3[child].weighted_selfdegree;
+  td.indegree += node_geometry3[child].indegree;
+  td.outdegree += node_geometry3[child].outdegree;  
 }
 
 // remove the node from its current community with which it has dnodecomm links
@@ -1057,6 +1059,8 @@ Graph::removeChild(int child, float dnodecomm) {
   td.weighted_indegree -= node_geometry3[child].weighted_indegree;
   td.weighted_outdegree -= node_geometry3[child].weighted_outdegree;
   td.weighted_selfdegree -= dnodecomm + node_geometry3[child].weighted_selfdegree;
+  td.indegree -= node_geometry3[child].indegree;
+  td.outdegree -= node_geometry3[child].outdegree;  
   return parent;
 }
 
@@ -1095,6 +1099,7 @@ Graph::removeAllChildren() {
       if (td.hasChildren()) {
 	td.child_count = 0;
       	td.first_child = -1;
+	td.indegree = td.outdegree = 0;
 	td.weighted_indegree = 0.0f;
 	td.weighted_outdegree = 0.0f;
 	td.weighted_selfdegree = 0.0f;
