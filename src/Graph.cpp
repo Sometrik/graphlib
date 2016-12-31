@@ -217,7 +217,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   processed_edges.resize(num_nodes * num_nodes);			
   auto end = end_edges();
   for (auto it = begin_edges(); it != end; ++it) {
-    if (it->weight < 1.0f) continue;
+    if (it->weight < 0.2f) continue;
     int tail = it->tail, head = it->head;
     int level = 0;
     assert(tail >= 0 && head >= 0);
