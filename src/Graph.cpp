@@ -290,7 +290,7 @@ Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
     // d *= getAlpha() * it->weight * link_strength * (l - link_length) / l;
     // d *= alpha * fabsf(it->weight) / max_edge_weight; // / avg_edge_weight;
     // l *= (level == 0 ? alpha : alpha / 48.0f) * idf;
-    l *= alpha * idf;
+    l *= alpha * idf * it->weight;
     
     float k = w1 / (w1 + w2);
     pos2 -= d * l * k;
