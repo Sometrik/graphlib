@@ -91,7 +91,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	if (ut == MALE) type_node_id = nodes.createMaleNode();
 	else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
 	if (type_node_id != -1) {
-	  target_graph.addEdge(np.first, type_node_id, -1, 0.25f);
+	  target_graph.addEdge(np.first, type_node_id, -1, 0.125f);
 	}
       }
 
@@ -105,7 +105,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       } else if (target_type == NODE_URL) {
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
-	weight = 0.25f;
+	weight = 0.125f;
       }
       
       if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || target_type != NODE_URL)) {
