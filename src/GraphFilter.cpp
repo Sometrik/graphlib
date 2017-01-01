@@ -4,6 +4,13 @@
 
 #include <iostream>
 
+// Hashtag weight should be at least little larger than URL weight
+// since we prefer to have a hashtag as a representative node
+
+#define ATTRIBUTE_WEIGHT	0.15f
+#define HASHTAG_WEIGHT		0.26f
+#define URL_WEIGHT		0.24f
+
 using namespace std;
 
 bool
@@ -91,7 +98,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	if (ut == MALE) type_node_id = nodes.createMaleNode();
 	else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
 	if (type_node_id != -1) {
-	  target_graph.addEdge(np.first, type_node_id, -1, 0.15f);
+	  target_graph.addEdge(np.first, type_node_id, -1, ATTRIBUTE_WEIGHT);
 	}
       }
 
@@ -101,11 +108,11 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       } else if (target_type == NODE_HASHTAG) {
 	stats.addHashtag(name_column.getText(np.second));
 	num_hashtags++;
-	weight = 0.25f;
+	weight = HASHTAG_WEIGHT;
       } else if (target_type == NODE_URL) {
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
-	weight = 0.25f;
+	weight = URL_WEIGHT;
       }
       
       if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || target_type != NODE_URL)) {
