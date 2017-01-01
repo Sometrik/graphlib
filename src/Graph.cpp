@@ -8,11 +8,12 @@
 #include "RenderMode.h"
 #include "Label.h"
 
-#include <DateTime.h>
 #include <algorithm>
 #include <iostream>
 #include <typeinfo>
 #include <unordered_set>
+
+#include <sys/time.h>
 
 #define EPSILON 0.0000000001
 #define INITIAL_ALPHA		0.1f
@@ -739,11 +740,22 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   return labels_changed;
 }
 
+static double getCurrentTime() {
+  struct timeval tv;
+  struct timezone tz;
+  int r = gettimeofday(&tv, &tz);
+  double t = 0;
+  if (r == 0) {
+    t = (double)tv.tv_sec + tv.tv_usec / 1000000.0;
+  }
+  return t;
+}
+
 GraphRefR
 Graph::lockGraphForReading(const char * debug_name) const {
-  double t0 = DateTime::getCurrentTime();
+  double t0 = getCurrentTime();
   auto graph = GraphRefR(this);
-  double t = DateTime::getCurrentTime() - t0;
+  double t = getCurrentTime() - t0;
   if (t > 0.01) {
     cerr << "lockGraphForReading() took too long (" << t << ")";
     if (debug_name) cerr << " for " << debug_name << endl;
@@ -754,9 +766,9 @@ Graph::lockGraphForReading(const char * debug_name) const {
 
 GraphRefW
 Graph::lockGraphForWriting(const char * debug_name) {
-  double t0 = DateTime::getCurrentTime();
+  double t0 = getCurrentTime();
   auto graph = GraphRefW(this);
-  double t = DateTime::getCurrentTime() - t0;
+  double t = getCurrentTime() - t0;
   if (t > 0.01) {
     cerr << "lockGraphForWriting() took too long (" << t << ")";
     if (debug_name) cerr << " for " << debug_name << endl;
