@@ -7,6 +7,7 @@ enum NodeType : unsigned short {
   NODE_ANY_FEMALE,
   NODE_ANY_PAGE,
   NODE_URL,
+  NODE_IMAGE,
   NODE_HASHTAG,
   NODE_TOKEN,
   NODE_USER,
