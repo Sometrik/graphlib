@@ -181,7 +181,7 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
       flags |= LABEL_FLAG_MIDDLE;
       flags |= LABEL_FLAG_CENTER;
       labels.push_back({ pos, offset, pd.label_texture, flags, color1, color2 });
-    } else if (pd.type == NODE_URL) {
+    } else if (pd.type == NODE_URL || pd.type == NODE_IMAGE) {
       flags |= LABEL_FLAG_MIDDLE;
       flags |= LABEL_FLAG_CENTER;
       labels.push_back({ pos, offset, pd.label_texture, flags, black, white });
@@ -385,7 +385,7 @@ Graph::extractLocationGraph(Graph & target_graph) {
       // sn.second++;
       
       NodeType type = getNodeArray().getNodeData(np.second).type;
-      assert(type != NODE_URL && type != NODE_HASHTAG);
+      assert(type != NODE_URL && type != NODE_IMAGE && type != NODE_HASHTAG);
     }
     
     if (lon2 == 0 && lat2 == 0) {
@@ -678,7 +678,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       continue;
     }
     float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
-    if (pd.type == NODE_HASHTAG || pd.type == NODE_URL) {
+    if (pd.type == NODE_HASHTAG || pd.type == NODE_URL || pd.type == NODE_IMAGE) {
       labels_changed |= td.setLabelVisibility(true);
     } else {
       float priority = 1000;

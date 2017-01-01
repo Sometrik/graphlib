@@ -161,7 +161,7 @@ GroupSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_time,
       if (target_type == NODE_HASHTAG) {
 	stats.addHashtag(name_column.getText(np.second));
 	num_hashtags++;
-      } else if (target_type == NODE_URL) {
+      } else if (target_type == NODE_URL || target_type == NODE_IMAGE) {
 	stats.addLink(name_column.getText(np.second), uname_column.getText(np.second));
 	num_links++;
       } else {
