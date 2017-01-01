@@ -653,7 +653,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
-    if (pd.type == NODE_URL || pd.type == NODE_ATTRIBUTE) {
+    if (pd.type == NODE_ATTRIBUTE) {
       continue;
     } else if (td.hasChildren()) {
       continue;
