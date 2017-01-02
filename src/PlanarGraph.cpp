@@ -211,35 +211,6 @@ PlanarGraph::colorizeRegions() {
 #endif
 }
 
-void
-PlanarGraph::updateMBR(int edge) {
-  if (getNodeArray().hasArcData()) {
-#if 0
-    auto & g = dynamic_cast<ColumnArc&>(getEdgeData()["_geometry"]);
-    auto & arc = g.getArc(edge);
-    
-    int left_face = edges["_leftFace"].getInt(edge);
-    int right_face = edges["_rightFace"].getInt(edge);
-    if (left_face != -1) {
-      Rect2d & face_mbr = face_attributes[left_face].mbr;
-      Rect2d & region_mbr = region_attributes[getFaceRegion(left_face)].mbr;
-      for (vector<glm::dvec3>::const_iterator it = arc.geometry.begin(); it != arc.geometry.end(); it++) {
-	face_mbr.growToContain(glm::vec3(it->x, it->y, it->z));
-	region_mbr.growToContain(glm::vec3(it->x, it->y, it->z));
-      }
-    }
-    if (right_face != -1) {
-      Rect2d & face_mbr = face_attributes[right_face].mbr;
-      Rect2d & region_mbr = region_attributes[getFaceRegion(right_face)].mbr;
-      for (vector<glm::dvec3>::const_iterator it = arc.geometry.begin(); it != arc.geometry.end(); it++) {
-	face_mbr.growToContain(glm::vec3(it->x, it->y, it->z));
-	region_mbr.growToContain(glm::vec3(it->x, it->y, it->z));
-      }
-    }
-#endif
-  }
-}
-
 static inline double determinant(double x1, double y1, double x2, double y2) {
   return x1 * y2 - x2 * y1;
 }

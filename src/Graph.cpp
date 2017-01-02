@@ -102,7 +102,6 @@ Graph::randomizeGeometry(bool use_2d) {
   for (unsigned int i = 0; i < num_nodes; i++) {
     getNodeArray().setRandomPosition(i, use_2d);
   }
-  mbr = Rect2d(-50, -50, +50, +50);
 }
 
 void
@@ -1140,6 +1139,6 @@ Graph::updateAlpha() {
   if (active_child_node == -1) {
     getNodeArray().updateTopLevelAlpha();
   } else {
-    getNodeArray().getNodeData(active_child_node).alpha *= 0.990f;
+    getNodeArray().getNodeData(active_child_node).alpha *= 0.9925f;
   }
 }

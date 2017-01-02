@@ -65,7 +65,6 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	graph->addEdge(node_id, node_id, face_id, 0.0f);
 	auto & fd = graph->getFaceAttributes(face_id);
 	fd.centroid = glm::vec2(x, y);
-	fd.mbr = glm::vec3(x, y, 0.0f);
       }
       break;
     case SHPT_MULTIPOINT:
@@ -275,7 +274,6 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	  if (pair_edge != -1) {
 	    graph->connectEdgePair(edge_id, pair_edge);
 	  } else {
-	    graph->updateMBR(edge_id);
 	    ostringstream key2;
 	    key2 << node1 << "/" << node2;
 	    waiting_faces[key2.str()] = edge_id;

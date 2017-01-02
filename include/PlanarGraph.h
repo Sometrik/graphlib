@@ -15,8 +15,6 @@ class PlanarGraph : public Graph {
 
   std::set<int> getAdjacentRegions() const override;
 
-  void updateMBR(int edge) override;
-
   void mapFacesToNodes(Graph & target) override;
   void mapRegionsToNodes(Graph & target) override;
   void calculateRegionAreas() override;

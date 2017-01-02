@@ -1,7 +1,6 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
-#include "MBRObject.h"
 #include "RawStatistics.h"
 #include "NodeArray.h"
 #include "graph_color.h"
@@ -84,10 +83,8 @@ edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face,
 };
 
 struct face_data_s {
-  // glm::vec3 normal;
   glm::vec2 centroid;
   graph_color_s color;
-  Rect2d mbr;
   int first_edge;
   time_t timestamp;
   float sentiment;
@@ -133,7 +130,7 @@ class Label;
 class GraphFilter;
 class DisplayInfo;
 
-class Graph : public MBRObject {
+class Graph {
  public:
   friend class GraphRefR;
   friend class GraphRefW;
@@ -248,7 +245,6 @@ class Graph : public MBRObject {
   virtual void mapRegionsToNodes(Graph & target) { }
   virtual void colorizeRegions() { }
   virtual void spatialAggregation(const Graph & other) { }
-  virtual void updateMBR(int edge) { }
   virtual void addUniversalRegion() { }
   
   void getVisibleLabels(std::vector<Label> & labels) const;
@@ -321,7 +317,6 @@ class Graph : public MBRObject {
   size_t getEdgeCount() const { return edge_attributes.size(); }
   size_t getFaceCount() const { return faces.size(); }  
   
-  Rect2d & getFaceMBR(int i) { return face_attributes[i].mbr; }
   const glm::vec2 & getFaceCentroid(int i) const { return face_attributes[i].centroid; }
           
   void clearHighlight() {
@@ -359,7 +354,7 @@ class Graph : public MBRObject {
 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
+    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
     faces.addRow();
     return face_id;
   }
@@ -545,8 +540,7 @@ class Graph : public MBRObject {
       return getNodeArray().getNodeData(active_child_node).alpha;
     }
   }
-  float isRunning() const { return getAlpha() >= 0.0005f; }
-  // void stop() { alpha = 0.0f; }
+  float isRunning() const { return getAlpha() >= 0.005f; }
 
  protected:
   void incLabelVersion() { label_version++; }
