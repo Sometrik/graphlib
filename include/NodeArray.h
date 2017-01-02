@@ -31,6 +31,7 @@
 #define MALE_NODE	3
 #define FEMALE_NODE	4
 #define GROUP_NODE	5
+#define DOCUMENT_NODE	6
 
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
