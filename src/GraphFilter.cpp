@@ -87,6 +87,17 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 
       if (is_first) {
 	stats.addActivity(t, first_user_sid, first_user_soid, lang, app_id, filter_id, PoliticalParty(political_party.getInt(np.first)));
+
+	if (lang && keep_lang) {
+	  int lang_node = nodes.createLanguage(lang);
+	  unordered_map<int, unordered_map<int, int> >::iterator it1;
+	  unordered_map<int, int>::iterator it2;
+	  if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
+	      (it2 = it1->second.find(lang_node)) != it1->second.end()) {
+	  } else {
+	    seen_edges[np.first][lang_node] = target_graph.addEdge(np.first, lang_node, -1, ATTRIBUTE_WEIGHT);
+	  }
+	}
       }
       
       if (!seen_nodes.count(np.second)) {
@@ -128,7 +139,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	  updateNodeSize(np.second);
 #endif
 	} else {
-	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, weight, 0);
+	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, weight);
 	}
       }
     }  
