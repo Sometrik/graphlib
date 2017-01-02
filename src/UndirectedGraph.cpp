@@ -15,7 +15,6 @@ UndirectedGraph::UndirectedGraph(const UndirectedGraph & other)
 std::shared_ptr<Graph>
 UndirectedGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new UndirectedGraph(getId()));
-  graph->setLocationGraphValid(false);
   graph->setNodeVisibility(getNodeVisibility());
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setFaceVisibility(getFaceVisibility());

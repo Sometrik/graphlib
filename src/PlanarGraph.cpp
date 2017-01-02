@@ -15,7 +15,6 @@ PlanarGraph::PlanarGraph(const PlanarGraph & other) : Graph(other) {
 std::shared_ptr<Graph>
 PlanarGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new PlanarGraph(getId()));
-  graph->setLocationGraphValid(false);
   graph->setNodeVisibility(getNodeVisibility());
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setFaceVisibility(getFaceVisibility());

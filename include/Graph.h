@@ -155,8 +155,6 @@ class Graph : public MBRObject {
     if (attr.weight > max_edge_weight) max_edge_weight = attr.weight;
     total_edge_weight += d;
   }
-
-  std::vector<int> getLocationGraphs() const;
   
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
@@ -191,7 +189,6 @@ class Graph : public MBRObject {
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
-  virtual void updateLocationGraph(int graph_id) { }
   virtual Graph * simplify() const { return 0; }
   virtual std::shared_ptr<Graph> createSimilar() const = 0;
   virtual Graph * copy() const = 0;
@@ -199,8 +196,6 @@ class Graph : public MBRObject {
 
   bool applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
   void reset();
-
-  void extractLocationGraph(Graph & target_graph);
 
   int getNextNodeEdge(int edge) const {
     return getEdgeAttributes(edge).next_node_edge;
@@ -362,9 +357,6 @@ class Graph : public MBRObject {
   void updateNewSecondaryObjects(unsigned int i) { new_secondary_objects_counter += i; }
   void resetNewObjects2() { new_primary_objects_counter = new_secondary_objects_counter = new_images_counter = 0; }
 
-  void setLocationGraphValid(bool t) { location_graph_valid = t; }
-  bool isLocationGraphValid() const { return location_graph_valid; }
-
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
     face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, Rect2d(), -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
@@ -377,7 +369,6 @@ class Graph : public MBRObject {
   void setNodeTexture(const skey & key, int texture);
   
   void clearTextures(int clear_flags = CLEAR_ALL) {
-    if (location_graph.get()) location_graph->clearTextures(clear_flags);
     nodes->clearTextures(clear_flags);
     if (clear_flags & CLEAR_LABELS) {
       for (int i = 0; i < getFaceCount(); i++) {
@@ -407,11 +398,7 @@ class Graph : public MBRObject {
   std::shared_ptr<Graph> getFinal() { return final_graph; }
   const std::shared_ptr<const Graph> getFinal() const { return final_graph; }
   
-  std::shared_ptr<Graph> & getLocation() { return location_graph; }
-  const std::shared_ptr<const Graph> getLocation() const { return location_graph; }
-
   void setFinalGraph(std::shared_ptr<Graph> g) { final_graph = g; }
-  void setLocation(std::shared_ptr<Graph> g) { location_graph = g; }
 
   virtual void clear() {
     faces.clear();    
@@ -585,8 +572,7 @@ class Graph : public MBRObject {
   int id;
   int highlighted_node = -1;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
-  bool location_graph_valid = false;
-  std::shared_ptr<Graph> location_graph, final_graph;
+  std::shared_ptr<Graph> final_graph;
   std::map<skey, int> face_cache;
   RawStatistics statistics;
   std::string name, keywords;

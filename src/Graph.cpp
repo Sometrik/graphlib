@@ -341,93 +341,6 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
 }
 
 void
-Graph::extractLocationGraph(Graph & target_graph) {
-  map<string, int> node_mapping;
-  target_graph.getNodeArray().getTable().addTextColumn("name");
-
-  // Column & sentiment = target_graph.getNodeArray().getNodeArray().getTable().addDoubleColumn("sentiment");
-
-  const table::Column & lat_column = getNodeArray().getTable()["latitude"], & lon_column = getNodeArray().getTable()["longitude"];  
- 
-  map<int, map<int, int> > seen_edges;
-  // map<int, pair<float, unsigned int> > node_sentiments;
-  
-  auto end = end_edges();
-  for (auto it = begin_edges(); it != end; ++it) {
-    // float edge_sentiment = it->sentiment;
-    pair<int, int> np(it->tail, it->head);
-
-    double lon1 = lon_column.getDouble(np.first), lat1 = lat_column.getDouble(np.first);
-    double lon2 = lon_column.getDouble(np.second), lat2 = lat_column.getDouble(np.second);
-    
-    if (lon1 == 0 && lat1 == 0) {
-      np.first = -1;
-    } else {
-      string key1 = to_string(lon1) + "/" + to_string(lat1);
-            
-      auto it = node_mapping.find(key1);
-      if (it != node_mapping.end()) {
-	np.first = it->second;
-      } else {
-	int new_node_id = target_graph.addNode();
-	node_mapping[key1] = new_node_id;
-	glm::vec3 tmp((float)lon1, (float)lat1, 0);
-	target_graph.getNodeArray().setPosition(new_node_id, tmp);
-	np.first = new_node_id;
-      }
-
-      // pair<float, unsigned int> & sn = node_sentiments[np.first];
-      // sn.first += edge_sentiment;
-      // sn.second++;
-      
-      NodeType type = getNodeArray().getNodeData(np.second).type;
-      assert(type != NODE_URL && type != NODE_IMAGE && type != NODE_HASHTAG);
-    }
-    
-    if (lon2 == 0 && lat2 == 0) {
-      np.second = -1;
-    } else {
-      string key2 = to_string(lon2) + "/" + to_string(lat2);
-      auto it = node_mapping.find(key2);
-      if (it != node_mapping.end()) {
-	np.second = it->second;
-      } else {
-	int new_node_id = target_graph.addNode();
-	node_mapping[key2] = new_node_id;
-	glm::vec3 tmp((float)lon2, (float)lat2, 0);
-	target_graph.getNodeArray().setPosition(new_node_id, tmp);
-	np.second = new_node_id;
-      }
-    }
-
-    if (np.first >= 0 && np.second >= 0 && np.first != np.second) {
-      map<int, map<int, int> >::iterator it1;
-      map<int, int>::iterator it2;
-      if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
-	  (it2 = it1->second.find(np.second)) != it1->second.end()) {
-	int edge = it2->second;
-	target_graph.getEdgeAttributes(edge).weight += 1.0f;
-	// weight.setValue(edge, weight.getInt(edge) + 1);
-      } else {
-	int edge = seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second);	  
-	// weight.setValue(edge, 1);
-      }
-    }
-  }
-  
-  target_graph.getNodeArray().setSRID(4326);
-  target_graph.getNodeArray().setNodeSizeMethod(getNodeArray().getNodeSizeMethod());
-  target_graph.setNodeVisibility(true);
-  target_graph.setEdgeVisibility(true);
-  target_graph.setFaceVisibility(false);
-  target_graph.setLabelVisibility(true);  
-}
-
-static bool compareCameraDistance(const pair<int, float> & a, const pair<int, float> & b) {
-  return a.second > b.second;
-}
-
-void
 Graph::refreshLayouts() {
   cerr << "resume after refreshLayouts\n";
   resume();
@@ -463,7 +376,6 @@ Graph::updateSelection(time_t start_time, time_t end_time, float start_sentiment
   if (applyFilter(start_time, end_time, start_sentiment, end_sentiment)) {
     cerr << "filter changed the graph\n";
     final_graph->incVersion();
-    setLocationGraphValid(false);
     assert(nodes->isDynamic());
     incVersion();
     resume();
