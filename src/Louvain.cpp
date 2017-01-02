@@ -99,7 +99,7 @@ Louvain::oneLevel() {
   }
 #endif
 
-  cerr << "max_num_passes = " << max_num_passes << endl;
+  // cerr << "max_num_passes = " << max_num_passes << endl;
   
   // repeat until there is no improvement in modularity, or the improvement is smaller than epsilon, or maximum number of passes have been done  
   for (int num_passes = 0; max_num_passes == -1 || num_passes < max_num_passes; num_passes++) {
@@ -141,14 +141,12 @@ Louvain::oneLevel() {
     if (num_moves > 0) {
       is_improved = true;
     }
-
-    cerr << "num moves = " << num_moves << endl;
       
     if (!num_moves) {
-      cerr << "stopping due to no moves\n";
+      cerr << "Louvain: stopping due to no moves\n";
       break;
     } if (modularity - prev_modularity < min_modularity) {
-      cerr << "modularity diff too small, min = " << min_modularity << "\n";
+      cerr << "Louvain: modularity diff too small, min = " << min_modularity << "\n";
       break;
     }
   }
