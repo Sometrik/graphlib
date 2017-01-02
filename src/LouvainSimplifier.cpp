@@ -10,6 +10,7 @@ LouvainSimplifier::LouvainSimplifier() {
   keepHashtags(true);
   keepLinks(true);
   keepLang(true);
+  keepApplications(true);
 }
 
 bool
@@ -20,12 +21,8 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
     target_graph.removeAllChildren();
     
     double precision = 0.000001;
-
-    cerr << "doing Louvain\n";
     
     Louvain c(&target_graph, -1, precision);
-
-    cerr << "Louvain created\n";
     
     double mod = target_graph.modularity();
     int level = 0;

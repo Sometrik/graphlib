@@ -29,9 +29,9 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
   if (current_pos == -1) {
     target_graph.clear();
     current_pos = 0;
-    cerr << "restarting update, begin = " << begin.get() << ", cp = " << current_pos << ", end = " << end.get() << ", source = " << &source_graph << ", edges = " << source_graph.getEdgeCount() << endl;
+    // cerr << "restarting update, begin = " << begin.get() << ", cp = " << current_pos << ", end = " << end.get() << ", source = " << &source_graph << ", edges = " << source_graph.getEdgeCount() << endl;
   } else {
-    cerr << "continuing update, begin = " << begin.get() << ", cp = " << current_pos << ", end = " << end.get() << ", source = " << &source_graph << ", edges = " << source_graph.getEdgeCount() << endl;
+    // cerr << "continuing update, begin = " << begin.get() << ", cp = " << current_pos << ", end = " << end.get() << ", source = " << &source_graph << ", edges = " << source_graph.getEdgeCount() << endl;
     for (int i = 0; i < current_pos; i++) {
       assert(it != end);
       ++it;
@@ -65,7 +65,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
     }
 
     if (it->tail < 0 || it->head < 0 || it->tail >= nodes.size() || it->head >= nodes.size()) {
-      cerr << "invalid values: tail = " << it->tail << ", head = " << it->head << ", t = " << t << ", count = " << nodes.size() << ", n = " << num_edges_processed << endl;
+      cerr << "GraphFilter: invalid values: tail = " << it->tail << ", head = " << it->head << ", t = " << t << ", count = " << nodes.size() << ", n = " << num_edges_processed << endl;
       assert(0);
     }
 
@@ -96,6 +96,16 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	      (it2 = it1->second.find(lang_node)) != it1->second.end()) {
 	  } else {
 	    seen_edges[np.first][lang_node] = target_graph.addEdge(np.first, lang_node, -1, ATTRIBUTE_WEIGHT);
+	  }
+	}
+	if (app_id > 0 && keep_applications) {
+	  int app_node = nodes.createApplication(app_id);
+	  unordered_map<int, unordered_map<int, int> >::iterator it1;
+	  unordered_map<int, int>::iterator it2;
+	  if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
+	      (it2 = it1->second.find(app_node)) != it1->second.end()) {
+	  } else {
+	    seen_edges[np.first][app_node] = target_graph.addEdge(np.first, app_node, -1, ATTRIBUTE_WEIGHT);
 	  }
 	}
       }

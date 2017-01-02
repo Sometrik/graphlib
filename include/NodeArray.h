@@ -271,7 +271,21 @@ class NodeArray : public ReadWriteObject {
   int createLanguage(short id) {
     int community_id = getLanguageById(id);
     if (community_id != -1) return community_id;
-    communities[id] = community_id = add(NODE_ATTRIBUTE);
+    languages[id] = community_id = add(NODE_ATTRIBUTE);
+    setRandomPosition(community_id);
+    return community_id;
+  }
+
+  int getApplicationById(short id) const {
+    auto it = applications.find(id);
+    if (it != applications.end()) return it->second;
+    return -1;
+  }
+
+  int createApplication(short id) {
+    int community_id = getApplicationById(id);
+    if (community_id != -1) return community_id;
+    applications[id] = community_id = add(NODE_ATTRIBUTE);
     setRandomPosition(community_id);
     return community_id;
   }
@@ -316,6 +330,7 @@ class NodeArray : public ReadWriteObject {
   std::string node_color_column;
   std::unordered_map<int, int> communities;
   std::unordered_map<short, int> languages;
+  std::unordered_map<short, int> applications;
   unsigned int flags = 0;
   Personality personality = NONE;
 };
