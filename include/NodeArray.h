@@ -46,7 +46,6 @@ struct node_data_s {
   glm::vec3 prev_position;
   short texture, label_texture;
   NodeType type;
-  std::string label;
   float alpha;
 };
 
@@ -77,14 +76,14 @@ class NodeArray : public ReadWriteObject {
   void setLabelMethod(const LabelMethod & m) { label_method = m; }
   const LabelMethod & getLabelMethod() const { return label_method; }
 
-  void updateNodeAppearance(int node_id);
+  std::string getNodeLabel(int node_id) const;
 
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, "", 0.0f });
+    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, 0.0f });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -156,14 +155,6 @@ class NodeArray : public ReadWriteObject {
 
   const node_data_s & getNodeData(int i) const { return node_geometry[i]; }
   node_data_s & getNodeData(int i) { return node_geometry[i]; }
-
-  void setLabel(int i, const std::string & text) {
-    auto & nd = node_geometry[i];
-    if (nd.label != text) {
-      nd.label = text;
-      nd.label_texture = 0;
-    }
-  }
 
   std::vector<int> addNodes(size_t n) {
     std::vector<int> v;

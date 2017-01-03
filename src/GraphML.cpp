@@ -85,7 +85,6 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
   
   createGraphFromElement(*graph, *graphml_element, *graph_element, nodes_by_id, directed);
 
-  graph->updateFaceAppearance();
   graph->randomizeGeometry();
   // graph->setComplexGraph(is_complex);
   // graph->setHasSubGraphs(is_complex);

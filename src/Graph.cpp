@@ -565,9 +565,6 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       continue;
     } else if (td.hasChildren()) {
       continue;
-    } else if (td.age < 0.0f || pd.label.empty()) {
-      labels_changed |= td.setLabelVisibility(false);
-      continue;
     }
     float scale = 1.0f;
     auto pos = pd.position;
@@ -600,7 +597,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
     auto & fd = getFaceAttributes(i);
     if (!display.isPointVisible(fd.centroid)) {
       labels_changed |= fd.setLabelVisibility(false);
-    } else if (!fd.label.empty() || getDefaultSymbolId()) {
+    } else {
       glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
       float priority = 1000;
       if (has_priority_column) {
@@ -738,41 +735,36 @@ Graph::setNodeTexture(const skey & key, int texture) {
   if (final_graph.get()) final_graph->setNodeTexture(key, texture);
 }
 
-void
-Graph::updateFaceAppearance() {
+std::string
+Graph::getFaceLabel(int face_id) const {
+  string label, name, text, id;
   auto & label_method = nodes->getLabelMethod();
-  if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
-    for (int i = 0; i < getFaceCount(); i++) {
-      string label, name, text, id;
-      if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
-	label = getFaceData()[label_method.getColumn()].getText(i);
-      } else {
-	for (auto & cd : getFaceData().getColumns()) {
-	  string n = StringUtils::toLower(cd.first);
-	  if (n == "label") {
-	    label = cd.second->getText(i);
-	  } else if (n == "name") {
-	    name = cd.second->getText(i);
-	  } else if (n == "text") {
-	    text = cd.second->getText(i);
-	  } else if (n == "id") {
-	    id = cd.second->getText(i);
-	  }
-	}
-	if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && !label.empty()) {
-	  if (!name.empty()) {
-	    label = name;
-	  } else if (!text.empty()) {
-	    label = text;
-	  } else if (!id.empty()) {
-	    label = id;
-	  }    
-	}
+  if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
+    label = getFaceData()[label_method.getColumn()].getText(face_id);
+  } else {
+    for (auto & cd : getFaceData().getColumns()) {
+      string n = StringUtils::toLower(cd.first);
+      if (n == "label") {
+	label = cd.second->getText(face_id);
+      } else if (n == "name") {
+	name = cd.second->getText(face_id);
+      } else if (n == "text") {
+	text = cd.second->getText(face_id);
+      } else if (n == "id") {
+	id = cd.second->getText(face_id);
       }
-      // if (!label.empty()) cerr << "setting label for face " << i << ": " << label << endl;
-      getFaceAttributes(i).setLabel(label);
+    }
+    if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && !label.empty()) {
+      if (!name.empty()) {
+	label = name;
+      } else if (!text.empty()) {
+	label = text;
+      } else if (!id.empty()) {
+	label = id;
+      }    
     }
   }
+  return label;
 }
 
 void
@@ -858,7 +850,6 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   int edge = (int)edge_attributes.size();
 
   if (!isNodeVisible(n1)) {
-    nodes->updateNodeAppearance(n1);
     setNodeAge(n1, initial_node_age); // this is first edge
   }
   int next_node_edge = getNodeFirstEdge(n1);
@@ -870,7 +861,6 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
     node_geometry3[n1].weighted_selfdegree += weight;
   } else {
     if (!isNodeVisible(n2)) {
-      nodes->updateNodeAppearance(n2);
       setNodeAge(n2, initial_node_age); // this is first edge
     }
     updateIndegree(n2, weight);
@@ -900,7 +890,6 @@ Graph::addChild(int parent, int child) {
 #if 0
   if (!isNodeVisible(parent)) {
     // PROBLEM: parent doesn't actually become visible, if the added child has no edges or children with edges
-    nodes->updateNodeAppearance(parent);
     setNodeAge(parent, initial_node_age);
   }
 #endif

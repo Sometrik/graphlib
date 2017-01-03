@@ -5,7 +5,6 @@ class LabelMethod {
  public:
   enum Method {
     AUTOMATIC_LABEL = 1,
-    FIXED_LABEL,
     LABEL_FROM_COLUMN,
   };
  LabelMethod(Method _method = AUTOMATIC_LABEL) : method(_method) { }

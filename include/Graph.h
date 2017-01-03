@@ -90,7 +90,6 @@ struct face_data_s {
   float sentiment;
   short feed, lang;
   long long app_id, filter_id;
-  std::string label;
   short label_texture, flags;
   unsigned short label_visibility_val;
 
@@ -112,13 +111,6 @@ struct face_data_s {
   }
   bool isLabelVisible() const { return flags & FACE_LABEL_VISIBLE; }
   float getLabelVisibilityValue() const { return label_visibility_val / 65535.0f; }
-  void setLabel(const std::string & text) {
-    if (label != text) {
-      label = text;
-      label_texture = 0;
-    }
-  }
-  const std::string & getFaceLabel(int i) const { return label; }
 };
 
 #include "EdgeIterator.h"
@@ -354,7 +346,7 @@ class Graph {
 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, -1, timestamp, sentiment, feed, lang, app_id, filter_id, "", 0, 0 });
+    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, -1, timestamp, sentiment, feed, lang, app_id, filter_id, 0, 0 });
     faces.addRow();
     return face_id;
   }
@@ -478,7 +470,7 @@ class Graph {
   GraphRefR lockGraphForReading(const char * debug_name) const;
   GraphRefW lockGraphForWriting(const char * debug_name);
   
-  void updateFaceAppearance();
+  std::string getFaceLabel(int face_id) const;
     
   void relaxLinks(std::vector<node_position_data_s> & v) const;
   void applyGravity(float gravity, std::vector<node_position_data_s> & v) const;

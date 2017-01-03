@@ -11,8 +11,8 @@ using namespace std;
 NodeArray::NodeArray() : size_method(SizeMethod::CONSTANT, 1.0f) {
 }
 
-void
-NodeArray::updateNodeAppearance(int node_id) {
+std::string
+NodeArray::getNodeLabel(int node_id) const {
   string label, uname, name;
   long long id = 0;
 
@@ -30,20 +30,18 @@ NodeArray::updateNodeAppearance(int node_id) {
       }
     }
   }
-  if (label_method.getValue() != LabelMethod::FIXED_LABEL) {
-    if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
-      label = getTable()[label_method.getColumn()].getText(node_id);
-    } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && label.empty()) {
-      if (!uname.empty()) {
-	label = uname;
-      } else if (!name.empty()) {
-	label = name;
-      } else if (id) {
-	label = to_string(id);
-      }
+  if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
+    label = getTable()[label_method.getColumn()].getText(node_id);
+  } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && label.empty()) {
+    if (!uname.empty()) {
+      label = uname;
+    } else if (!name.empty()) {
+      label = name;
+    } else if (id) {
+      label = to_string(id);
     }
-    setLabel(node_id, label);
   }
+  return label;
 }
 
 static table::Column * sort_col = 0;
