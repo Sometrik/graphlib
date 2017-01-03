@@ -14,6 +14,9 @@ NodeArray::getNodeLabel(int node_id) const {
   string label, uname, name;
   long long id = 0;
 
+  auto & nd = getNodeData(node_id);
+  NodeType type = nd.type;
+
   if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
     for (auto & cd : getTable().getColumns()) {
       auto & n = cd.first;
@@ -31,10 +34,12 @@ NodeArray::getNodeLabel(int node_id) const {
   if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
     label = getTable()[label_method.getColumn()].getText(node_id);
   } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && label.empty()) {
-    if (!uname.empty()) {
+    if (!uname.empty() && type != NODE_URL && type != NODE_IMAGE) {
       label = uname;
     } else if (!name.empty()) {
       label = name;
+    } else if (!uname.empty()) {
+      label = uname;
     } else if (id) {
       label = to_string(id);
     }
