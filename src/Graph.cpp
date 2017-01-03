@@ -1,7 +1,5 @@
 #include "Graph.h"
 
-#include <StringUtils.h>
-
 #include "DisplayInfo.h"
 #include "ColorProvider.h"
 #include "Controller.h"
@@ -743,14 +741,14 @@ Graph::getFaceLabel(int face_id) const {
     label = getFaceData()[label_method.getColumn()].getText(face_id);
   } else {
     for (auto & cd : getFaceData().getColumns()) {
-      string n = StringUtils::toLower(cd.first);
-      if (n == "label") {
+      auto & n = cd.first;
+      if (strcasecmp(n.c_str(), "label") == 0) {
 	label = cd.second->getText(face_id);
-      } else if (n == "name") {
+      } else if (strcasecmp(n.c_str(), "name") == 0) {
 	name = cd.second->getText(face_id);
-      } else if (n == "text") {
+      } else if (strcasecmp(n.c_str(), "text") == 0) {
 	text = cd.second->getText(face_id);
-      } else if (n == "id") {
+      } else if (strcasecmp(n.c_str(), "id") == 0) {
 	id = cd.second->getText(face_id);
       }
     }

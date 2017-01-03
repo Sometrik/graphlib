@@ -1,8 +1,6 @@
 #include "NodeArray.h"
 
 #include <glm/gtc/packing.hpp>
-#include <Color.h>
-#include <StringUtils.h>
 
 #include <algorithm>
 
@@ -18,14 +16,14 @@ NodeArray::getNodeLabel(int node_id) const {
 
   if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
     for (auto & cd : getTable().getColumns()) {
-      string n = StringUtils::toLower(cd.first);
-      if (n == "label") {
+      auto & n = cd.first;
+      if (strcasecmp(n.c_str(), "label") == 0) {
 	label = cd.second->getText(node_id);
-      } else if (n == "uname") {
+      } else if (strcasecmp(n.c_str(), "uname") == 0) {
 	uname = cd.second->getText(node_id);
-      } else if (n == "name") {
+      } else if (strcasecmp(n.c_str(), "name") == 0) {
 	name = cd.second->getText(node_id);
-      } else if (n == "id") {
+      } else if (strcasecmp(n.c_str(), "id") == 0) {
 	id = cd.second->getInt64(node_id);
       }
     }
