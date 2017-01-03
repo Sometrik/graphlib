@@ -191,26 +191,16 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
   labels.insert(labels.end(), primary_labels.begin(), primary_labels.end());
 }
 
-unsigned int
-Graph::calcVisibleNodeCount() const {
-  unsigned int n = 0;
-  auto nodes_end = end_visible_nodes();
-  for (auto it = begin_visible_nodes(); it != nodes_end; ++it) {
-    n++;
-  }
-  return n;
-}
-
 // Gauss-Seidel relaxation for links
 void
 Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
-  unsigned int visible_nodes = calcVisibleNodeCount();
+  // unsigned int visible_nodes = calcVisibleNodeCount();
   double avg_edge_weight = total_edge_weight / getEdgeCount();
   float alpha = getAlpha();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
   unsigned int num_nodes = nodes->size();
-  float max_idf = log(visible_nodes / 1.0f);
+  // float max_idf = log(visible_nodes / 1.0f);
   vector<bool> processed_edges;  
   processed_edges.resize(num_nodes * num_nodes);			
   auto end = end_edges();
@@ -311,16 +301,33 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
   float best_d = 0;
   glm::vec2 ppos(x, y);
   auto & size_method = nodes->getNodeSizeMethod();
-    
+
+  std::unordered_set<int> open_nodes;
+  open_nodes.insert(-1);
+  for (int p = getActiveChildNode(); p != -1; p = getNodeTertiaryData(p).parent_node) {
+    open_nodes.insert(p);
+  }
+
+  cerr << "ppos = " << ppos.x << " " << ppos.y << endl;
+
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = nodes->getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
-    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+    
+    float scale = 1.0f;
     auto pos = pd.position;
-    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node) {
-      pos += nodes->getNodeData(p).position;
+    for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node, scale *= 0.125f) {
+      if (!open_nodes.count(p)) {
+	scale = 1.0f;
+	pos = glm::vec3();
+      }
+      pos *= 0.125f;
+      pos += getNodeArray().getNodeData(p).position;
     }
+
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size()) * scale;
+    
     glm::vec3 tmp1 = display.project(pos);
     glm::vec3 tmp2 = display.project(pos + glm::vec3(size / 2.0f / node_scale, 0.0f, 0.0f));
     glm::vec2 pos1(tmp1.x, tmp1.y);
@@ -329,6 +336,7 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
     float diam = glm::length(tmp3);
     pos1 -= ppos;
     float d = glm::length(pos1) - diam;
+    cerr << "node, pos = " << tmp1.x << " " << tmp1.y << ", diam = " << diam << ", d = " << d << endl;
     if (d <= 0 && (best_i == -1 || d < best_d)) {
       best_i = *it;
       best_d = d;
@@ -559,7 +567,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
-    if (pd.type == NODE_ATTRIBUTE || pd.type == NODE_URL || pd.type == NODE_IMAGE) {
+    if (pd.type == NODE_ATTRIBUTE || pd.type == NODE_IMAGE) {
       continue;
     } else if (td.hasChildren()) {
       continue;

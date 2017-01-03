@@ -515,8 +515,6 @@ class Graph {
   void setVersion(int _version) { version = _version; }
   void incVersion() { version++; }
 
-  unsigned int calcVisibleNodeCount() const;
-
   void setFilter(const std::shared_ptr<GraphFilter> & _filter) { filter = _filter; }
   const std::shared_ptr<GraphFilter> & getFilter() const { return filter; }
 
