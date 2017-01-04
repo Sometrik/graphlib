@@ -24,21 +24,13 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
     
     Louvain c(&target_graph, -1, precision);
     
-    double mod = target_graph.modularity();
     int level = 0;
     bool is_improved = true;
-
-    cerr << "initial modularity = " << mod << endl;
     
     for (int level = 1; is_improved; level++) {
       is_improved = c.oneLevel();
 
       if (is_improved) {
-	double new_mod = target_graph.modularity();
-	
-	cerr << "l " << level << ": modularity increase: " << mod << " to " << new_mod << endl;
-	mod = new_mod;
-	
 	for (auto cluster_id : c.getClusterIds()) {
 	  auto & td = target_graph.getNodeTertiaryData(cluster_id);
 	  assert(td.parent_node == -1);
