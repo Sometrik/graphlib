@@ -138,13 +138,6 @@ class Graph {
 
   virtual ~Graph();  
   
-  void updateEdgeWeight(int i, float d) {
-    auto & attr = getEdgeAttributes(i);
-    attr.weight += d;
-    if (attr.weight > max_edge_weight) max_edge_weight = attr.weight;
-    total_edge_weight += d;
-  }
-  
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
 
@@ -392,9 +385,17 @@ class Graph {
     face_attributes.clear();
     edge_attributes.clear();
 
+    max_edge_weight = 0.0f;
     highlighted_node = -1;
-    total_indegree = total_outdegree = 0;
-    total_edge_weight = total_weighted_indegree = total_weighted_outdegree = 0.0;
+    final_graph.reset();
+    face_cache.clear();
+    node_geometry3.clear();
+    
+    total_weighted_outdegree = total_weighted_indegree = 0.0;
+    total_outdegree = total_indegree = 0;
+    filter.reset();
+    active_child_node = -1;
+    manually_selected_active_child = false;
   }
       
   std::map<skey, int> & getFaceCache() { return face_cache; } 
@@ -540,7 +541,6 @@ class Graph {
   table::Table faces;
   std::vector<face_data_s> face_attributes;
   std::vector<edge_data_s> edge_attributes;
-  double total_edge_weight = 0.0;
   float max_edge_weight = 0.0f;
   std::shared_ptr<NodeArray> nodes;
  
