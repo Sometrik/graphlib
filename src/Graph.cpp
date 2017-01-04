@@ -539,7 +539,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
 
     auto ppos = display.project(pos);
     auto d = ppos - display.project(pos + glm::vec3(size, 0.0f, 0.0f));
-    auto d2 = ppos - glm::vec3(display.getViewport()[2] / 2.0f, display.getViewport()[3], 0.0f);
+    auto d2 = ppos - glm::vec3(display.getViewport()[2] / 2.0f, display.getViewport()[3] / 2.0f, 0.0f);
     float l = glm::length(d);
     bool is_open = l >= 100.0f;
     float score = glm::length(d2);
