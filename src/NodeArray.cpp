@@ -3,6 +3,7 @@
 #include <glm/gtc/packing.hpp>
 
 #include <algorithm>
+#include <cassert>
 
 using namespace std;
 
@@ -16,6 +17,12 @@ NodeArray::getNodeLabel(int node_id) const {
 
   auto & nd = getNodeData(node_id);
   NodeType type = nd.type;
+
+  assert(type != NODE_ANY_MALE && type != NODE_ANY_FEMALE && type != NODE_ANY_PAGE &&
+	 type != NODE_TOKEN && type != NODE_USER);
+  
+  if (type == NODE_COMMUNITY) return "";
+  else if (type == NODE_ATTRIBUTE) return "(attr)";
 
   if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
     for (auto & cd : getTable().getColumns()) {
