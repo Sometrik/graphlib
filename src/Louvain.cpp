@@ -87,7 +87,8 @@ Louvain::oneLevel() {
 #endif
   
   bool is_improved = false;
-  double modularity = getGraph().modularity();
+  double initial_modularity = getGraph().modularity();
+  double modularity = initial_modularity;
 
 #if 0
   // shuffle nodes
@@ -141,7 +142,7 @@ Louvain::oneLevel() {
     if (num_moves > 0) {
       is_improved = true;
     }
-      
+
     if (!num_moves) {
       cerr << "Louvain: stopping due to no moves\n";
       break;
@@ -150,6 +151,8 @@ Louvain::oneLevel() {
       break;
     }
   }
+
+  cerr << "level done, modularity increase: " << initial_modularity << " to " << modularity << endl;
 
   std::unordered_set<int> clusters;
 
