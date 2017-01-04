@@ -1013,7 +1013,7 @@ Graph::removeAllChildren() {
     if (i < node_geometry3.size()) {
       auto & nd = nodes->getNodeData(i);
       auto & td = node_geometry3[i];
-      if (td.hasChildren()) {
+      if (td.hasChildren() || nd.type == NODE_COMMUNITY) {
 	td.child_count = 0;
       	td.first_child = -1;
 	td.indegree = td.outdegree = 0;
