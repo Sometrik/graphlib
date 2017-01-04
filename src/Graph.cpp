@@ -195,7 +195,7 @@ Graph::getVisibleLabels(vector<Label> & labels) const {
 void
 Graph::relaxLinks(std::vector<node_position_data_s> & v) const {
   // unsigned int visible_nodes = calcVisibleNodeCount();
-  double avg_edge_weight = total_edge_weight / getEdgeCount();
+  // double avg_edge_weight = total_edge_weight / getEdgeCount();
   float alpha = getAlpha();
   auto & size_method = nodes->getNodeSizeMethod();
   bool flatten = nodes->doFlattenHierarchy();
@@ -299,22 +299,22 @@ int
 Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) const {
   int best_i = -1;
   float best_d = 0;
-  glm::vec2 ppos(x, y);
+  glm::vec2 ppos(x, y);  
   auto & size_method = nodes->getNodeSizeMethod();
-
+  
   std::unordered_set<int> open_nodes;
   open_nodes.insert(-1);
   for (int p = getActiveChildNode(); p != -1; p = getNodeTertiaryData(p).parent_node) {
     open_nodes.insert(p);
   }
 
-  cerr << "ppos = " << ppos.x << " " << ppos.y << endl;
-
   auto end = end_visible_nodes();
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = nodes->getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
-    
+
+    if (pd.type == NODE_HASHTAG || pd.type == NODE_ATTRIBUTE || pd.type == NODE_COMMUNITY) continue;
+	
     float scale = 1.0f;
     auto pos = pd.position;
     for (int p = td.parent_node; p != -1; p = getNodeTertiaryData(p).parent_node, scale *= 0.125f) {
@@ -336,11 +336,13 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
     float diam = glm::length(tmp3);
     pos1 -= ppos;
     float d = glm::length(pos1) - diam;
-    cerr << "node, pos = " << tmp1.x << " " << tmp1.y << ", diam = " << diam << ", d = " << d << endl;
-    if (d <= 0 && (best_i == -1 || d < best_d)) {
+    if (best_i == -1 || d < best_d) { // d <= 0
       best_i = *it;
       best_d = d;
     }
+  }
+  if (best_i != -1) {
+    cerr << "best node " << best_i << ", d = " << best_d << ": " << getNodeArray().getNodeLabel(best_i) << endl;
   }
   return best_i;
 }
@@ -449,7 +451,7 @@ Graph::calculateEdgeCentrality() {
   double factor = (num_edges - 1) * (num_edges - 2);
   
   double sum = 0;
-  total_edge_weight = 0;
+  double total_edge_weight = 0;
   for (unsigned int i = 0; i < num_edges; i++) {
     sum += betweenness_data[i];
     double w = betweenness_data[i] == 0 ? 0.1 : 1 + log(1 + betweenness_data[i]);
@@ -862,18 +864,15 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   
   setNodeFirstEdge(n1, edge);
   updateOutdegree(n1, weight);
-
+  updateIndegree(n2, weight);
+  
   if (n1 == n2) {
     node_geometry3[n1].weighted_selfdegree += weight;
-  } else {
-    if (!isNodeVisible(n2)) {
-      setNodeAge(n2, initial_node_age); // this is first edge
-    }
-    updateIndegree(n2, weight);
+  } else if (!isNodeVisible(n2)) {
+    setNodeAge(n2, initial_node_age); // this is first edge
   }
   
   edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
-  total_edge_weight += fabsf(weight);
   if (weight > max_edge_weight) max_edge_weight = weight;
 
   if (face != -1) {
@@ -909,7 +908,7 @@ Graph::addChild(int parent, int child) {
   node_geometry3[parent].child_count++;
   node_geometry3[parent].descendant_count += 1 + node_geometry3[child].descendant_count;
   nodes->getNodeData(parent).label_texture = 0;
-  nodes->getNodeData(child).position -= nodes->getNodeData(parent).position;
+  nodes->getNodeData(child).position = nodes->getNodeData(child).position / 0.125f - nodes->getNodeData(parent).position;
 
   assert(nodes->isDynamic());
   incVersion();
@@ -941,7 +940,7 @@ Graph::removeChild(int child) {
     node_geometry3[parent].child_count--;
     node_geometry3[parent].descendant_count -= 1 + node_geometry3[child].descendant_count;
     nodes->getNodeData(parent).label_texture = 0;
-    nodes->getNodeData(child).position += nodes->getNodeData(parent).position;
+    nodes->getNodeData(child).position = nodes->getNodeData(parent).position + nodes->getNodeData(child).position * 0.125f;
 
     assert(nodes->isDynamic());
     incVersion();
@@ -1028,6 +1027,7 @@ Graph::removeAllChildren() {
       td.setIsInitialized(false);
     }
   }
+  active_child_node = -1;
 }
 
 std::unordered_map<int, float>
@@ -1058,15 +1058,20 @@ Graph::getAllNeighbors(int node) const {
 double
 Graph::modularity() const {
   double q = 0.0;
-  double m = getTotalWeightedIndegree();
+  double m = getTotalWeightedIndegree() + getTotalWeightedOutdegree();
   assert(m >= 0);
 
-  size_t size = getNodeArray().size();
-  for (int i = 0; i < size; i++) {
-    auto & td = getNodeTertiaryData(i);
-    if (td.weighted_indegree + td.weighted_outdegree > 0) {
-      double tot_var = (td.weighted_indegree + td.weighted_outdegree) / m;
-      q += 2 * td.weighted_selfdegree / m - tot_var * tot_var;
+  auto end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & td = getNodeTertiaryData(*it);
+    if (td.parent_node == -1) {
+      if (getNodeArray().getNodeData(*it).type != NODE_COMMUNITY) {
+	cerr << "got invalid node " << *it << ": type = " << int(getNodeArray().getNodeData(*it).type) << ", label = " << getNodeArray().getNodeLabel(*it) << endl;
+      }
+      if (td.weighted_indegree + td.weighted_outdegree > 0) {
+	double tot_var = (td.weighted_indegree + td.weighted_outdegree) / m;
+	q += 2 * td.weighted_selfdegree / m - tot_var * tot_var;
+      }
     }
   }
   
@@ -1080,7 +1085,7 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree) con
   
   double totc = td_comm.weighted_indegree + td_comm.weighted_outdegree;
   double degc = w_degree;
-  double m2 = getTotalWeightedIndegree();
+  double m2 = getTotalWeightedIndegree() + getTotalWeightedOutdegree();
   double dnc = dnodecomm;
   
   return (dnc - totc * degc / m2);
@@ -1092,10 +1097,10 @@ Graph::directedModularity() const {
   double m = getTotalWeightedIndegree();
   assert(m >= 0);
 
-  size_t size = getNodeArray().size();
-  for (int i = 0; i < size; i++) {
-    auto & td = getNodeTertiaryData(i);
-    if (td.weighted_indegree > 0 || td.weighted_outdegree > 0) {
+  auto end = end_visible_nodes();
+  for (auto it = begin_visible_nodes(); it != end; ++it) {
+    auto & td = getNodeTertiaryData(*it);
+    if (td.parent_node == -1 && (td.weighted_indegree > 0 || td.weighted_outdegree > 0)) {
       double tot_out_var = (double)td.weighted_outdegree / m;
       double tot_in_var = (double)td.weighted_indegree / m;
       q += td.weighted_selfdegree / m - (tot_out_var * tot_in_var);
