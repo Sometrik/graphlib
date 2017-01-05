@@ -143,12 +143,6 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	unordered_map<int, int>::iterator it2;
 	if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
 	    (it2 = it1->second.find(np.second)) != it1->second.end()) {
-#if 0
-	  updateOutdegree(np.first, 1.0f);
-	  updateIndegree(np.second, 1.0f);
-	  updateNodeSize(np.first);
-	  updateNodeSize(np.second);
-#endif
 	} else {
 	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, weight);
 	}
