@@ -85,6 +85,8 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       auto & target_nd_old = nodes.getNodeData(np.second);
       NodeType target_type = target_nd_old.type;
 
+      bool is_new_node = !target_graph.isNodeVisible(np.first);
+      
       if (is_first) {
 	stats.addActivity(t, first_user_sid, first_user_soid, lang, app_id, filter_id, PoliticalParty(political_party.getInt(np.first)));
 
@@ -110,8 +112,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	}
       }
       
-      if (!seen_nodes.count(np.second)) {
-	seen_nodes.insert(np.second);
+      if (is_new_node) {
 	UserType ut = UserType(user_type.getInt(np.second));
 	if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
 	// stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
