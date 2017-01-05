@@ -21,7 +21,6 @@ class GraphFilter {
     current_pos = -1;
     min_time = max_time = 0;
     num_links = num_hashtags = 0;
-    seen_edges.clear();
   }
   virtual bool hasPosition() const { return current_pos != -1; }
 
@@ -35,7 +34,6 @@ class GraphFilter {
 
  private:
   int current_pos = -1;
-  std::unordered_map<int, std::unordered_map<int, int> > seen_edges;
   time_t min_time = 0, max_time = 0;
   unsigned int num_links = 0, num_hashtags = 0;
   bool keep_hashtags = false;

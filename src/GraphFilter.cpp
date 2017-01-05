@@ -92,22 +92,14 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 
 	if (lang && keep_lang) {
 	  int lang_node = nodes.createLanguage(lang);
-	  unordered_map<int, unordered_map<int, int> >::iterator it1;
-	  unordered_map<int, int>::iterator it2;
-	  if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
-	      (it2 = it1->second.find(lang_node)) != it1->second.end()) {
-	  } else {
-	    seen_edges[np.first][lang_node] = target_graph.addEdge(np.first, lang_node, -1, ATTRIBUTE_WEIGHT);
+	  if (!target_graph.hasEdge(np.first, lang_node)) {
+	    target_graph.addEdge(np.first, lang_node, -1, ATTRIBUTE_WEIGHT);
 	  }
 	}
 	if (app_id > 0 && keep_applications) {
 	  int app_node = nodes.createApplication(app_id);
-	  unordered_map<int, unordered_map<int, int> >::iterator it1;
-	  unordered_map<int, int>::iterator it2;
-	  if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
-	      (it2 = it1->second.find(app_node)) != it1->second.end()) {
-	  } else {
-	    seen_edges[np.first][app_node] = target_graph.addEdge(np.first, app_node, -1, ATTRIBUTE_WEIGHT);
+	  if (!target_graph.hasEdge(np.first, app_node)) {
+	    target_graph.addEdge(np.first, app_node, -1, ATTRIBUTE_WEIGHT);
 	  }
 	}
       }
@@ -119,7 +111,7 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	int type_node_id = -1;
 	if (ut == MALE) type_node_id = nodes.createMaleNode();
 	else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
-	if (type_node_id != -1) {
+	if (type_node_id != -1 && !target_graph.hasEdge(np.first, type_node_id)) {
 	  target_graph.addEdge(np.first, type_node_id, -1, ATTRIBUTE_WEIGHT);
 	}
       }
@@ -137,15 +129,10 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	weight = URL_WEIGHT;
       }
       
-      if ((keep_hashtags || target_type != NODE_HASHTAG) && (keep_links || (target_type != NODE_URL && target_type != NODE_IMAGE))) {
-	
-	unordered_map<int, unordered_map<int, int> >::iterator it1;
-	unordered_map<int, int>::iterator it2;
-	if ((it1 = seen_edges.find(np.first)) != seen_edges.end() &&
-	    (it2 = it1->second.find(np.second)) != it1->second.end()) {
-	} else {
-	  seen_edges[np.first][np.second] = target_graph.addEdge(np.first, np.second, -1, weight);
-	}
+      if ((keep_hashtags || target_type != NODE_HASHTAG) &&
+	  (keep_links || (target_type != NODE_URL && target_type != NODE_IMAGE)) &&
+	  !target_graph.hasEdge(np.first, np.second)) {
+	target_graph.addEdge(np.first, np.second, -1, weight);
       }
     }  
   }
