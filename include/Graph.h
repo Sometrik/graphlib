@@ -238,12 +238,6 @@ class Graph {
 
   bool hasEdge(int n1, int n2) const;
 
-  int addNode(NodeType type = NODE_ANY) {
-    int node_id = nodes->add(type);
-    if (node_geometry3.size() <= node_id) node_geometry3.resize(node_id + 1);
-    return node_id;
-  }
-
   void setNodeFirstEdge(int n, int edge) {
     if (node_geometry3.size() <= n) node_geometry3.resize(n + 1);
     node_geometry3[n].first_edge = edge;
