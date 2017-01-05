@@ -304,10 +304,6 @@ class Graph {
   
   const glm::vec2 & getFaceCentroid(int i) const { return face_attributes[i].centroid; }
           
-  void clearHighlight() {
-    highlighted_node = -1;
-  }
-
   void setKeywords(const std::string & k) { keywords = k; }
   const std::string & getKeywords() const { return keywords; }
   
@@ -386,7 +382,6 @@ class Graph {
     edge_attributes.clear();
 
     max_edge_weight = 0.0f;
-    highlighted_node = -1;
     final_graph.reset();
     face_cache.clear();
     node_geometry3.clear();
@@ -554,7 +549,6 @@ class Graph {
   short source_id = 0;
 
   int id;
-  int highlighted_node = -1;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   std::shared_ptr<Graph> final_graph;
   std::map<skey, int> face_cache;
