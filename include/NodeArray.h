@@ -17,6 +17,8 @@
 #include <map>
 #include <memory>
 
+#define DEFAULT_ATTRIBUTE_WEIGHT	0.15f
+
 #define GF_TEMPORAL_GRAPH	1
 #define GF_HAS_SPATIAL_DATA	4
 #define GF_HAS_ARC_DATA		8
@@ -46,7 +48,7 @@ struct node_data_s {
   glm::vec3 prev_position;
   short texture, label_texture;
   NodeType type;
-  float alpha;
+  float alpha, weight;
 };
 
 class NodeArray : public ReadWriteObject {
@@ -81,9 +83,9 @@ class NodeArray : public ReadWriteObject {
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
-  int add(NodeType type = NODE_ANY) {
+  int add(NodeType type = NODE_ANY, float weight = 1.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, 0.0f });
+    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, 0.0f, weight });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -262,7 +264,7 @@ class NodeArray : public ReadWriteObject {
   int createLanguage(short id) {
     int community_id = getLanguageById(id);
     if (community_id != -1) return community_id;
-    languages[id] = community_id = add(NODE_ATTRIBUTE);
+    languages[id] = community_id = add(NODE_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
     setRandomPosition(community_id);
     return community_id;
   }
@@ -276,7 +278,7 @@ class NodeArray : public ReadWriteObject {
   int createApplication(short id) {
     int community_id = getApplicationById(id);
     if (community_id != -1) return community_id;
-    applications[id] = community_id = add(NODE_ATTRIBUTE);
+    applications[id] = community_id = add(NODE_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
     setRandomPosition(community_id);
     return community_id;
   }
@@ -286,7 +288,7 @@ class NodeArray : public ReadWriteObject {
 
   int createMaleNode() {
     if (male_node_id == -1) {
-      male_node_id = add(NODE_ATTRIBUTE);
+      male_node_id = add(NODE_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
       setNodeTexture(male_node_id, MALE_NODE);
       setRandomPosition(male_node_id);
     }
@@ -295,7 +297,7 @@ class NodeArray : public ReadWriteObject {
 
   int createFemaleNode() {
     if (female_node_id == -1) {
-      female_node_id = add(NODE_ATTRIBUTE);
+      female_node_id = add(NODE_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
       setNodeTexture(female_node_id, FEMALE_NODE);
       setRandomPosition(female_node_id);
     }
