@@ -12,7 +12,8 @@ enum NodeType : unsigned short {
   NODE_TOKEN,
   NODE_USER,
   NODE_COMMUNITY,
-  NODE_ATTRIBUTE
+  NODE_ATTRIBUTE,
+  NODE_LANG_ATTRIBUTE  
 };
 
 #endif

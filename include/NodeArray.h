@@ -17,7 +17,7 @@
 #include <map>
 #include <memory>
 
-#define DEFAULT_ATTRIBUTE_WEIGHT	0.15f
+#define DEFAULT_ATTRIBUTE_WEIGHT	0.5f
 
 #define GF_TEMPORAL_GRAPH	1
 #define GF_HAS_SPATIAL_DATA	4
@@ -264,7 +264,7 @@ class NodeArray : public ReadWriteObject {
   int createLanguage(short id) {
     int community_id = getLanguageById(id);
     if (community_id != -1) return community_id;
-    languages[id] = community_id = add(NODE_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
+    languages[id] = community_id = add(NODE_LANG_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
     setRandomPosition(community_id);
     return community_id;
   }
