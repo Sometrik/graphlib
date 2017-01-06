@@ -85,7 +85,9 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       auto & target_nd_old = nodes.getNodeData(np.second);
       NodeType target_type = target_nd_old.type;
 
-      bool is_new_node = !target_graph.isNodeVisible(np.first);
+      bool is_newly_active1 = target_graph.getNodeTertiaryData(np.first).outdegree == 0;
+      bool is_new_node1 = !target_graph.isNodeVisible(np.first);
+      bool is_new_node2 = !target_graph.isNodeVisible(np.second);
       
       if (is_first) {
 	stats.addActivity(t, first_user_sid, first_user_soid, lang, app_id, filter_id, PoliticalParty(political_party.getInt(np.first)));
@@ -103,16 +105,32 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
 	  }
 	}
       }
+
+      if (is_newly_active1 || is_new_node1) {
+	UserType ut = UserType(user_type.getInt(np.first));
+	
+	if (is_newly_active1) {
+	  if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
+	  // stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
+	}
+
+	if (is_new_node1) {
+	  int type_node_id = -1;
+	  if (ut == MALE) type_node_id = nodes.createMaleNode();
+	  else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
+	  if (type_node_id != -1 && !target_graph.hasEdge(np.first, type_node_id)) {
+	    target_graph.addEdge(np.first, type_node_id, -1, ATTRIBUTE_WEIGHT);
+	  }
+	}
+      }
       
-      if (is_new_node) {
+      if (is_new_node2) {
 	UserType ut = UserType(user_type.getInt(np.second));
-	if (ut != UNKNOWN_TYPE) stats.addUserType(ut);
-	// stats.addPoliticalParty(PoliticalParty(political_party.getInt(np.first)));
 	int type_node_id = -1;
 	if (ut == MALE) type_node_id = nodes.createMaleNode();
 	else if (ut == FEMALE) type_node_id = nodes.createFemaleNode();
-	if (type_node_id != -1 && !target_graph.hasEdge(np.first, type_node_id)) {
-	  target_graph.addEdge(np.first, type_node_id, -1, ATTRIBUTE_WEIGHT);
+	if (type_node_id != -1 && !target_graph.hasEdge(np.second, type_node_id)) {
+	  target_graph.addEdge(np.second, type_node_id, -1, ATTRIBUTE_WEIGHT);
 	}
       }
 
