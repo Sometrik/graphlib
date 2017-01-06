@@ -39,7 +39,7 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 	  for (int n = td.first_child; n != -1; ) {
 	    auto & pd = target_graph.getNodeArray().getNodeData(n);
 	    auto & ctd = target_graph.getNodeTertiaryData(n);
-	    if (pd.type != NODE_ATTRIBUTE) {
+	    if (1) { // pd.type != NODE_ATTRIBUTE) {
 	      if (ctd.group_leader != -1) {
 		auto & ctd2 = target_graph.getNodeTertiaryData(ctd.group_leader);
 		if (best_node == -1 || ctd2.weighted_indegree > best_d) {
