@@ -589,11 +589,11 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       labels_changed |= td.setLabelVisibility(false);
       continue;
     }
-    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size()) * pd.weight;
     if (pd.type == NODE_HASHTAG) {
       labels_changed |= td.setLabelVisibility(true);
     } else {
-      float priority = 1000;
+      float priority = 1000.0f;
       if (has_priority_column) {
 	priority = node_priority_column.getDouble(*it);
       }
@@ -607,7 +607,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       labels_changed |= fd.setLabelVisibility(false);
     } else {
       glm::vec3 pos(fd.centroid.x, fd.centroid.y, 0.0f);
-      float priority = 1000;
+      float priority = 1000.0f;
       if (has_priority_column) {
 	priority = face_priority_column.getDouble(i);
       }
