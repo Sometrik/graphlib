@@ -22,6 +22,7 @@ NodeArray::getNodeLabel(int node_id) const {
 	 type != NODE_TOKEN && type != NODE_USER);
   
   if (type == NODE_COMMUNITY) return "";
+  else if (type == NODE_LANG_ATTRIBUTE) return "(language)";
   else if (type == NODE_ATTRIBUTE) return "(attr)";
 
   if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL) {
@@ -41,7 +42,9 @@ NodeArray::getNodeLabel(int node_id) const {
   if (label_method.getValue() == LabelMethod::LABEL_FROM_COLUMN) {
     label = getTable()[label_method.getColumn()].getText(node_id);
   } else if (label_method.getValue() == LabelMethod::AUTOMATIC_LABEL && label.empty()) {
-    if (!uname.empty() && type != NODE_URL && type != NODE_IMAGE) {
+    int source_id = getTable()["source"].getInt(node_id);
+    bool is_vimeo = source_id == 13 || source_id == 18 || source_id == 69;
+    if (!uname.empty() && type != NODE_URL && type != NODE_IMAGE && !is_vimeo) {
       label = uname;
     } else if (!name.empty()) {
       label = name;
