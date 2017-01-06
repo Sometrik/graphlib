@@ -313,7 +313,7 @@ Graph::pickNode(const DisplayInfo & display, int x, int y, float node_scale) con
     auto & pd = nodes->getNodeData(*it);
     auto & td = getNodeTertiaryData(*it);
 
-    if (pd.type == NODE_HASHTAG || pd.type == NODE_ATTRIBUTE || pd.type == NODE_COMMUNITY) continue;
+    if (pd.type == NODE_HASHTAG || pd.type == NODE_COMMUNITY) continue;
 	
     float scale = 1.0f;
     auto pos = pd.position;
@@ -569,7 +569,7 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
-    if (pd.type == NODE_ATTRIBUTE || pd.type == NODE_IMAGE) {
+    if (pd.type == NODE_LANG_ATTRIBUTE || pd.type == NODE_ATTRIBUTE || pd.type == NODE_IMAGE) {
       continue;
     } else if (td.hasChildren()) {
       continue;
