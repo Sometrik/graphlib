@@ -590,16 +590,16 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       labels_changed |= td.setLabelVisibility(false);
       continue;
     }
-    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size()) * pd.weight;
+    float size = size_method.calculateSize(td, total_indegree, total_outdegree, nodes->size());
+    float priority = 1000.0f;
     if (pd.type == NODE_HASHTAG) {
-      labels_changed |= td.setLabelVisibility(true);
-    } else {
-      float priority = 1000.0f;
-      if (has_priority_column) {
-	priority = node_priority_column.getDouble(*it);
-      }
-      all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, priority, *it });
+      priority = 1.0f;
+    } else if (pd.type == NODE_URL || pd.type == NODE_IMAGE) {
+      priority = 2000.0f;
+    } else if (has_priority_column) {
+      priority = node_priority_column.getDouble(*it);
     }
+    all_labels.push_back({ label_data_s::NODE, pos, glm::vec2(), size, priority, *it });
   }
 
   for (int i = 0; i < getFaceCount(); i++) {
