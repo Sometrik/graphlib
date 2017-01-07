@@ -114,21 +114,6 @@ class NodeArray : public ReadWriteObject {
   void setPosition(int i, const glm::vec2 & v) {
     setPosition(i, glm::vec3(v, 0.0f));
   }
-#if 0
-  void setPositions(int i, const std::pair<glm::vec3, glm::vec3> & p) {
-    node_geometry[i].position = p.first;
-    node_geometry[i].prev_position = p.second;
-    // mbr.growToContain(p.first.x, p.first.y);
-    version++;
-  }
-#endif
-#if 0
-  void setNodeColor2(int i, const graph_color_s & c) {
-    node_geometry[i].color = c;
-    version++;
-  }
-  void setNodeColor2(int i, const canvas::Color & c);
-#endif
   
   void setNodeTexture(int i, int texture) {
     node_geometry[i].texture = texture;
@@ -167,10 +152,6 @@ class NodeArray : public ReadWriteObject {
     }
     return v;
   }
-
-#if 0
-  void setNodeColorByColumn(int column);
-#endif
 
   const std::pair<glm::vec3, glm::vec3> getPositions(int i) const {
     return std::pair<glm::vec3, glm::vec3>(node_geometry[i].position, node_geometry[i].prev_position);

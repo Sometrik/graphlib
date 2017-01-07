@@ -63,56 +63,6 @@ static bool compareRows(const int & a, const int & b) {
   return sort_col->compare(a, b);
 }
 
-#if 0
-void
-NodeArray::setNodeColorByColumn(int column) {
-  sort_col = &(nodes[column]);
-  if (size() <= 1) return;
-  cerr << "setting colors by column " << sort_col->name() << endl;
-  vector<int> v;
-  for (int i = 0; i < size(); i++) {
-      v.push_back(i);
-  }
-  sort(v.begin(), v.end(), compareRows);
-  glm::vec3 c1(1.0, 0.0, 0.0), c2(1.0, 1.0, 0.0);
-  for (int i = 0; i < v.size(); i++) {
-    cerr << "node " << i << ": " << sort_col->getDouble(v[i]) << endl;
-#if 1
-    glm::vec3 c = glm::normalize(glm::mix(c1, c2, (float)(v.size() - 1 - i) / (v.size() - 1)));
-#else
-    Colorf c;
-    c.setHSL(2.0f * (v.size() - 1 - i) / (v.size() - 1) / 3.0f, 0.75, 0.5);
-#endif
-    graph_color_s tmp = {
-	(unsigned char)glm::clamp(int(c.r * 255.0f), 0, 255),
-	  (unsigned char)glm::clamp(int(c.g * 255.0f), 0, 255),
-	  (unsigned char)glm::clamp(int(c.b * 255.0f), 0, 255),
-	  255
-    };
-    setNodeColor2(v[i], tmp);
-  }
-  version++;
-  // updateFlags(GF_PER_NODE_COLORS, true);
-}
-#endif
-
-#if 0
-void
-NodeArray::setNodeColor2(int i, const canvas::Color & c) {
-  int r = int(c.red * 0xff), g = int(c.green * 0xff), b = int(c.blue * 0xff), a = int(c.alpha * 0xff);
-  if (r > 255) r = 255;
-  else if (r < 0) r = 0;
-  if (g > 255) g = 255;
-  else if (g < 0) g = 0;
-  if (b > 255) b = 255;
-  else if (b < 0) b = 0;
-  if (a > 255) a = 255;
-  else if (a < 0) a = 0;
-  graph_color_s tmp = { (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a };
-  setNodeColor2(i, tmp);
-}
-#endif
-
 void
 NodeArray::setLabelTexture(const skey & key, int texture) {
   auto it2 = getNodeCache().find(key);
