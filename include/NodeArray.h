@@ -34,6 +34,8 @@
 #define FEMALE_NODE	4
 #define GROUP_NODE	5
 #define DOCUMENT_NODE	6
+#define IMAGE_NODE	7
+#define FLAG_NODE	8
 
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
@@ -265,6 +267,7 @@ class NodeArray : public ReadWriteObject {
     int community_id = getLanguageById(id);
     if (community_id != -1) return community_id;
     languages[id] = community_id = add(NODE_LANG_ATTRIBUTE, DEFAULT_ATTRIBUTE_WEIGHT);
+    setNodeTexture(community_id, FLAG_NODE);
     setRandomPosition(community_id);
     return community_id;
   }
