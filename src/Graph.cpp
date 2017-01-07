@@ -776,57 +776,6 @@ Graph::getFaceLabel(int face_id) const {
   return label;
 }
 
-void
-Graph::applyGravity(float gravity, std::vector<node_position_data_s> & v) const {
-  float k = getAlpha() * gravity;
-  if (k < EPSILON) return;
-  
-  auto end = end_visible_nodes();
-  for (auto it = begin_visible_nodes(); it != end; ++it) {
-    auto & td = getNodeTertiaryData(*it);
-    bool open = td.parent_node == active_child_node;
-    
-    if (open) {
-      auto & pd = v[*it];
-      float weight = 1.0f;
-      // float weight = pow(td.size, 0.5f);
-      const glm::vec3 & pos = pd.position;
-      float d = glm::length(pos);
-      if (d > 0.001) {
-	// pd.position -= pos * (k * sqrtf(d) / d * weight);
-	pd.position -= pos * k * weight;
-      }
-    }
-  }
-}
-
-void
-Graph::applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v) const {
-  auto end = end_visible_nodes();
-  for (auto it = begin_visible_nodes(); it != end; ++it) {
-    auto & pd = v[*it];
-    glm::vec3 & pos = pd.position, & ppos = pd.prev_position;
-    glm::vec3 new_pos = pos - (ppos - pos) * friction;
-    if (mode == RENDERMODE_2D) {
-      new_pos.z = 0;
-    }
-    pd.prev_position = pos;
-    pd.position = new_pos;
-  }
-}
-
-void
-Graph::applyAge() {
-  auto end = end_visible_nodes();
-  for (auto it = begin_visible_nodes(); it != end; ++it) {
-    if (node_geometry3.size() <= *it) node_geometry3.resize(*it + 1);
-    auto & td = node_geometry3[*it];
-    td.age += 1.0f / 50.0f;
-  }
-  assert(nodes->isDynamic());
-  incVersion();
-}
-
 bool
 Graph::applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment) {
   if (getFilter().get() && final_graph.get()) {
@@ -858,9 +807,6 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   assert(weight >= 0);
   int edge = (int)edge_attributes.size();
 
-  if (!isNodeVisible(n1)) {
-    setNodeAge(n1, initial_node_age); // this is first edge
-  }
   int next_node_edge = getNodeFirstEdge(n1);
   
   setNodeFirstEdge(n1, edge);
@@ -869,8 +815,6 @@ Graph::addEdge(int n1, int n2, int face, float weight, int arc) {
   
   if (n1 == n2) {
     node_geometry3[n1].weighted_selfdegree += weight;
-  } else if (!isNodeVisible(n2)) {
-    setNodeAge(n2, initial_node_age); // this is first edge
   }
   
   edge_attributes.push_back(edge_data_s( weight, n1, n2, next_node_edge, -1, -1, arc ));
@@ -892,13 +836,6 @@ Graph::addChild(int parent, int child) {
   
   if (node_geometry3.size() <= parent) node_geometry3.resize(parent + 1);
   if (node_geometry3.size() <= child) node_geometry3.resize(child + 1);
-
-#if 0
-  if (!isNodeVisible(parent)) {
-    // PROBLEM: parent doesn't actually become visible, if the added child has no edges or children with edges
-    setNodeAge(parent, initial_node_age);
-  }
-#endif
   
   assert(node_geometry3[child].parent_node == -1);
   assert(node_geometry3[child].next_child == -1);

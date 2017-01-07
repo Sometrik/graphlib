@@ -23,7 +23,6 @@ struct node_tertiary_data_s {
   float weighted_indegree = 0.0f, weighted_outdegree = 0.0f, weighted_selfdegree = 0.0f;
   int first_child = -1, next_child = -1, parent_node = -1;
   unsigned int child_count = 0, descendant_count = 0;
-  float age = 0.0;
   unsigned short flags = NODE_IS_SELECTED;
   unsigned short label_visibility_val = 0;
   int group_leader = -1;
@@ -153,11 +152,6 @@ class Graph {
   void removeAllChildren();
 
   bool isNodeVisible(int node) const;
-
-  void setNodeAge(int node, float age) {
-    if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
-    node_geometry3[node].age = age;
-  }
 
   void setGroupLeader(int node, int leader) {
     if (node_geometry3.size() <= node) node_geometry3.resize(node + 1);
@@ -463,9 +457,6 @@ class Graph {
   std::string getFaceLabel(int face_id) const;
     
   void relaxLinks(std::vector<node_position_data_s> & v) const;
-  void applyGravity(float gravity, std::vector<node_position_data_s> & v) const;
-  void applyDrag(RenderMode mode, float friction, std::vector<node_position_data_s> & v) const;
-  void applyAge();
 
   double modularity() const; // calculate the modularity of the communities
   double directedModularity() const;
@@ -498,9 +489,6 @@ class Graph {
   void setDefaultNodeColor(const glm::vec4 & color) { node_color = color; }
   void setDefaultEdgeColor(const glm::vec4 & color) { edge_color = color; }
   void setDefaultFaceColor(const glm::vec4 & color) { face_color = color; }
-
-  void setInitialNodeAge(float t) { initial_node_age = t; }
-  float getInitialNodeAge() const { return initial_node_age; }
 
   void setVersion(int _version) { version = _version; }
   void incVersion() { version++; }
@@ -560,7 +548,6 @@ class Graph {
   int default_symbol_id = 0;
   bool show_nodes = true, show_edges = true, show_faces = true, show_labels = true;
   glm::vec4 node_color, edge_color, face_color;
-  float initial_node_age = 0.0f;
   std::shared_ptr<GraphFilter> filter;
   int active_child_node = -1;
   bool manually_selected_active_child = false;
