@@ -47,7 +47,6 @@ struct node_position_data_s {
 
 struct node_data_s {
   glm::vec3 position;
-  glm::vec3 prev_position;
   short texture, label_texture;
   NodeType type;
   float alpha, weight;
@@ -87,7 +86,7 @@ class NodeArray : public ReadWriteObject {
 
   int add(NodeType type = NODE_ANY, float weight = 1.0f) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ glm::vec3(), glm::vec3(), 0, 0, type, 0.0f, weight });
+    node_geometry.push_back({ glm::vec3(), 0, 0, type, 0.0f, weight });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -107,8 +106,7 @@ class NodeArray : public ReadWriteObject {
     node_geometry[i].position = v;    
   }
   void setPosition(int i, const glm::vec3 & v) { 
-    node_geometry[i].position = node_geometry[i].prev_position = v;
-    // mbr.growToContain(v.x, v.y);
+    node_geometry[i].position = v;
     version++;
   }
   void setPosition(int i, const glm::vec2 & v) {
@@ -152,26 +150,21 @@ class NodeArray : public ReadWriteObject {
     }
     return v;
   }
-
-  const std::pair<glm::vec3, glm::vec3> getPositions(int i) const {
-    return std::pair<glm::vec3, glm::vec3>(node_geometry[i].position, node_geometry[i].prev_position);
-  }
   
   std::vector<node_data_s> & getGeometry() { return node_geometry; }
   const std::vector<node_data_s> & getGeometry() const { return node_geometry; }
-  std::vector<node_position_data_s> copyPositions() const {
-    std::vector<node_position_data_s> v;
+  void updatePositions(std::vector<node_position_data_s> & v) const {
+    unsigned int old_position = v.size();
     v.resize(node_geometry.size());
-    for (unsigned int i = 0, n = node_geometry.size(); i < n; i++) {
+    for (unsigned int i = old_position, n = node_geometry.size(); i < n; i++) {
       v[i].position = node_geometry[i].position;
-      v[i].prev_position = node_geometry[i].prev_position;
+      v[i].prev_position = node_geometry[i].position;
     }
-    return v;
-  }
+  }  
   void storePositions(const std::vector<node_position_data_s> & v) {
-    for (unsigned int i = 0, n = v.size(); i < n; i++) {
+    unsigned int n = v.size() < node_geometry.size() ? v.size() : node_geometry.size();
+    for (unsigned int i = 0; i < n; i++) {
       node_geometry[i].position = v[i].position;
-      node_geometry[i].prev_position = v[i].prev_position;
     }
     version++;
   }
