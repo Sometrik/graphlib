@@ -522,6 +522,8 @@ class Graph {
   }
   float isRunning() const { return getAlpha() >= 0.005f; }
 
+  void selectNode(int node_id);
+
  protected:
   void incLabelVersion() { label_version++; }
 

@@ -489,6 +489,15 @@ bool
 Graph::setActiveChildNode(int id) {
   if (id != active_child_node) {
     active_child_node = id;
+    if (id != -1) {
+      auto & td = node_geometry3[id];
+      if (!td.isInitialized()) {
+	randomizeChildGeometry(id, true);
+	resume();
+	td.setIsInitialized(true);
+      }
+    }
+    incVersion();
     return true;
   } else {
     return false;
@@ -553,19 +562,11 @@ Graph::updateVisibilities(const DisplayInfo & display, bool reset) {
       best_score = score;
     }
   }
-
-  if (setActiveChildNode(best_child)) {
-    if (best_child != -1) {
-      auto & td = node_geometry3[best_child];
-      if (!td.isInitialized()) {
-	randomizeChildGeometry(best_child, true);
-	resume();
-	td.setIsInitialized(true);
-      }
-    }
-    incVersion();
+  
+  if (!manually_selected_active_child) {
+    setActiveChildNode(best_child);
   }
-
+  
   for (auto it = begin_visible_nodes(); it != end; ++it) {
     auto & pd = getNodeArray().getNodeData(*it);
     auto & td = node_geometry3[*it];
@@ -1140,5 +1141,23 @@ Graph::updateAlpha() {
     getNodeArray().updateTopLevelAlpha();
   } else {
     getNodeArray().getNodeData(active_child_node).alpha *= 0.9925f;
+  }
+}
+
+void
+Graph::selectNode(int node_id) {
+  if (node_id == -1) {
+    manually_selected_active_child = false;
+  } else {
+    auto & nd = getNodeArray().getNodeData(node_id);
+    if (nd.type == NODE_COMMUNITY) {
+      manually_selected_active_child = true;
+      setActiveChildNode(node_id);
+    } else {
+      auto & td = getNodeTertiaryData(node_id);
+      if (td.parent_node != -1) {
+	selectNode(td.parent_node);
+      }
+    }
   }
 }
