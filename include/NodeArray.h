@@ -25,15 +25,16 @@
 #define GF_PER_NODE_COLORS	64
 #define GF_FLATTEN_HIERARCHY	128
 
-#define DEFAULT_PROFILE	0
-#define PENDING_PROFILE	1
-#define BOT_PROFILE	2
-#define MALE_NODE	3
-#define FEMALE_NODE	4
-#define GROUP_NODE	5
+#define BLANK_NODE	0
+#define DEFAULT_PROFILE	1
+#define PENDING_PROFILE	2
+#define BOT_PROFILE	3
+#define MALE_NODE	4
+#define FEMALE_NODE	5
 #define DOCUMENT_NODE	6
 #define IMAGE_NODE	7
 #define FLAG_NODE	8
+#define CUSTOM_NODES	9
 
 #define CLEAR_LABELS	1
 #define CLEAR_NODES	2
@@ -84,7 +85,7 @@ class NodeArray : public ReadWriteObject {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ glm::vec3(), 0, 0, type, 0.0f });
+    node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type, 0.0f });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -126,8 +127,8 @@ class NodeArray : public ReadWriteObject {
       if (clear_flags & CLEAR_LABELS) {
 	nd.label_texture = 0;
       }
-      if (clear_flags & CLEAR_NODES) {
-	nd.texture = DEFAULT_PROFILE;
+      if (clear_flags & CLEAR_NODES && nd.texture >= CUSTOM_NODES) {
+	nd.texture = BLANK_NODE;
       }
     }
   }
@@ -224,7 +225,6 @@ class NodeArray : public ReadWriteObject {
     int community_id = getCommunityById(id);
     if (community_id != -1) return community_id;
     communities[id] = community_id = add(NODE_COMMUNITY);
-    setNodeTexture(community_id, GROUP_NODE);
     setRandomPosition(community_id);
     return community_id;
   }
