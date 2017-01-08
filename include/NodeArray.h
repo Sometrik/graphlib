@@ -48,7 +48,6 @@ struct node_data_s {
   glm::vec3 position;
   short texture, label_texture;
   NodeType type;
-  float alpha;
 };
 
 class NodeArray : public ReadWriteObject {
@@ -85,7 +84,7 @@ class NodeArray : public ReadWriteObject {
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
-    node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type, 0.0f });
+    node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type });
     version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
@@ -176,10 +175,6 @@ class NodeArray : public ReadWriteObject {
   void setLabelStyle(LabelStyle style) { label_style = style; }
   LabelStyle getLabelStyle() const { return label_style; }
   
-  void setTopLevelAlpha(float f) { alpha = f; }
-  float getTopLevelAlpha() const { return alpha; }
-  void updateTopLevelAlpha() { alpha *= 0.990f; }
-
   int getVersion() const { return version; }
 
   int getSRID() const { return srid; }
@@ -291,7 +286,6 @@ class NodeArray : public ReadWriteObject {
   SizeMethod size_method;
   LabelMethod label_method;
   LabelStyle label_style = LABEL_PLAIN;
-  float alpha = 0.0f;
   int srid = 0, version = 1;
   int male_node_id = -1, female_node_id = -1;
   std::vector<ArcData2D> arc_geometry;
