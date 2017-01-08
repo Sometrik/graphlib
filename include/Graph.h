@@ -503,9 +503,9 @@ class Graph {
 
   float getAlpha() const {
     if (active_child_node == -1) {
-      return getNodeArray().getTopLevelAlpha();
+      return alpha;
     } else {
-      return getNodeArray().getNodeData(active_child_node).alpha;
+      return child_alpha;
     }
   }
   float isRunning() const { return getAlpha() >= 0.005f; }
@@ -551,6 +551,8 @@ class Graph {
   std::shared_ptr<GraphFilter> filter;
   int active_child_node = -1;
   bool manually_selected_active_child = false;
+  float alpha = 0.0f;
+  float child_alpha = 0.0f;
   
   static int next_id;
 };

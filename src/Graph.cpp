@@ -1066,18 +1066,18 @@ Graph::modularityGain(int node, int comm, double dnodecomm, double w_degree_out,
 void
 Graph::resume() {
   if (active_child_node == -1) {
-    getNodeArray().setTopLevelAlpha(INITIAL_ALPHA);
+    alpha = INITIAL_ALPHA;
   } else {
-    getNodeArray().getNodeData(active_child_node).alpha = INITIAL_ALPHA;
+    child_alpha = INITIAL_ALPHA;
   }
 }
 
 void
 Graph::updateAlpha() {
   if (active_child_node == -1) {
-    getNodeArray().updateTopLevelAlpha();
+    alpha *= 0.9925f;
   } else {
-    getNodeArray().getNodeData(active_child_node).alpha *= 0.9925f;
+    child_alpha *= 0.9925f;
   }
 }
 
