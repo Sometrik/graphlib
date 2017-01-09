@@ -88,7 +88,7 @@ struct face_data_s {
   time_t timestamp;
   float sentiment;
   short feed, lang;
-  long long app_id, filter_id;
+  long long app_id;
   short label_texture, flags;
   unsigned short label_visibility_val;
 
@@ -321,9 +321,9 @@ class Graph {
   void updateNewSecondaryObjects(unsigned int i) { new_secondary_objects_counter += i; }
   void resetNewObjects2() { new_primary_objects_counter = new_secondary_objects_counter = new_images_counter = 0; }
 
-  virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1, long long filter_id = -1) { // int shell1 = -1, int shell2 = -1) {
+  virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, -1, timestamp, sentiment, feed, lang, app_id, filter_id, 0, 0 });
+    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, -1, timestamp, sentiment, feed, lang, app_id, 0, 0 });
     faces.addRow();
     return face_id;
   }
