@@ -131,11 +131,19 @@ class Graph {
     PACKED_SPHERES
   };
   
-  Graph(int _id = 0);
-  Graph(const Graph & other);
+  Graph(int _id)
+    : id(_id),
+    node_color(0.0f, 0.0f, 0.0f, 0.0f),
+    edge_color(0.0f, 0.0f, 0.0f, 0.0f),
+    face_color(0.0f, 0.0f, 0.0f, 0.0f)
+      {
+	if (!id) id = next_id++;
+      }
+  
+  Graph(const Graph & other) = delete;
   Graph & operator= (const Graph & other) = delete;
 
-  virtual ~Graph();  
+  virtual ~Graph() { }
   
   table::Table & getFaceData() { return faces; }
   const table::Table & getFaceData() const { return faces; }
@@ -167,7 +175,6 @@ class Graph {
 
   virtual Graph * simplify() const { return 0; }
   virtual std::shared_ptr<Graph> createSimilar() const = 0;
-  virtual Graph * copy() const = 0;
   virtual bool isDirected() const { return false; }
 
   bool applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);

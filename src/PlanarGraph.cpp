@@ -4,14 +4,6 @@
 
 using namespace std;
 
-PlanarGraph::PlanarGraph(int _id) : Graph(_id) {
-  
-}
-
-PlanarGraph::PlanarGraph(const PlanarGraph & other) : Graph(other) {
-
-}
-
 std::shared_ptr<Graph>
 PlanarGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new PlanarGraph(getId()));

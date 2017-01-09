@@ -7,12 +7,6 @@
 
 using namespace std;
 
-DirectedGraph::DirectedGraph(int _id) : Graph(_id) {
-}
-
-DirectedGraph::DirectedGraph(const DirectedGraph & other) : Graph(other) {
-}
-
 std::shared_ptr<Graph>
 DirectedGraph::createSimilar() const {
   std::shared_ptr<Graph> graph(new DirectedGraph(getId()));

@@ -3,14 +3,6 @@
 #include <GraphFilter.h>
 
 using namespace std;
-
-UndirectedGraph::UndirectedGraph(int _id) : Graph(_id) {
-}
-
-UndirectedGraph::UndirectedGraph(const UndirectedGraph & other)
-  : Graph(other) {
-  
-}
   
 std::shared_ptr<Graph>
 UndirectedGraph::createSimilar() const {

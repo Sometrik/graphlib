@@ -5,11 +5,9 @@
 
 class UndirectedGraph : public Graph {
  public:
-  UndirectedGraph(int _id = 0);
-  UndirectedGraph(const UndirectedGraph & other);
+  UndirectedGraph(int _id = 0) : Graph(_id) { }
    
   std::shared_ptr<Graph> createSimilar() const override;
-  Graph * copy() const override { return new UndirectedGraph(*this); }
     
   int addUndirectedEdge(int n1, int n2) {
     int hyperedge_id = addFace(-1);

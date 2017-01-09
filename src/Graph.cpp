@@ -19,31 +19,6 @@
 using namespace std;
 
 int Graph::next_id = 1;
-
-Graph::Graph(int _id)
-  : id(_id),
-    node_color(0.0f, 0.0f, 0.0f, 0.0f),
-    edge_color(0.0f, 0.0f, 0.0f, 0.0f),
-    face_color(0.0f, 0.0f, 0.0f, 0.0f)
-{
-  if (!id) id = next_id++;
-}
-
-
-Graph::~Graph() {
-  
-}
-
-Graph::Graph(const Graph & other)
-  : nodes(other.nodes), // copy node array by reference
-    faces(other.faces),
-    face_attributes(other.face_attributes),
-    edge_attributes(other.edge_attributes),
-    version(other.version),
-    source_id(other.source_id)
-{
-  id = next_id++;
-}
  
 bool
 Graph::hasEdge(int n1, int n2) const {

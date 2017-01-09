@@ -5,13 +5,11 @@
 
 class PlanarGraph : public Graph {
  public:
-  PlanarGraph(int _id = 0);
-  PlanarGraph(const PlanarGraph & other);
+  PlanarGraph(int _id = 0) : Graph(_id) { }
   
   bool checkConsistency() const override;
 
   std::shared_ptr<Graph> createSimilar() const override;
-  Graph * copy() const override { return new PlanarGraph(*this); }
 
   std::set<int> getAdjacentRegions() const override;
 
