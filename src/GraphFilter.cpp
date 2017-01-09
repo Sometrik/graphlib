@@ -60,8 +60,10 @@ GraphFilter::processTemporalData(Graph & target_graph, time_t start_time, time_t
       se = fd.sentiment;
       lang = fd.lang;
       app_id = fd.app_id;
-      filter_id = fd.filter_id;
       is_first = fd.first_edge == current_pos;
+
+      auto filter_column = source_graph.getFaceData().getColumnSafe("filterId");
+      if (filter_column) filter_id = filter_column->getInt64(it->face);
     }
 
     if (it->tail < 0 || it->head < 0 || it->tail >= nodes.size() || it->head >= nodes.size()) {
