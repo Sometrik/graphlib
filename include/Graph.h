@@ -173,7 +173,6 @@ class Graph {
 
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
-  virtual Graph * simplify() const { return 0; }
   virtual bool isDirected() const { return true; }
   virtual std::shared_ptr<Graph> createSimilar();
 
