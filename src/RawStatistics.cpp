@@ -14,11 +14,27 @@
 
 using namespace std;
 
-static bool compareQuantity1(const pair<string, int> & a, const pair<string, int> & b) {
+static bool compareQuantityA1(const pair<string, int> & a, const pair<string, int> & b) {
   return a.second > b.second;
 }
 
-static bool compareQuantity3(const pair<skey, int> & a, const pair<skey, int> & b) {
+static bool compareQuantityA2(const pair<skey, int> & a, const pair<skey, int> & b) {
+  return a.second > b.second;
+}
+
+static bool compareQuantityB1(const statistics_row_s & a, const statistics_row_s & b) {
+  return a.value > b.value;
+}
+
+static bool compareQuantityB2(const pair<FilterType, int> & a, const pair<FilterType, int> & b) {
+  return a.second > b.second;
+}
+
+static bool compareQuantityB3(const pair<short, int> & a, const pair<short, int> & b) {
+  return a.second > b.second;
+}
+
+static bool compareQuantityB4(const pair<PoliticalParty, int> & a, const pair<PoliticalParty, int> & b) {
   return a.second > b.second;
 }
 
@@ -36,8 +52,8 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   for (auto & p : hashtags) tmp_hashtags.push_back(p);
   for (auto & p : links) tmp_links.push_back(p);
   
-  sort(tmp_hashtags.begin(), tmp_hashtags.end(), compareQuantity1);
-  sort(tmp_links.begin(), tmp_links.end(), compareQuantity1);
+  sort(tmp_hashtags.begin(), tmp_hashtags.end(), compareQuantityA1);
+  sort(tmp_links.begin(), tmp_links.end(), compareQuantityA1);
 
   map<string, pair<string, int> > tmp_hashtags2, tmp_links2;
   for (auto & p : tmp_hashtags) {
@@ -62,11 +78,17 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   for (auto & p : tmp_hashtags2) output.sorted_hashtags.push_back( { 0, p.second.first, p.second.second } );
   for (auto & p : tmp_links2) output.sorted_links.push_back( { 0, p.second.first, p.second.second } );
 
+  sort(output.sorted_hashtags.begin(), output.sorted_hashtags.end(), compareQuantityB1);
+  sort(output.sorted_links.begin(), output.sorted_links.end(), compareQuantityB1);
+ 
+  while (output.sorted_hashtags.size() > 100) output.sorted_hashtags.pop_back();  
+  while (output.sorted_links.size() > 100) output.sorted_links.pop_back();
+
   vector<pair<skey, int> > most_active_users0;
   for (auto & ua : user_activity) {
     most_active_users0.push_back(pair<skey, int>(ua.first, ua.second));
   }
-  sort(most_active_users0.begin(), most_active_users0.end(), compareQuantity3);
+  sort(most_active_users0.begin(), most_active_users0.end(), compareQuantityA2);
   while (most_active_users0.size() > 25) most_active_users0.pop_back();
 
   if (!most_active_users0.empty()) {
@@ -87,7 +109,7 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   for (auto & ua : user_popularity) {
     most_popular_users0.push_back(pair<skey, int>(ua.first, ua.second));
   }
-  sort(most_popular_users0.begin(), most_popular_users0.end(), compareQuantity3);
+  sort(most_popular_users0.begin(), most_popular_users0.end(), compareQuantityA2);
   while (most_popular_users0.size() > 25) most_popular_users0.pop_back();
   
   if (!most_popular_users0.empty()) {
@@ -123,6 +145,10 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   for (auto & p : political_parties) {
     output.top_political_parties.push_back(p);
   }
+
+  sort(output.top_filters.begin(), output.top_filters.end(), compareQuantityB2);
+  sort(output.top_languages.begin(), output.top_languages.end(), compareQuantityB3);
+  sort(output.top_political_parties.begin(), output.top_political_parties.end(), compareQuantityB4);
 
   std::map<skey, std::map<AppPlatform, int> > user_platforms;
   std::map<skey, std::map<AppInfo::Device, int> > user_devices;
@@ -177,27 +203,12 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   output.weekdays = weekdays;
   output.user_types = user_types;
   output.political_parties = political_parties;
-  
-  output.sortData();
 }
 
 void
 RawStatistics::addLink(const std::string & title, const std::string & url) {
   links[url]++;
   version++;
-#if 0
-  URI uri(url_lc);
-  if (uri.getDomain() == "yle.fi" || // *
-      uri.getDomain() == "www.mtv.fi" ||
-      uri.getDomain() == "www.iltalehti.fi" ||
-      uri.getDomain() == "www.iltasanomat.fi" || // *
-      uri.getDomain() == "www.hs.fi" || // *
-      uri.getDomain() == "www.ft.com" || // *
-      uri.getDomain() == "www.taloussanomat.fi" // *
-      ) {
-    headlines[title]++;
-  }
-#endif
 }
 
 void
