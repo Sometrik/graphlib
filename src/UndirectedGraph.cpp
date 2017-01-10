@@ -6,7 +6,7 @@ using namespace std;
   
 std::shared_ptr<Graph>
 UndirectedGraph::createSimilar() const {
-  std::shared_ptr<Graph> graph(new UndirectedGraph(getId()));
+  auto graph = std::make_shared<UndirectedGraph>(getId());
   graph->setNodeVisibility(getNodeVisibility());
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setFaceVisibility(getFaceVisibility());

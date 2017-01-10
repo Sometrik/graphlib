@@ -6,7 +6,7 @@ using namespace std;
 
 std::shared_ptr<Graph>
 PlanarGraph::createSimilar() const {
-  std::shared_ptr<Graph> graph(new PlanarGraph(getId()));
+  auto graph = std::make_shared<PlanarGraph>(getId());
   graph->setNodeVisibility(getNodeVisibility());
   graph->setEdgeVisibility(getEdgeVisibility());
   graph->setFaceVisibility(getFaceVisibility());
