@@ -1073,3 +1073,16 @@ Graph::selectNode(int node_id) {
     }
   }
 }
+
+std::shared_ptr<Graph>
+Graph::createSimilar() const {
+  auto graph = std::make_shared<Graph>(getId());
+  graph->setNodeVisibility(getNodeVisibility());
+  graph->setEdgeVisibility(getEdgeVisibility());
+  graph->setFaceVisibility(getFaceVisibility());
+  graph->setLabelVisibility(getLabelVisibility());
+  graph->setLineWidth(getLineWidth());
+  graph->setNodeArray(nodes);
+  
+  return graph;
+}
