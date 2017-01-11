@@ -1,15 +1,13 @@
 #ifndef _FILEMANAGER_H_
 #define _FILEMANAGER_H_
 
+#include <FileTypeHandler.h>
+
 #include <string>
 #include <map>
 #include <memory>
 
-#include "FileTypeHandler.h"
-
 class Graph;
-
-#include <string>
 
 class FileManager { 
  public:
