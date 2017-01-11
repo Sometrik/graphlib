@@ -1,6 +1,5 @@
 #include "GraphML.h"
 
-#include "DirectedGraph.h"
 #include "UndirectedGraph.h"
 
 #include <tinyxml2.h>
@@ -51,7 +50,7 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
   }
   std::shared_ptr<Graph> graph;
   if (directed) {
-    graph = std::make_shared<DirectedGraph>();
+    graph = std::make_shared<Graph>();
     graph->setNodeArray(initial_nodes);
     graph->getNodeArray().setNodeSizeMethod(SizeMethod(SizeMethod::SIZE_FROM_INDEGREE));
   } else {

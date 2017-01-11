@@ -5,7 +5,7 @@
 #include <fstream>
 #include <glm/glm.hpp>
 
-#include "DirectedGraph.h"
+#include <Graph.h>
 #include <StringUtils.h>
 
 using namespace std;
@@ -16,7 +16,7 @@ CSVLoader::CSVLoader() : FileTypeHandler("Comma separated values", false) {
 
 std::shared_ptr<Graph>
 CSVLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
-  auto graph = std::make_shared<DirectedGraph>();
+  auto graph = std::make_shared<Graph>();
   graph->setNodeArray(initial_nodes);
 
   ifstream in(filename, ios::in);

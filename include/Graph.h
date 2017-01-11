@@ -131,7 +131,7 @@ class Graph {
     PACKED_SPHERES
   };
   
-  Graph(int _id)
+  Graph(int _id = 0)
     : id(_id),
     node_color(0.0f, 0.0f, 0.0f, 0.0f),
     edge_color(0.0f, 0.0f, 0.0f, 0.0f),
@@ -174,7 +174,7 @@ class Graph {
   int getFaceFirstEdge(int i) const { return face_attributes[i].first_edge; }
 
   virtual bool isDirected() const { return true; }
-  virtual std::shared_ptr<Graph> createSimilar();
+  virtual std::shared_ptr<Graph> createSimilar() const;
 
   bool applyFilter(time_t start_time, time_t end_time, float start_sentiment, float end_sentiment);
   void reset();

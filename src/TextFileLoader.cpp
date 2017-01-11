@@ -1,12 +1,12 @@
-#include "TextFileLoader.h"
+#include <TextFileLoader.h>
+
+#include <Graph.h>
+#include <StringUtils.h>
 
 #include <cassert>
 #include <iostream>
 #include <fstream>
 #include <glm/glm.hpp>
-
-#include "DirectedGraph.h"
-#include <StringUtils.h>
 
 using namespace std;
 
@@ -16,7 +16,7 @@ TextFileLoader::TextFileLoader() : FileTypeHandler("Text file", false) {
 
 std::shared_ptr<Graph>
 TextFileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & initial_nodes) {
-  auto graph = std::make_shared<DirectedGraph>();
+  auto graph = std::make_shared<Graph>();
   graph->setNodeArray(std::make_shared<NodeArray>());
 
   ifstream in(filename, ios::in);
