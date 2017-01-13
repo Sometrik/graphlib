@@ -4,9 +4,9 @@
 #include "FileTypeHandler.h"
 
 #include <string>
-#include <vector>
 #include <list>
 #include <fstream>
+#include <map>
 
 #include <glm/glm.hpp>
 
@@ -23,10 +23,10 @@ class DXFLoader : public FileTypeHandler {
  private:
   bool parseHeader(std::ifstream & stream);
   bool parseTables(std::ifstream & stream, std::list<DXFLayer> & layers);
-  bool parseEntities(std::ifstream & stream, std::list<DXFLayer> & layers, Graph & graph, std::map<std::string, int> & nodes, std::map<std::string, int> & waiting_faces);
+  bool parseEntities(std::ifstream & stream, std::list<DXFLayer> & layers, Graph & graph, std::map<std::string, int> & waiting_faces);
   const DXFLayer & getLayer(const std::string & layer, std::list<DXFLayer> & layers) const;
-  void process3DFace(Graph & graph, std::map<std::string, int> & nodes, std::map<std::string, int> & waiting_faces, const DXFFace & face);
-  void processLine(Graph & graph, std::map<std::string, int> & nodes, const DXFLine & line);
+  void process3DFace(Graph & graph, std::map<std::string, int> & waiting_faces, const DXFFace & face);
+  void processLine(Graph & graph, const DXFLine & line);
 };
 
 #endif

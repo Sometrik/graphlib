@@ -435,7 +435,7 @@ DXFLoader::parseTables(ifstream & stream, list<DXFLayer> & layers) {
 }
 
 bool
-DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & graph, map<string, int> & nodes, map<string, int> & waiting_faces) {
+DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & graph, map<string, int> & waiting_faces) {
   int activeEntity = 0;
   string line1, line2;
   int color = -1;
@@ -457,7 +457,7 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
 	} else {
 	  p.color = getLayer(layer, layers).color;
 	}
-	process3DFace(graph, nodes, waiting_faces, p);
+	process3DFace(graph, waiting_faces, p);
 	
 	color = -1;
 	layer = "";
@@ -472,7 +472,7 @@ DXFLoader::parseEntities(ifstream & stream, list<DXFLayer> & layers, Graph & gra
 	} else {
 	  p.color = getLayer(layer, layers).color;
 	}
-	processLine(graph, nodes, p);
+	processLine(graph, p);
 	color = -1;
 	layer = "";
 	v.clear();
@@ -584,7 +584,6 @@ DXFLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
 
   list<DXFLayer> layers;
   list<std::shared_ptr<DXFEntity> > entities;
-  map<string, int> nodes;
   map<string, int> waiting_faces;
 
   auto graph = std::make_shared<PlanarGraph>();
@@ -610,7 +609,7 @@ DXFLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
 	    return 0;
 	  }
 	} else if (line2 == "ENTITIES") {
-	  if (!parseEntities(stream, layers, *graph, nodes, waiting_faces)) {
+	  if (!parseEntities(stream, layers, *graph, waiting_faces)) {
 	    return 0;
 	  }
 	}
@@ -622,7 +621,7 @@ DXFLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
 }
 
 void
-DXFLoader::process3DFace(Graph & graph, map<string, int> & nodes, map<string, int> & waiting_faces, const DXFFace & face) {
+DXFLoader::process3DFace(Graph & graph, map<string, int> & waiting_faces, const DXFFace & face) {
   DXFColor c = fromACIColor(face.color);
   // int region_id = graph.addRegion();
   int face_id = graph.addFace();
@@ -631,7 +630,7 @@ DXFLoader::process3DFace(Graph & graph, map<string, int> & nodes, map<string, in
   // fd.normal = face.normal;
   vector<int> face_nodes;      
   for (auto & v : face.v) {
-    face_nodes.push_back(createNode3D(graph, nodes, v.x, v.y, v.z));	
+    face_nodes.push_back(graph.getNodeArray().createNode3D(v.x, v.y, v.z));	
   }
   assert(face_nodes.size() >= 3);
   for (int i = 0; i < face_nodes.size(); i++) {
@@ -658,11 +657,11 @@ DXFLoader::process3DFace(Graph & graph, map<string, int> & nodes, map<string, in
 }
 
 void
-DXFLoader::processLine(Graph & graph, map<string, int> & nodes, const DXFLine & line) {
+DXFLoader::processLine(Graph & graph, const DXFLine & line) {
   DXFColor c = fromACIColor(line.color);
   vector<int> line_nodes;
   for (auto & v : line.v) {
-    int node_id = createNode3D(graph, nodes, v.x, v.y, v.z);
+    int node_id = graph.getNodeArray().createNode3D(v.x, v.y, v.z);
     line_nodes.push_back(node_id);
   }
   assert(line_nodes.size() == 2);

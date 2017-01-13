@@ -82,6 +82,9 @@ class NodeArray : public ReadWriteObject {
   std::map<skey, int> & getNodeCache() { return node_cache; } 
   const std::map<skey, int> & getNodeCache() const { return node_cache; } 
 
+  std::map<std::string, int> & getNodePositionCache() { return node_position_cache; }
+  const std::map<std::string, int> & getNodePositionCache() const { return node_position_cache; }
+
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
     node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type });
@@ -274,6 +277,11 @@ class NodeArray : public ReadWriteObject {
     return female_node_id;
   }
 
+  int createNode2D(double x, double y);
+  int createNode3D(double x, double y, double z);
+  std::pair<int, int> createNodesForArc(const ArcData2D & arc, bool rev = false);
+  bool hasNode(double x, double y, int * r = 0) const;
+
  protected:
   bool testFlags(unsigned int bit) const { return (flags & bit) != 0; }
   void updateFlags(unsigned int bit, bool t) { flags = (t ? flags | bit : flags & ~bit); }
@@ -282,6 +290,8 @@ class NodeArray : public ReadWriteObject {
     
  private:
   std::map<skey, int> node_cache;
+  std::map<std::string, int> node_position_cache;
+
   table::Table nodes;
   SizeMethod size_method;
   LabelMethod label_method;

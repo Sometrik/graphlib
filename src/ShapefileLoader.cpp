@@ -33,7 +33,6 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
   
   std::shared_ptr<Graph> graph;
 
-  map<string, int> nodes;
   map<string, pair<glm::dvec2, set<string> > > node_edges;
   map<string, int> waiting_faces;
 
@@ -61,7 +60,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
       {
 	int face_id = graph->addFace();
 	double x = o->padfX[0], y = o->padfY[0], z = o->padfZ[0];
-	int node_id = createNode2D(*graph, nodes, x, y);
+	int node_id = graph->getNodeArray().createNode2D(x, y);
 	graph->addEdge(node_id, node_id, face_id, 0.0f);
 	auto & fd = graph->getFaceAttributes(face_id);
 	fd.centroid = glm::vec2(x, y);
@@ -79,7 +78,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
       }
       for (int j = 0; j < o->nVertices; j++) {
 	double x = o->padfX[j], y = o->padfY[j], z = o->padfZ[j];
-	int node_id = createNode2D(*graph, nodes, x, y);
+	int node_id = graph->getNodeArray().createNode2D(x, y);
 	graph->addEdge(node_id, node_id, -1, 0.0f);
       }
 #endif
@@ -108,7 +107,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	  }
 
 	  int arc_id = graph->getNodeArray().addArcGeometry(arc);
-	  pair<int, int> n = createNodesForArc(arc, *graph, nodes);
+	  pair<int, int> n = graph->getNodeArray().createNodesForArc(arc);
 	  assert(arc_id);
 	  assert(arc_id >= 1 && arc_id <= graph->getNodeArray().getArcGeometry().size());
 	  int edge_id = graph->addEdge(n.first, n.second, hyperedge_id, 1.0f, arc_id);
@@ -166,7 +165,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
     cerr << "creating nodes (" << node_edges.size() << ")\n";
     for (map<string, pair<glm::dvec2, set<string> > >::iterator it = node_edges.begin(); it != node_edges.end(); it++) {
       if (it->second.second.size() >= 3) {
-	createNode2D(*graph, nodes, it->second.first.x, it->second.first.y);
+	graph->getNodeArray().createNode2D(it->second.first.x, it->second.first.y);
       }
     }
     cerr << "creating faces\n";    
@@ -206,9 +205,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	// cerr << "rolling vertices (" << input.size() << ")\n";
 	bool node_found = false;
 	for (int step = 0; step < input.size(); step++) {
-	  ostringstream key1;
-	  key1 << input.front().x << "/" << input.front().y;
-	  if (nodes.find(key1.str()) != nodes.end()) {
+	  if (graph->getNodeArray().hasNode(input.front().x, input.front().y)) {
 	    node_found = true;
 	    break;
 	  } else {
@@ -219,27 +216,25 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
 	input.push_back(input.front());
 	assert(input.size() >= 4);
 	if (!node_found) { // island
-	  createNode2D(*graph, nodes, input.front().x, input.front().y);
+	  graph->getNodeArray().createNode2D(input.front().x, input.front().y);
 	}
 	// ArcData2D arc;
 	// for (list<glm::dvec3>::iterator it = input.begin(); it != input.end(); it++) {
 	//   arc.data.push_back(*it);
 	// }
-	// pair<int, int> n = createNodesForArc(arc, graph, nodes);
+	// pair<int, int> n = graph->getNodeArray().createNodesForArc(arc);
 	// assert(n.first == n.second);
 	// int edge_id = graph->addEdge(n.first, n.second, face_id);
 	// geometries.setArc(edge_id, arc);
 	vector<ArcData2D> arcs;
 	vector<int> face_nodes;
 	for (auto & v : input) {
-	  ostringstream key1;
-	  key1 << v.x << "/" << v.y;
-	  map<string, int>::iterator it2 = nodes.find(key1.str());
-	  if (it2 != nodes.end()) {
+	  int n;
+	  if (graph->getNodeArray().hasNode(v.x, v.y, &n)) {
 	    if (!arcs.empty()) {
 	      arcs.back().data.push_back(v);
 	    }
-	    face_nodes.push_back(it2->second);
+	    face_nodes.push_back(n);
 	    arcs.push_back(ArcData2D());
 	  }
 	  assert(!arcs.empty());

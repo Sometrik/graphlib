@@ -48,14 +48,14 @@ class MapInfoLoader : public FileTypeHandler {
   bool handleColumns(std::ifstream & in, Graph & graph);
   bool handleData(std::ifstream & in);
 
-  bool handlePoint(std::ifstream & in, Graph & graph, std::map<std::string, int> & nodes);
-  bool handleLine(std::ifstream & in, Graph & graph, std::map<std::string, int> & nodes);
-  bool handlePolyline(std::ifstream & in, Graph & graph, std::map<std::string, int> & nodes);
-  bool handleRegion(std::ifstream & in, Graph & graph, std::map<std::string, int> & nodes);
+  bool handlePoint(std::ifstream & in, Graph & graph);
+  bool handleLine(std::ifstream & in, Graph & graph);
+  bool handlePolyline(std::ifstream & in, Graph & graph);
+  bool handleRegion(std::ifstream & in, Graph & graph);
   bool handlePen(std::ifstream & in);
   bool handleBrush(std::ifstream & in);
-  bool handleCommand(MIFCommand cmd, std::ifstream & in, Graph & graph, std::map<std::string, int> & nodes);
-  bool handlePrimitive(MIFPrimitive cmd, std::ifstream & in, Graph & graph, std::map<std::string, int> & nodes);
+  bool handleCommand(MIFCommand cmd, std::ifstream & in, Graph & graph);
+  bool handlePrimitive(MIFPrimitive cmd, std::ifstream & in, Graph & graph);
 
  private:
   std::map<std::string, MIFCommand> commands;

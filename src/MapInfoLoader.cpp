@@ -49,8 +49,6 @@ MapInfoLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray>
   }
   
   bool data_started = false;
-
-  map<string, int> nodes;
   
   while (!in.eof() && !in.fail()) {
     string s;
@@ -72,7 +70,7 @@ MapInfoLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray>
       }
       if (cmd->second == MIF_DATA) {
 	data_started = true;
-      } else if (!handleCommand(cmd->second, in, *graph, nodes)) {
+      } else if (!handleCommand(cmd->second, in, *graph)) {
 	cerr << "failed to handle command " << cmd->first;
 	return 0;
       }
@@ -82,7 +80,7 @@ MapInfoLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray>
 	cerr << "primitive not found: " << s << endl;
 	return 0;
       }
-      if (!handlePrimitive(cmd->second, in, *graph, nodes)) {
+      if (!handlePrimitive(cmd->second, in, *graph)) {
 	cerr << "failed to handle command " << cmd->first;
 	return 0;
       }
@@ -187,7 +185,7 @@ MapInfoLoader::handleBrush(ifstream & in) {
 }
 
 bool
-MapInfoLoader::handlePoint(ifstream & in, Graph & graph, map<string, int> & nodes) {
+MapInfoLoader::handlePoint(ifstream & in, Graph & graph) {
   double x, y;
   in >> x;
   in >> y;
@@ -197,7 +195,7 @@ MapInfoLoader::handlePoint(ifstream & in, Graph & graph, map<string, int> & node
   
   int face_id = graph.addFace();
   int arc_id = graph.getNodeArray().addArcGeometry(arc);
-  pair<int, int> n = createNodesForArc(arc, graph, nodes);
+  pair<int, int> n = graph.getNodeArray().createNodesForArc(arc);
   assert(n.first == n.second);
   graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
   
@@ -205,7 +203,7 @@ MapInfoLoader::handlePoint(ifstream & in, Graph & graph, map<string, int> & node
 }
 
 bool
-MapInfoLoader::handleLine(ifstream & in, Graph & graph, map<string, int> & nodes) {
+MapInfoLoader::handleLine(ifstream & in, Graph & graph) {
   double x1, y1, x2, y2;
   in >> x1;
   in >> y1;
@@ -218,14 +216,14 @@ MapInfoLoader::handleLine(ifstream & in, Graph & graph, map<string, int> & nodes
 
   int face_id = graph.addFace();
   int arc_id = graph.getNodeArray().addArcGeometry(arc);
-  pair<int, int> n = createNodesForArc(arc, graph, nodes);
+  pair<int, int> n = graph.getNodeArray().createNodesForArc(arc);
   graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
     
   return true;
 }
 
 bool
-MapInfoLoader::handlePolyline(ifstream & in, Graph & graph, map<string, int> & nodes) {
+MapInfoLoader::handlePolyline(ifstream & in, Graph & graph) {
   unsigned int num_points = 0;
   in >> num_points;  
   ArcData2D arc;
@@ -238,14 +236,14 @@ MapInfoLoader::handlePolyline(ifstream & in, Graph & graph, map<string, int> & n
   assert(arc.size() >= 2);
   int face_id = graph.addFace();
   int arc_id = graph.getNodeArray().addArcGeometry(arc);
-  pair<int, int> n = createNodesForArc(arc, graph, nodes);
+  pair<int, int> n = graph.getNodeArray().createNodesForArc(arc);
   graph.addEdge(n.first, n.second, face_id, 1.0f, arc_id);
   
   return true;
 }
 
 bool
-MapInfoLoader::handleRegion(ifstream & in, Graph & graph, std::map<std::string, int> & nodes) {
+MapInfoLoader::handleRegion(ifstream & in, Graph & graph) {
   assert(0);
 #if 0
   int num_contours = 0;
@@ -266,7 +264,7 @@ MapInfoLoader::handleRegion(ifstream & in, Graph & graph, std::map<std::string, 
 }
 
 bool
-MapInfoLoader::handleCommand(MIFCommand cmd, ifstream & in, Graph & graph, map<string, int> & nodes) {
+MapInfoLoader::handleCommand(MIFCommand cmd, ifstream & in, Graph & graph) {
   switch (cmd) {
   case MIF_VERSION: return handleVersion(in);    
   case MIF_DELIMITER: return handleDelimiter(in);
@@ -279,12 +277,12 @@ MapInfoLoader::handleCommand(MIFCommand cmd, ifstream & in, Graph & graph, map<s
 }
 
 bool
-MapInfoLoader::handlePrimitive(MIFPrimitive cmd, ifstream & in, Graph & graph, map<string, int> & nodes) {
+MapInfoLoader::handlePrimitive(MIFPrimitive cmd, ifstream & in, Graph & graph) {
   switch (cmd) {
-  case MIF_POINT: return handlePoint(in, graph, nodes);
-  case MIF_LINE: return handleLine(in, graph, nodes );
-  case MIF_PLINE: return handlePolyline(in, graph, nodes);
-  case MIF_REGION: return handleRegion(in, graph, nodes);
+  case MIF_POINT: return handlePoint(in, graph);
+  case MIF_LINE: return handleLine(in, graph);
+  case MIF_PLINE: return handlePolyline(in, graph);
+  case MIF_REGION: return handleRegion(in, graph);
   case MIF_PEN: return handlePen(in);
   case MIF_BRUSH: return handleBrush(in);
   }
