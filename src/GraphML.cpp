@@ -189,7 +189,7 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
     XMLElement * key_element = doc.NewElement("key");
     key_element->SetAttribute("attr.name", col.first.c_str());
     key_element->SetAttribute("id", col.first.c_str());
-    key_element->SetAttribute("attr.type", col.second->getTypeText());
+    key_element->SetAttribute("attr.type", "text"); // col.second->getTypeText());
     key_element->SetAttribute("for", "node");
     graphml_element->LinkEndChild(key_element);    
   }
@@ -198,7 +198,7 @@ GraphML::saveGraph(const Graph & graph, const std::string & filename) {
     XMLElement * key_element = doc.NewElement("key");
     key_element->SetAttribute("attr.name", col.first.c_str());
     key_element->SetAttribute("id", col.first.c_str());
-    key_element->SetAttribute("attr.type", col.second->getTypeText());
+    key_element->SetAttribute("attr.type", "text"); // col.second->getTypeText());
     key_element->SetAttribute("for", "edge");
     graphml_element->LinkEndChild(key_element);    
   }
