@@ -92,7 +92,7 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   while (most_active_users0.size() > 25) most_active_users0.pop_back();
 
   if (!most_active_users0.empty()) {
-    const table::Column & username = graph.getNodeArray().getTable()["uname"];
+    auto & username = graph.getNodeArray().getTable()["uname"];
     for (auto & ud : most_active_users0) {
       int i = graph.getNodeArray().getNodeId(ud.first.source_id, ud.first.source_object_id);
       string uname;
@@ -113,8 +113,8 @@ RawStatistics::finalize(const Graph & graph, StatisticsData & output) const {
   while (most_popular_users0.size() > 25) most_popular_users0.pop_back();
   
   if (!most_popular_users0.empty()) {
-    const table::Column & name_column = graph.getNodeArray().getTable()["name"];
-    const table::Column & username_column = graph.getNodeArray().getTable()["uname"];
+    auto & name_column = graph.getNodeArray().getTable()["name"];
+    auto & username_column = graph.getNodeArray().getTable()["uname"];
     for (auto & ud : most_popular_users0) {
       int i = graph.getNodeArray().getNodeId(ud.first.source_id, ud.first.source_object_id);
       string title;

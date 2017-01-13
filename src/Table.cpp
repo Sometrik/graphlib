@@ -4,10 +4,6 @@
 
 #include "TextColumn.h"
 #include "CompressedTextColumn.h"
-#include "IntColumn.h"
-#include "UShortColumn.h"
-#include "DoubleColumn.h"
-#include "BigIntColumn.h"
 #include "TimeSeriesColumn.h"
 
 #include <fstream>
@@ -47,7 +43,7 @@ Table::loadCSV(const char * filename, char delimiter) {
   }
 }
 
-Column &
+ColumnBase &
 Table::addTextColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {
@@ -57,7 +53,7 @@ Table::addTextColumn(const char * name) {
   }
 }
 
-Column &
+ColumnBase &
 Table::addCompressedTextColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {
@@ -67,47 +63,47 @@ Table::addCompressedTextColumn(const char * name) {
   }
 }
 
-Column &
+ColumnBase &
 Table::addDoubleColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<DoubleColumn>(name));
+    return addColumn(std::make_shared<Column<double> >(name));
   }
 }
 
-Column &
+ColumnBase &
 Table::addIntColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<IntColumn>(name));
+    return addColumn(std::make_shared<Column<int> >(name));
   }
 }
 
-Column &
+ColumnBase &
 Table::addUShortColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<UShortColumn>(name));
+    return addColumn(std::make_shared<Column<unsigned short> >(name));
   }
 }
 
-Column &
+ColumnBase &
 Table::addBigIntColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<BigIntColumn>(name));
+    return addColumn(std::make_shared<Column<long long> >(name));
   }
 }
 
-Column &
+ColumnBase &
 Table::addTimeSeriesColumn(const char * name) {
   auto it = columns.find(name);
   if (it != columns.end()) {

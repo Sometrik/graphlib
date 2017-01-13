@@ -18,20 +18,20 @@ namespace table {
       return it != columns.end();
     }
 
-    const Column * getColumnSafe(const char * name) const {
+    const ColumnBase * getColumnSafe(const char * name) const {
       auto it = columns.find(name);
       return it != columns.end() ? it->second.get() : 0;
     }
     
-    Column & addTextColumn(const char * name);
-    Column & addCompressedTextColumn(const char * name);  
-    Column & addDoubleColumn(const char * name);
-    Column & addIntColumn(const char * name);
-    Column & addUShortColumn(const char * name);  
-    Column & addBigIntColumn(const char * name);
-    Column & addTimeSeriesColumn(const char * name);
+    ColumnBase & addTextColumn(const char * name);
+    ColumnBase & addCompressedTextColumn(const char * name);  
+    ColumnBase & addDoubleColumn(const char * name);
+    ColumnBase & addIntColumn(const char * name);
+    ColumnBase & addUShortColumn(const char * name);  
+    ColumnBase & addBigIntColumn(const char * name);
+    ColumnBase & addTimeSeriesColumn(const char * name);
     
-    Column & addColumn(const std::shared_ptr<Column> & col) {
+    ColumnBase & addColumn(const std::shared_ptr<ColumnBase> & col) {
       col->reserve(num_rows);
       columns[col->name()] = col;
       columns_in_order.push_back(col);
@@ -51,21 +51,21 @@ namespace table {
       num_rows = 0;
     }
     
-    Column & operator[] (int i) {
+    ColumnBase & operator[] (int i) {
       for (auto it = columns.begin(); it != columns.end(); it++, i--) {
 	if (!i) return *(it->second);
       }
       return null_column;
     }
     
-    const Column & operator[] (int i) const {
+    const ColumnBase & operator[] (int i) const {
       for (auto it = columns.begin(); it != columns.end(); it++, i--) {
 	if (!i) return *(it->second);
       }
       return null_column;
     }
     
-    Column & operator[] (const char * s) {
+    ColumnBase & operator[] (const char * s) {
       auto it = columns.find(s);
       if (it != columns.end()) {
 	return *(it->second);
@@ -74,7 +74,7 @@ namespace table {
       }
     }
     
-    const Column & operator[] (const char * s) const {
+    const ColumnBase & operator[] (const char * s) const {
       auto it = columns.find(s);
       if (it != columns.end()) {
 	return *(it->second);
@@ -83,11 +83,11 @@ namespace table {
       }
     }
     
-    Column & operator[] (const std::string & s) {
+    ColumnBase & operator[] (const std::string & s) {
       return (*this)[s.c_str()];
     }
     
-    const Column & operator[] (const std::string & s) const {
+    const ColumnBase & operator[] (const std::string & s) const {
       return (*this)[s.c_str()];
     }
     
@@ -99,12 +99,12 @@ namespace table {
     bool empty() const { return num_rows == 0; }
     size_t getColumnCount() const { return columns.size(); }
 
-    std::unordered_map<std::string, std::shared_ptr<Column> > & getColumns() { return columns; }
-    const std::unordered_map<std::string, std::shared_ptr<Column> > & getColumns() const { return columns; }
+    std::unordered_map<std::string, std::shared_ptr<ColumnBase> > & getColumns() { return columns; }
+    const std::unordered_map<std::string, std::shared_ptr<ColumnBase> > & getColumns() const { return columns; }
 
   private:
-    std::unordered_map<std::string, std::shared_ptr<Column> > columns;
-    std::vector<std::shared_ptr<Column> > columns_in_order;
+    std::unordered_map<std::string, std::shared_ptr<ColumnBase> > columns;
+    std::vector<std::shared_ptr<ColumnBase> > columns_in_order;
     NullColumn null_column;
     size_t num_rows;
   };

@@ -76,7 +76,7 @@ DBase3Column::DBase3Column(const std::shared_ptr<DBase3Handle> _dbf,
 			   int _column_index,
 			   int _num_rows,
 			   const std::string & _name)
-: Column(_name),
+: ColumnBase(_name),
   dbf(_dbf),
   column_index(_column_index),
   num_rows(_num_rows)

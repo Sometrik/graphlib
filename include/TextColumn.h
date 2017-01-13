@@ -7,10 +7,10 @@
 #include <cstring>
 
 namespace table {
-  class TextColumn : public Column {
+  class TextColumn : public ColumnBase {
   public:
-  TextColumn(const std::string & _name) : Column(_name) { }
-  TextColumn(const TextColumn & other) : Column(other.name()) {
+  TextColumn(const std::string & _name) : ColumnBase(_name) { }
+  TextColumn(const TextColumn & other) : ColumnBase(other.name()) {
       auto & other_data = other.data;
       for (int i = 0; i < other_data.size(); i++) {
 	pushValue(other_data[i]);
@@ -22,8 +22,8 @@ namespace table {
       }
     }
     
-    std::shared_ptr<Column> copy() const override { return std::make_shared<TextColumn>(*this); }
-    std::shared_ptr<Column> create() const override { return std::make_shared<TextColumn>(name()); }
+    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<TextColumn>(*this); }
+    std::shared_ptr<ColumnBase> create() const override { return std::make_shared<TextColumn>(name()); }
     size_t size() const override { return data.size(); }
     void reserve(size_t n) override { data.reserve(n); }
     

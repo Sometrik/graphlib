@@ -8,15 +8,15 @@
 #include <map>
 
 namespace table {
-  class TimeSeriesColumn : public Column {
+  class TimeSeriesColumn : public ColumnBase {
   public:
-    TimeSeriesColumn(const std::string & _name) : Column(_name) { }
-    TimeSeriesColumn(const char * _name) : Column(_name) { }
+    TimeSeriesColumn(const std::string & _name) : ColumnBase(_name) { }
+    TimeSeriesColumn(const char * _name) : ColumnBase(_name) { }
 
-    std::shared_ptr<Column> copy() const override { return std::make_shared<TimeSeriesColumn>(*this); }
-    std::shared_ptr<Column> create() const override { return std::make_shared<TimeSeriesColumn>(name()); }
+    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<TimeSeriesColumn>(*this); }
+    std::shared_ptr<ColumnBase> create() const override { return std::make_shared<TimeSeriesColumn>(name()); }
     
-    ColumnType getType() const override { return TIME_SERIES; }
+    // ColumnType getType() const override { return TIME_SERIES; }
 
     size_t size() const override { return data.size(); }
     void reserve(size_t n) override { data.reserve(n); }

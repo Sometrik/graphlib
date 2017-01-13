@@ -32,11 +32,13 @@ Graph::hasEdge(int n1, int n2) const {
   return false;
 }
 
-static table::Column * sort_col = 0;
+#if 0
+static table::ColumnBase * sort_col = 0;
 
 static bool compareRows(const int & a, const int & b) {
   return sort_col->compare(a, b);
 }
+#endif
 
 #if 0
 void
@@ -93,7 +95,7 @@ Graph::randomizeChildGeometry(int node_id, bool use_2d) {
 
 void
 Graph::getVisibleLabels(vector<Label> & labels) const {  
-  const table::Column & user_type = getNodeArray().getTable()["type"];
+  auto & user_type = getNodeArray().getTable()["type"];
   auto & size_method = nodes->getNodeSizeMethod();
   
   glm::vec4 black(0.0, 0.0, 0.0, 1.0), white(1.0, 1.0, 1.0, 1.0);
@@ -687,8 +689,8 @@ Graph::getNodePosition(int node_id) const {
   
 skey
 Graph::getNodeKey(int node_id) const {
-  const table::Column & source_id_column = getNodeArray().getTable()["source"];
-  const table::Column & id_column = getNodeArray().getTable()["id"];
+  auto & source_id_column = getNodeArray().getTable()["source"];
+  auto & id_column = getNodeArray().getTable()["id"];
   
   short source_id = source_id_column.getInt(node_id);
   long long source_object_id = 0;

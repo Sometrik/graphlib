@@ -9,15 +9,15 @@
 namespace table {
   class DBase3Handle;
   
-  class DBase3Column : public Column {
+  class DBase3Column : public ColumnBase {
   public:
     DBase3Column(std::shared_ptr<DBase3Handle> _dbf,
 		 int _column_index,
 		 int _num_rows,
 		 const std::string & _name);
 
-    std::shared_ptr<Column> copy() const override { return std::make_shared<DBase3Column>(*this); }
-    std::shared_ptr<Column> create() const override { return std::shared_ptr<Column>(0); } // FIXME
+    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<DBase3Column>(*this); }
+    std::shared_ptr<ColumnBase> create() const override { return std::shared_ptr<ColumnBase>(0); } // FIXME
   
     size_t size() const override { return num_rows; }
     void reserve(size_t n) override { }
@@ -51,14 +51,14 @@ namespace table {
     DBase3File(const std::string & filename);
     
     unsigned int getRecordCount() const { return record_count; }
-    std::vector<std::shared_ptr<Column> > & getColumns() { return columns; }
+    std::vector<std::shared_ptr<ColumnBase> > & getColumns() { return columns; }
     
   private:
     bool openDBF(const std::string & filename);
     
     std::shared_ptr<DBase3Handle> dbf;
     unsigned int record_count;
-    std::vector<std::shared_ptr<Column> > columns;
+    std::vector<std::shared_ptr<ColumnBase> > columns;
   };
 };
 
