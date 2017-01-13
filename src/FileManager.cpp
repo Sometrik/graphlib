@@ -18,7 +18,8 @@ FileManager::getInstance() {
 
 std::shared_ptr<Graph>
 FileManager::openGraph(const string & filename) {
-  return getHandlerByFilename(filename).openGraph(filename);
+  auto initial_nodes = std::make_shared<NodeArray>();
+  return openGraph(filename, initial_nodes);
 }
 
 std::shared_ptr<Graph>
