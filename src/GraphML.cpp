@@ -6,7 +6,6 @@
 #include <Table.h>
 
 #include <cassert>
-#include <map>
 #include <iostream>
 
 using namespace std;
@@ -41,7 +40,7 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
   XMLElement * graph_element = graphml_element->FirstChildElement("graph");
   assert(graph_element);
 
-  map<string, int> nodes_by_id;
+  unordered_map<string, int> nodes_by_id;
   
   const char * edgedefault = graph_element->Attribute("edgedefault");
   bool directed = true;
@@ -92,7 +91,7 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
 }
 
 void
-GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XMLElement & graph_element, map<string, int> & nodes_by_id, bool is_directed, int parent_node_id) const {
+GraphML::createGraphFromElement(Graph & graph, XMLElement & graphml_element, XMLElement & graph_element, unordered_map<string, int> & nodes_by_id, bool is_directed, int parent_node_id) const {
   auto & node_table = graph.getNodeArray().getTable();
   auto & edge_table = graph.getFaceData();
   

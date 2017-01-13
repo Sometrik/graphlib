@@ -3,6 +3,8 @@
 
 #include "FileTypeHandler.h"
 
+#include <unordered_map>
+
 class Graph;
 
 namespace tinyxml2 {
@@ -16,7 +18,7 @@ class GraphML : public FileTypeHandler {
   bool saveGraph(const Graph & graph, const std::string & filename) override;
 
  protected:
-  void createGraphFromElement(Graph & graph, tinyxml2::XMLElement & graphml_element, tinyxml2::XMLElement & graph_element, std::map<std::string, int> & nodes_by_id, bool is_directed, int parent_node_id = -1) const;  
+  void createGraphFromElement(Graph & graph, tinyxml2::XMLElement & graphml_element, tinyxml2::XMLElement & graph_element, std::unordered_map<std::string, int> & nodes_by_id, bool is_directed, int parent_node_id = -1) const;  
 };
 
 #endif
