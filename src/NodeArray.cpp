@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <sstream>
 
 using namespace std;
 
@@ -78,4 +79,60 @@ NodeArray::setRandomPosition(int node_id, bool use_2d) {
 		use_2d ? 0.0f : 256.0f * rand() / RAND_MAX - 128.0f
 		);
   setPosition(node_id, v1);
+}
+
+int
+NodeArray::createNode2D(double x, double y) {
+  ostringstream key;
+  key << x << "/" << y;
+  map<string, int>::iterator it = node_position_cache.find(key.str());
+  if (it != node_position_cache.end()) {
+    return it->second;
+  } else {
+    int node_id = node_position_cache[key.str()] = add();
+    setPosition(node_id, glm::vec3(x, y, 0.0f));
+    return node_id;  
+  }
+}
+
+int
+NodeArray::createNode3D(double x, double y, double z) {
+  ostringstream key;
+  key << x << "/" << y << "/" << z;
+  map<string, int>::iterator it = node_position_cache.find(key.str());
+  if (it != node_position_cache.end()) {
+    return it->second;
+  } else {
+    int node_id = node_position_cache[key.str()] = add();
+    setPosition(node_id, glm::vec3(x, y, z));
+    return node_id;  
+  }
+}
+
+bool
+NodeArray::hasNode(double x, double y, int * r) const {
+  ostringstream key;
+  key << x << "/" << y;
+  auto it = node_position_cache.find(key.str());
+  if (it != node_position_cache.end()) {
+    if (r) *r = it->second;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+pair<int, int>
+NodeArray::createNodesForArc(const ArcData2D & arc, bool rev) {
+  assert(arc.data.size() >= 2);
+  auto & v1 = arc.data.front();
+  auto & v2 = arc.data.back();
+  int node1 = createNode2D(v1.x, v1.y);
+  int node2 = createNode2D(v2.x, v2.y);
+  assert(node1 >= 0 && node2 >= 0);
+  if (rev) {
+    return pair<int, int>(node1, node2);
+  } else {
+    return pair<int, int>(node2, node1);
+  }
 }
