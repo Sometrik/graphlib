@@ -58,11 +58,13 @@ NodeArray::getNodeLabel(int node_id) const {
   return label;
 }
 
-static table::Column * sort_col = 0;
+#if 0
+static table::ColumnBase * sort_col = 0;
 
 static bool compareRows(const int & a, const int & b) {
   return sort_col->compare(a, b);
 }
+#endif
 
 void
 NodeArray::setLabelTexture(const skey & key, int texture) {
