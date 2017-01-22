@@ -21,18 +21,7 @@ namespace table {
   class CompressedTextColumn : public ColumnBase {
   public:
   CompressedTextColumn(const std::string & _name) : ColumnBase(_name) { }
-  CompressedTextColumn(const CompressedTextColumn & other) : ColumnBase(other.name()) {
-#if 0
-      auto & other_data = other.data;
-      for (int i = 0; i < other_data.size(); i++) {
-	pushValue(other_data[i], other_data[i] ? strlen(other_data[i]) : 0);
-      }
-#endif
-    }
-    ~CompressedTextColumn() { }
     
-    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<CompressedTextColumn>(*this); }
-    std::shared_ptr<ColumnBase> create() const override { return std::make_shared<CompressedTextColumn>(name()); }
     size_t size() const override { return data.size(); }
     void reserve(size_t n) override { data.reserve(n); }
     

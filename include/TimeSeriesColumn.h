@@ -12,9 +12,6 @@ namespace table {
   public:
     TimeSeriesColumn(const std::string & _name) : ColumnBase(_name) { }
     TimeSeriesColumn(const char * _name) : ColumnBase(_name) { }
-
-    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<TimeSeriesColumn>(*this); }
-    std::shared_ptr<ColumnBase> create() const override { return std::make_shared<TimeSeriesColumn>(name()); }
     
     // ColumnType getType() const override { return TIME_SERIES; }
 

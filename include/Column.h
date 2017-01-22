@@ -14,10 +14,8 @@ namespace table {
 
     ColumnBase & operator= (const ColumnBase & other) = delete;
 
-    virtual ~ColumnBase() { }
+    virtual ~ColumnBase() = default;
 
-    virtual std::shared_ptr<ColumnBase> copy() const = 0;
-    virtual std::shared_ptr<ColumnBase> create() const = 0;    
     virtual void reserve(size_t n) = 0;
     virtual size_t size() const = 0;
 
@@ -51,8 +49,6 @@ namespace table {
     Column(const std::string & _name) : ColumnBase(_name) { }
     Column(const char * _name) : ColumnBase(_name) { }
 
-    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<Column<T> >(*this); }
-    std::shared_ptr<ColumnBase> create() const override { return std::make_shared<Column<T> >(name()); }
     void reserve(size_t n) override { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
@@ -103,8 +99,6 @@ namespace table {
   class NullColumn : public ColumnBase {
   public:
   NullColumn() : ColumnBase("") { }
-    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<NullColumn>(*this); }
-    std::shared_ptr<ColumnBase> create() const override { return std::make_shared<NullColumn>(); }
     void reserve(size_t n) override { }
     size_t size() const override { return 0; }
     double getDouble(int i) const override { return 0; }

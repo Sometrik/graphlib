@@ -15,9 +15,6 @@ namespace table {
 		 int _column_index,
 		 int _num_rows,
 		 const std::string & _name);
-
-    std::shared_ptr<ColumnBase> copy() const override { return std::make_shared<DBase3Column>(*this); }
-    std::shared_ptr<ColumnBase> create() const override { return std::shared_ptr<ColumnBase>(0); } // FIXME
   
     size_t size() const override { return num_rows; }
     void reserve(size_t n) override { }
