@@ -385,8 +385,8 @@ class Graph {
     manually_selected_active_child = false;
   }
       
-  std::map<skey, int> & getFaceCache() { return face_cache; } 
-  const std::map<skey, int> & getFaceCache() const { return face_cache; } 
+  std::unordered_map<skey, int> & getFaceCache() { return face_cache; } 
+  const std::unordered_map<skey, int> & getFaceCache() const { return face_cache; } 
 
   int getFaceId(short source_id, long long source_object_id) const;
   
@@ -539,7 +539,7 @@ class Graph {
   int id;
   unsigned int new_primary_objects_counter = 0, new_secondary_objects_counter = 0, new_images_counter = 0;
   std::shared_ptr<Graph> final_graph;
-  std::map<skey, int> face_cache;
+  std::unordered_map<skey, int> face_cache;
   RawStatistics statistics;
   std::string name, keywords;
   int server_search_id = 0;

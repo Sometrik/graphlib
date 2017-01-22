@@ -87,7 +87,7 @@ int
 NodeArray::createNode2D(double x, double y) {
   ostringstream key;
   key << x << "/" << y;
-  map<string, int>::iterator it = node_position_cache.find(key.str());
+  auto it = node_position_cache.find(key.str());
   if (it != node_position_cache.end()) {
     return it->second;
   } else {
@@ -101,7 +101,7 @@ int
 NodeArray::createNode3D(double x, double y, double z) {
   ostringstream key;
   key << x << "/" << y << "/" << z;
-  map<string, int>::iterator it = node_position_cache.find(key.str());
+  auto it = node_position_cache.find(key.str());
   if (it != node_position_cache.end()) {
     return it->second;
   } else {

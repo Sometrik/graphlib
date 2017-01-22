@@ -14,7 +14,6 @@
 
 #include <glm/glm.hpp>
 #include <string>
-#include <map>
 #include <memory>
 
 #define GF_TEMPORAL_GRAPH	1
@@ -79,11 +78,11 @@ class NodeArray : public ReadWriteObject {
 
   std::string getNodeLabel(int node_id) const;
 
-  std::map<skey, int> & getNodeCache() { return node_cache; } 
-  const std::map<skey, int> & getNodeCache() const { return node_cache; } 
+  std::unordered_map<skey, int> & getNodeCache() { return node_cache; } 
+  const std::unordered_map<skey, int> & getNodeCache() const { return node_cache; } 
 
-  std::map<std::string, int> & getNodePositionCache() { return node_position_cache; }
-  const std::map<std::string, int> & getNodePositionCache() const { return node_position_cache; }
+  std::unordered_map<std::string, int> & getNodePositionCache() { return node_position_cache; }
+  const std::unordered_map<std::string, int> & getNodePositionCache() const { return node_position_cache; }
 
   int add(NodeType type = NODE_ANY) {
     int node_id = node_geometry.size();
@@ -289,8 +288,8 @@ class NodeArray : public ReadWriteObject {
   std::vector<node_data_s> node_geometry;
     
  private:
-  std::map<skey, int> node_cache;
-  std::map<std::string, int> node_position_cache;
+  std::unordered_map<skey, int> node_cache;
+  std::unordered_map<std::string, int> node_position_cache;
 
   table::Table nodes;
   SizeMethod size_method;
