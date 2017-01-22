@@ -3,7 +3,6 @@
 
 #include "RawStatistics.h"
 #include "NodeArray.h"
-#include "graph_color.h"
 
 #include <vector>
 #include <set>
@@ -83,7 +82,6 @@ edge_data_s(float _weight, int _tail, int _head, int _next_node_edge, int _face,
 
 struct face_data_s {
   glm::vec2 centroid;
-  graph_color_s color;
   int first_edge;
   time_t timestamp;
   float sentiment;
@@ -329,7 +327,7 @@ class Graph {
 
   virtual int addFace(time_t timestamp = 0, float sentiment = 0, short feed = 0, short lang = 0, long long app_id = -1) { // int shell1 = -1, int shell2 = -1) {
     int face_id = (int)face_attributes.size();
-    face_attributes.push_back({ glm::vec2(0, 0), { 255, 255, 255, 255 }, -1, timestamp, sentiment, feed, lang, app_id, 0, 0 });
+    face_attributes.push_back({ glm::vec2(0, 0), -1, timestamp, sentiment, feed, lang, app_id, 0, 0 });
     faces.addRow();
     return face_id;
   }
