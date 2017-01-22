@@ -626,7 +626,7 @@ DXFLoader::process3DFace(Graph & graph, map<string, int> & waiting_faces, const 
   // int region_id = graph.addRegion();
   int face_id = graph.addFace();
   auto & fd = graph.getFaceAttributes(face_id);
-  fd.color = { c.red, c.green, c.blue };
+  // fd.color = { c.red, c.green, c.blue };
   // fd.normal = face.normal;
   vector<int> face_nodes;      
   for (auto & v : face.v) {
