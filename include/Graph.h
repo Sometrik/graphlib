@@ -516,6 +516,8 @@ class Graph {
 
   void selectNode(int node_id);
 
+  void clearSelectionLock() { manually_selected_active_child = false; }
+
  protected:
   void incLabelVersion() { label_version++; }
 
