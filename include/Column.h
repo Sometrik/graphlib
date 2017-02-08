@@ -52,20 +52,20 @@ namespace table {
     void reserve(size_t n) override { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
-    double getDouble(int i) const override { return (double)getInt(i); }
-    long long getInt64(int i) const override { return data[i]; }
+    double getDouble(int i) const override { return (double)data[i]; }
+    long long getInt64(int i) const override { return (long long)data[i]; }
     std::string getText(int i) const override { return std::to_string(data[i]); }
-    int getInt(int i) const override { return data[i]; }
+    int getInt(int i) const override { return (int)data[i]; }
     
     void setValue(int i, double v) override {
       assert(i >= 0);
       while (i >= data.size()) data.push_back(T());
-      setValue(i, (int)v);
+      data[i] = T(v);
     }
     void setValue(int i, long long v) override {
       assert(i >= 0);
       while (i >= data.size()) data.push_back(T());
-      data[i] = v;
+      data[i] = T(v);
     }
     void setValue(int i, const std::string & v) override {
       // setValue(i, stoi(v));
@@ -73,18 +73,18 @@ namespace table {
     void setValue(int i, int v) override {
       assert(i >= 0);
       while (i >= data.size()) data.push_back(T());
-      data[i] = v;
+      data[i] = T(v);
     }
     
-    void pushValue(double v) override { data.push_back(v); }
+    void pushValue(double v) override { data.push_back(T(v)); }
     void pushValue(const std::string & v) override {
       // data.push_back(v);
     }
     void pushValue(long long v) override {
-      data.push_back(v);
+      data.push_back(T(v));
     }
     void pushValue(int v) override {
-      data.push_back(v);
+      data.push_back(T(v));
     }
 
     bool compare(int a, int b) const override {
