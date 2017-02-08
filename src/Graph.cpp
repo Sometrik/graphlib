@@ -918,7 +918,7 @@ Graph::removeAllChildren() {
       auto & nd = nodes->getNodeData(i);
       auto & td = node_geometry3[i];
       if (td.parent_node != -1) {
-	nd.position = getNodePosition(i);
+	// nd.position = getNodePosition(i);
 	td.parent_node = -1;
       }
       td.setLabelVisibility(false);
