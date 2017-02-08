@@ -3,6 +3,8 @@
 
 #include <Column.h>
 
+#include <cassert>
+
 struct image_url_s {
   bool operator< (const image_url_s & other) const {
     if (width < other.width) return true;
@@ -18,21 +20,29 @@ class ImageSet {
  public:
   ImageSet() = default;
 
+  const image_url_s & getAny() const {
+    if (images.empty()) {
+      return null_image;
+    } else {
+      auto it = images.begin();
+      return *it;
+    }    
+  }
   const image_url_s & getSuitableUrl(unsigned int width) const {
     for (auto & i : images) {
       if (i.width >= width) {
 	return i;
       }
     }
-    if (images.empty()) {
-      return null_image;
-    } else {
-      auto it = images.end();
-      return *it;
-    }
+    return getAny();
   }
 
   void insert(const image_url_s & image) { images.insert(image); }
+  void insert(const std::string & url) { insert(0, 0, url); }
+  void insert(unsigned int w, unsigned int h, const std::string & url) {
+    image_url_s u = { w, h, url };
+    insert(u);
+  }
   
  private:
   std::set<image_url_s> images;
@@ -50,16 +60,32 @@ namespace table {
     size_t size() const override { return data.size(); }
     void reserve(size_t n) override { data.reserve(n); }
     
-    double getDouble(int i) const override { return 0; }
-    int getInt(int i) const override { return 0; }
-    long long getInt64(int i) const override { return 0; }
-    std::string getText(int i) const override { return 0; }
+    double getDouble(int i) const override { return getInt(i); }
+    long long getInt64(int i) const override { return getInt(i); }
+    int getInt(int i) const override {
+      return data[i].getAny().width;
+    }
+    std::string getText(int i) const override {
+      return data[i].getAny().url;
+    }
+
+    const ImageSet & getImageSet(int i) const {
+      if (i >= 0 && i < data.size()) {
+	return data[i];
+      } else {
+	return nullImage;
+      }
+    }
 
     void setValue(int i, double v) override { }
     void setValue(int i, int v) override { }
     void setValue(int i, long long v) override { }
     void setValue(int i, const std::string & v) override { }
-    void addImage(int i, const image_url_s & image) { data[i].insert(image); }
+    void addImage(int i, unsigned int w, unsigned int h, const std::string & url) {
+      assert(i >= 0);
+      while (i >= data.size()) data.push_back(ImageSet());
+      data[i].insert(w, h, url);
+    }
 
     bool compare(int a, int b) const override { return false; }
     void clear() override { data.clear(); }
@@ -74,11 +100,14 @@ namespace table {
       data.push_back(ImageSet());
     }
     void pushValue(const std::string & v) override {
-      data.push_back(ImageSet());
+      ImageSet is;
+      is.insert(v);
+      data.push_back(is);
     }
             
   private:
     std::vector<ImageSet> data;
+    ImageSet nullImage;
   };
 };
 
