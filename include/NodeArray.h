@@ -85,7 +85,7 @@ class NodeArray : public ReadWriteObject {
   const std::unordered_map<std::string, int> & getNodePositionCache() const { return node_position_cache; }
 
   int add(NodeType type = NODE_ANY) {
-    int node_id = node_geometry.size();
+   int node_id(node_geometry.size());
     node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type });
     version++;
     while (nodes.size() < node_geometry.size()) {
