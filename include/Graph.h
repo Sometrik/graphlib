@@ -516,7 +516,14 @@ class Graph {
 
   void selectNode(int node_id);
 
-  void clearSelectionLock() { manually_selected_active_child = false; }
+  bool clearSelectionLock() {
+    if (manually_selected_active_child) {
+      manually_selected_active_child = false;
+      return true;
+    } else {
+      return false;
+    }
+  }
 
  protected:
   void incLabelVersion() { label_version++; }
