@@ -65,7 +65,7 @@ Inflate::decompressString(unsigned int data_offset, unsigned short data_length) 
   do {
     assert(pos <= input_buffer->size());
     
-    unsigned int len = input_buffer->size() - pos;
+    auto len = input_buffer->size() - pos;
     int flush = Z_SYNC_FLUSH;
     if (len > CHUNK) {
       len = CHUNK;
