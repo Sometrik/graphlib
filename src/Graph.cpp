@@ -71,22 +71,13 @@ Graph::setFaceColorByColumn(int column) {
 #endif
 
 void
-Graph::randomizeGeometry(bool use_2d) {
-  assert(!nodes->hasSpatialData());
-  unsigned int num_nodes = getNodeArray().size();
-  for (unsigned int i = 0; i < num_nodes; i++) {
-    getNodeArray().setRandomPosition(i, use_2d);
-  }
-}
-
-void
 Graph::randomizeChildGeometry(int node_id, bool use_2d) {
   assert(!nodes->hasSpatialData());
   assert(node_id >= 0);
   if (node_id < node_geometry3.size()) {
     auto & td = node_geometry3[node_id];
     for (int c = td.first_child; c != -1; ) {
-      getNodeArray().setRandomPosition(c, use_2d);
+      getNodeArray().setInitialPosition(c, use_2d);
       auto & td2 = node_geometry3[c];
       c = td2.next_child;
     }

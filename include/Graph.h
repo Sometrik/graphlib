@@ -299,7 +299,6 @@ class Graph {
   void setKeywords(const std::string & k) { keywords = k; }
   const std::string & getKeywords() const { return keywords; }
   
-  void randomizeGeometry(bool use_2d = false);
   void randomizeChildGeometry(int node_id, bool use_2d = false);
   void refreshLayouts();
 
