@@ -85,7 +85,7 @@ class NodeArray : public ReadWriteObject {
   const std::unordered_map<std::string, int> & getNodePositionCache() const { return node_position_cache; }
 
   int add(NodeType type = NODE_ANY) {
-   int node_id(node_geometry.size());
+    int node_id(node_geometry.size());
     node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type });
     version++;
     while (nodes.size() < node_geometry.size()) {
@@ -101,10 +101,7 @@ class NodeArray : public ReadWriteObject {
     }
     return -1;
   }
-
-  void updatePosition(int i, const glm::vec3 & v) {
-    node_geometry[i].position = v;    
-  }
+  
   void setPosition(int i, const glm::vec3 & v) { 
     node_geometry[i].position = v;
     version++;
@@ -153,10 +150,10 @@ class NodeArray : public ReadWriteObject {
   
   std::vector<node_data_s> & getGeometry() { return node_geometry; }
   const std::vector<node_data_s> & getGeometry() const { return node_geometry; }
-  void updatePositions(std::vector<node_position_data_s> & v) const {
-    unsigned int old_position = v.size();
+  void updatePositions(std::vector<node_position_data_s> & v, bool update_all = false) const {
+    size_t old_position = update_all ? 0 : v.size();
     v.resize(node_geometry.size());
-    for (unsigned int i = old_position, n = node_geometry.size(); i < n; i++) {
+    for (size_t i = old_position, n = node_geometry.size(); i < n; i++) {
       v[i].position = node_geometry[i].position;
       v[i].prev_position = node_geometry[i].position;
     }
