@@ -69,7 +69,7 @@ Louvain::oneLevel() {
       assert(getGraph().getNodeTertiaryData(community_id).parent_node == -1);
       // g->getNodeArray().setPosition(community_id, g->getNodePosition(n));
       g->addChild(community_id, n, 0);
-      // g->getNodeArray().setPosition(n, glm::vec3());
+      g->getNodeArray().setPosition2(n, glm::vec3());
     }
   } else {
     assert(0);
