@@ -433,7 +433,6 @@ Graph::calculateEdgeCentrality() {
 
   assert(nodes->isDynamic());
   incVersion();
-  randomizeGeometry();
   resume();
 }
 
