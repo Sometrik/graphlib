@@ -75,12 +75,22 @@ NodeArray::setLabelTexture(const skey & key, int texture) {
 }
 
 void
-NodeArray::setRandomPosition(int node_id, bool use_2d) {
+NodeArray::setInitialPosition(int node_id, bool use_2d) {
   glm::vec3 v1( 256.0f * rand() / RAND_MAX - 128.0f,
 		256.0f * rand() / RAND_MAX - 128.0f,
 		use_2d ? 0.0f : 256.0f * rand() / RAND_MAX - 128.0f
 		);
-  setPosition(node_id, v1);
+  node_geometry[node_id].position = v1;
+  // no need to update version for initial position
+}
+
+void
+NodeArray::randomizeGeometry(bool use_2d) {
+  assert(!hasSpatialData());
+  for (size_t i = 0; i < size(); i++) {
+    setInitialPosition(i, use_2d);
+  }
+  version++;
 }
 
 int
@@ -92,7 +102,7 @@ NodeArray::createNode2D(double x, double y) {
     return it->second;
   } else {
     int node_id = node_position_cache[key.str()] = add();
-    setPosition(node_id, glm::vec3(x, y, 0.0f));
+    setPosition2(node_id, glm::vec3(x, y, 0.0f));
     return node_id;  
   }
 }
@@ -106,7 +116,7 @@ NodeArray::createNode3D(double x, double y, double z) {
     return it->second;
   } else {
     int node_id = node_position_cache[key.str()] = add();
-    setPosition(node_id, glm::vec3(x, y, z));
+    setPosition2(node_id, glm::vec3(x, y, z));
     return node_id;  
   }
 }

@@ -84,12 +84,15 @@ class NodeArray : public ReadWriteObject {
   std::unordered_map<std::string, int> & getNodePositionCache() { return node_position_cache; }
   const std::unordered_map<std::string, int> & getNodePositionCache() const { return node_position_cache; }
 
+  // add() doesn't change version, since new node is invisible without edges
   int add(NodeType type = NODE_ANY) {
     int node_id(node_geometry.size());
     node_geometry.push_back({ glm::vec3(), BLANK_NODE, 0, type });
-    version++;
     while (nodes.size() < node_geometry.size()) {
       nodes.addRow();
+    }
+    if (isDynamic()) {
+      setInitialPosition(node_id);
     }
     return node_id;
   }
@@ -102,17 +105,17 @@ class NodeArray : public ReadWriteObject {
     return -1;
   }
   
-  void setPosition(int i, const glm::vec3 & v) { 
+  void setPosition2(int i, const glm::vec3 & v) { 
     node_geometry[i].position = v;
     version++;
   }
-  void setPosition(int i, const glm::vec2 & v) {
-    setPosition(i, glm::vec3(v, 0.0f));
+  void setPosition2(int i, const glm::vec2 & v) {
+    setPosition2(i, glm::vec3(v, 0.0f));
   }
   
   void setNodeTexture(int i, int texture) {
     node_geometry[i].texture = texture;
-    version++;
+    // version++;
   }
 
   void setLabelTexture(const skey & key, int texture);  
@@ -186,7 +189,8 @@ class NodeArray : public ReadWriteObject {
   }
   const std::vector<ArcData2D> & getArcGeometry() const { return arc_geometry; }
 
-  void setRandomPosition(int node_id, bool use_2d = true);
+  void randomizeGeometry(bool use_2d = false);
+  void setInitialPosition(int node_id, bool use_2d = true);
 
   bool isTemporal() const { return testFlags(GF_TEMPORAL_GRAPH); }
   void setTemporal(bool t) { updateFlags(GF_TEMPORAL_GRAPH, t); } 
@@ -219,7 +223,6 @@ class NodeArray : public ReadWriteObject {
     int community_id = getCommunityById(id);
     if (community_id != -1) return community_id;
     communities[id] = community_id = add(NODE_COMMUNITY);
-    setRandomPosition(community_id);
     return community_id;
   }
 
@@ -234,7 +237,6 @@ class NodeArray : public ReadWriteObject {
     if (community_id != -1) return community_id;
     languages[id] = community_id = add(NODE_LANG_ATTRIBUTE);
     setNodeTexture(community_id, FLAG_NODE);
-    setRandomPosition(community_id);
     return community_id;
   }
 
@@ -248,7 +250,6 @@ class NodeArray : public ReadWriteObject {
     int community_id = getApplicationById(id);
     if (community_id != -1) return community_id;
     applications[id] = community_id = add(NODE_ATTRIBUTE);
-    setRandomPosition(community_id);
     return community_id;
   }
 
@@ -259,7 +260,6 @@ class NodeArray : public ReadWriteObject {
     if (male_node_id == -1) {
       male_node_id = add(NODE_ATTRIBUTE);
       setNodeTexture(male_node_id, MALE_NODE);
-      setRandomPosition(male_node_id);
     }
     return male_node_id;
   }
@@ -268,7 +268,6 @@ class NodeArray : public ReadWriteObject {
     if (female_node_id == -1) {
       female_node_id = add(NODE_ATTRIBUTE);
       setNodeTexture(female_node_id, FEMALE_NODE);
-      setRandomPosition(female_node_id);
     }
     return female_node_id;
   }
