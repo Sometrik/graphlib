@@ -36,6 +36,7 @@ class FileManager {
   
   DummyHandler null_handler;
 
+  // needs to be sorted for display
   std::map<std::string, std::shared_ptr<FileTypeHandler> > extmap;
 };
 
