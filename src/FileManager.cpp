@@ -63,19 +63,19 @@ void
 FileManager::addHandler(std::shared_ptr<FileTypeHandler> handler) {
   assert(handler.get());
   const vector<string> & extensions = handler->getExtensions();
-  for (vector<string>::const_iterator it = extensions.begin(); it != extensions.end(); it++) {
-    extmap[*it] = handler;
+  for (auto & ext : extensions) {
+    extmap[ext] = handler;
   }
 }
 
 string
 FileManager::getReadableFormatsString() const {
   string t;
-  for (map<string, std::shared_ptr<FileTypeHandler> >::const_iterator it = extmap.begin(); it != extmap.end(); it++) {
+  for (auto & ed : extmap) {
     if (!t.empty()) t += "|";
-    t += it->second->getDescription() + " (*." + it->first + ")|*." + it->first;
+    t += ed.second->getDescription() + " (*." + ed.first + ")|*." + ed.first;
   }
-  if (!t.empty()) t+= "|";
+  if (!t.empty()) t += "|";
   t += "All files (*.*)|*.*";
   return t;
 }
