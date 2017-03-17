@@ -5,7 +5,6 @@
 #include "TextColumn.h"
 #include "CompressedTextColumn.h"
 #include "TimeSeriesColumn.h"
-#include "ImageSet.h"
 
 #include <fstream>
 #include <iostream>
@@ -113,14 +112,3 @@ Table::addTimeSeriesColumn(const char * name) {
     return addColumn(std::make_shared<TimeSeriesColumn>(name));
   }
 }
-
-ColumnBase &
-Table::addImageSetColumn(const char * name) {
-  auto it = columns.find(name);
-  if (it != columns.end()) {
-    return *(it->second);
-  } else {
-    return addColumn(std::make_shared<ImageSetColumn>(name));
-  }
-}
-

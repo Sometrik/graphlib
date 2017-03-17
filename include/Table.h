@@ -30,7 +30,6 @@ namespace table {
     ColumnBase & addUShortColumn(const char * name);  
     ColumnBase & addBigIntColumn(const char * name);
     ColumnBase & addTimeSeriesColumn(const char * name);
-    ColumnBase & addImageSetColumn(const char * name);
     
     ColumnBase & addColumn(const std::shared_ptr<ColumnBase> & col) {
       col->reserve(num_rows);
