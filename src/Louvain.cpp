@@ -16,6 +16,13 @@ Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
     create_node_clusters(_create_node_clusters),
     create_edge_clusters(_create_edge_clusters)
 {
+  auto end = g->end_visible_nodes();
+  for (auto it = g->begin_visible_nodes(); it != end; ++it) {
+    // if (getNodeCommunity(*it) == -1) {
+    if (getGraph().getNodeTertiaryData(*it).parent_node == -1) {
+      current_nodes.push_back(*it);
+    }
+  }
 }
 
 int
@@ -57,13 +64,7 @@ Louvain::oneLevel() {
   std::vector<int> nodes, edges;
 
   if (create_node_clusters) {
-    auto end = g->end_visible_nodes();
-    for (auto it = g->begin_visible_nodes(); it != end; ++it) {
-      // if (getNodeCommunity(*it) == -1) {
-      if (getGraph().getNodeTertiaryData(*it).parent_node == -1) {
-	nodes.push_back(*it);
-      }
-    }
+    nodes = current_nodes;
     for (auto & n : nodes) {
       int community_id = g->getNodeArray().createCommunity(n);
       assert(getGraph().getNodeTertiaryData(community_id).parent_node == -1);
@@ -155,17 +156,16 @@ Louvain::oneLevel() {
 
   cerr << "level done, modularity increase: " << initial_modularity << " to " << modularity << endl;
 
-  std::unordered_set<int> clusters;
-
   if (is_improved) {
+    std::unordered_set<int> clusters;
     for (int node : nodes) {
       clusters.insert(getNodeCommunity(node));
     }
     
-    current_clusters.clear();
-    current_clusters.reserve(clusters.size());
+    current_nodes.clear();
+    current_nodes.reserve(clusters.size());
     for (auto id : clusters) {
-      current_clusters.push_back(id);
+      current_nodes.push_back(id);
     }
   } else {
     for (int node : nodes) {

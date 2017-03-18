@@ -20,7 +20,7 @@ class Louvain {
   Graph & getGraph() { return *g; }
   const Graph & getGraph() const { return *g; }
 
-  const std::vector<int> & getClusterIds() const { return current_clusters; }
+  const std::vector<int> & getNodeIds() const { return current_nodes; }
   
  protected:
   // return the community of given node
@@ -37,7 +37,9 @@ class Louvain {
 
   bool create_node_clusters, create_edge_clusters;
 
-  std::vector<int> current_clusters;
+  int current_level = 0;
+
+  std::vector<int> current_nodes;
 };
 
 #endif
