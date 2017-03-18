@@ -524,6 +524,8 @@ class Graph {
     }
   }
 
+  void convertParentToEdge(int node_id);
+
  protected:
   void incLabelVersion() { label_version++; }
 

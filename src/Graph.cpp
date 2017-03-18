@@ -1078,3 +1078,14 @@ Graph::createSimilar() const {
   
   return graph;
 }
+
+void
+Graph::convertParentToEdge(int node_id) {
+  auto & td = getNodeTertiaryData(node_id);
+  assert(td.parent_node != -1);
+  if (td.parent_node != -1) {
+    addEdge(node_id, td.parent_node, -1, 0.001f);
+    float dnodecomm = 0.0f; // ??????
+    removeChild(node_id, dnodecomm);    
+  }  
+}
