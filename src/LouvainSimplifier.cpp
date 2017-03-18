@@ -31,7 +31,7 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
       is_improved = c.oneLevel();
 
       if (is_improved) {
-	for (auto cluster_id : c.getClusterIds()) {
+	for (auto cluster_id : c.getNodeIds()) {
 	  auto & td = target_graph.getNodeTertiaryData(cluster_id);
 	  assert(td.parent_node == -1);
 	  float best_d = 0;
@@ -57,6 +57,8 @@ LouvainSimplifier::apply(Graph & target_graph, time_t start_time, time_t end_tim
 	  target_graph.flattenChildren(cluster_id);
 	}
       }
+
+      // break;
     }
   }
 
