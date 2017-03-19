@@ -4,7 +4,7 @@
 #include "Column.h"
 
 #include <memory>
-#include <vector>
+#include <map>
 
 namespace table {
   class DBase3Handle;
@@ -13,9 +13,8 @@ namespace table {
   public:
     DBase3Column(std::shared_ptr<DBase3Handle> _dbf,
 		 int _column_index,
-		 int _num_rows,
-		 const std::string & _name);
-  
+		 int _num_rows);
+		   
     size_t size() const override { return num_rows; }
     void reserve(size_t n) override { }
 
@@ -48,14 +47,14 @@ namespace table {
     DBase3File(const std::string & filename);
     
     unsigned int getRecordCount() const { return record_count; }
-    std::vector<std::shared_ptr<ColumnBase> > & getColumns() { return columns; }
+    std::map<std::string, std::shared_ptr<ColumnBase> > & getColumns() { return columns; }
     
   private:
     bool openDBF(const std::string & filename);
     
     std::shared_ptr<DBase3Handle> dbf;
     unsigned int record_count;
-    std::vector<std::shared_ptr<ColumnBase> > columns;
+    std::map<std::string, std::shared_ptr<ColumnBase> > columns;
   };
 };
 

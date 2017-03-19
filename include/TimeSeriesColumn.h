@@ -10,8 +10,7 @@
 namespace table {
   class TimeSeriesColumn : public ColumnBase {
   public:
-    TimeSeriesColumn(const std::string & _name) : ColumnBase(_name) { }
-    TimeSeriesColumn(const char * _name) : ColumnBase(_name) { }
+    TimeSeriesColumn() { }
     
     // ColumnType getType() const override { return TIME_SERIES; }
 

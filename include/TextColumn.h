@@ -3,14 +3,13 @@
 
 #include "Column.h"
 
-#include <iostream>
 #include <cstring>
 
 namespace table {
   class TextColumn : public ColumnBase {
   public:
-  TextColumn(const std::string & _name) : ColumnBase(_name) { }
-  TextColumn(const TextColumn & other) : ColumnBase(other.name()) {
+  TextColumn() { }
+  TextColumn(const TextColumn & other) : ColumnBase(other) {
       auto & other_data = other.data;
       for (int i = 0; i < other_data.size(); i++) {
 	pushValue(other_data[i]);

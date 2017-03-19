@@ -20,7 +20,7 @@ namespace table {
   
   class CompressedTextColumn : public ColumnBase {
   public:
-  CompressedTextColumn(const std::string & _name) : ColumnBase(_name) { }
+  CompressedTextColumn() { }
     
     size_t size() const override { return data.size(); }
     void reserve(size_t n) override { data.reserve(n); }

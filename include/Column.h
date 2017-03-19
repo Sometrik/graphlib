@@ -9,8 +9,7 @@
 namespace table {
   class ColumnBase {
   public:
-  ColumnBase(const std::string & _name) : column_name(_name) { }
-  ColumnBase(const char * _name) : column_name(_name) { }
+  ColumnBase() { }
 
     ColumnBase & operator= (const ColumnBase & other) = delete;
 
@@ -36,19 +35,11 @@ namespace table {
     virtual void pushValue(int v) = 0;
     virtual void pushValue(long long v) = 0;
     virtual void pushValue(const std::string & v) = 0;
-        
-    const std::string & name() const { return column_name; }
-    
-  private:
-    std::string column_name;
   };
 
   template<class T>
   class Column : public ColumnBase {
   public:
-    Column(const std::string & _name) : ColumnBase(_name) { }
-    Column(const char * _name) : ColumnBase(_name) { }
-
     void reserve(size_t n) override { data.reserve(n); }
     size_t size() const override { return data.size(); }
     
@@ -98,7 +89,7 @@ namespace table {
 
   class NullColumn : public ColumnBase {
   public:
-  NullColumn() : ColumnBase("") { }
+  NullColumn() { }
     void reserve(size_t n) override { }
     size_t size() const override { return 0; }
     double getDouble(int i) const override { return 0; }
