@@ -299,7 +299,7 @@ ShapefileLoader::openGraph(const char * filename, const std::shared_ptr<NodeArra
   
   table::Table & table = graph->getFaceData();
   for (auto & col : dbf->getColumns()) {
-    table.addColumn(col);
+    table.addColumn(col.first, col.second);
   }
   
   return graph;
