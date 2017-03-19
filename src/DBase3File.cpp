@@ -67,17 +67,15 @@ DBase3File::openDBF(const string & filename) {
   unsigned int field_count = dbf->getFieldCount();
   for (unsigned int i = 0; i < field_count; i++) {
     string name = dbf->getFieldName(i);
-    columns.push_back(std::make_shared<DBase3Column>(dbf, i, record_count, name));
+    columns[name] = std::make_shared<DBase3Column>(dbf, i, record_count);
   }
   return true;
 }
 
 DBase3Column::DBase3Column(const std::shared_ptr<DBase3Handle> _dbf,
 			   int _column_index,
-			   int _num_rows,
-			   const std::string & _name)
-: ColumnBase(_name),
-  dbf(_dbf),
+			   int _num_rows)
+: dbf(_dbf),
   column_index(_column_index),
   num_rows(_num_rows)
 {
