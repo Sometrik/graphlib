@@ -49,7 +49,7 @@ Table::addTextColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<TextColumn>(name));
+    return addColumn(name, std::make_shared<TextColumn>());
   }
 }
 
@@ -59,7 +59,7 @@ Table::addCompressedTextColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<CompressedTextColumn>(name));
+    return addColumn(name, std::make_shared<CompressedTextColumn>());
   }
 }
 
@@ -69,7 +69,7 @@ Table::addDoubleColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<Column<double> >(name));
+    return addColumn(name, std::make_shared<Column<double> >());
   }
 }
 
@@ -79,7 +79,7 @@ Table::addIntColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<Column<int> >(name));
+    return addColumn(name, std::make_shared<Column<int> >());
   }
 }
 
@@ -89,7 +89,7 @@ Table::addUShortColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<Column<unsigned short> >(name));
+    return addColumn(name, std::make_shared<Column<unsigned short> >());
   }
 }
 
@@ -99,7 +99,7 @@ Table::addBigIntColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<Column<long long> >(name));
+    return addColumn(name, std::make_shared<Column<long long> >());
   }
 }
 
@@ -109,6 +109,6 @@ Table::addTimeSeriesColumn(const char * name) {
   if (it != columns.end()) {
     return *(it->second);
   } else {
-    return addColumn(std::make_shared<TimeSeriesColumn>(name));
+    return addColumn(name, std::make_shared<TimeSeriesColumn>());
   }
 }

@@ -31,9 +31,9 @@ namespace table {
     ColumnBase & addBigIntColumn(const char * name);
     ColumnBase & addTimeSeriesColumn(const char * name);
     
-    ColumnBase & addColumn(const std::shared_ptr<ColumnBase> & col) {
+    ColumnBase & addColumn(const std::string & name, const std::shared_ptr<ColumnBase> & col) {
       col->reserve(num_rows);
-      columns[col->name()] = col;
+      columns[name] = col;
       columns_in_order.push_back(col);
       return *col;
     }
@@ -52,16 +52,31 @@ namespace table {
     }
     
     ColumnBase & operator[] (int i) {
+#if 0
       for (auto it = columns.begin(); it != columns.end(); it++, i--) {
 	if (!i) return *(it->second);
       }
+#else
+      if (i >= 0 && i < columns_in_order.size()) return *(columns_in_order[i]);
+#endif
       return null_column;
+    }
+
+    const char * getColumnName(int i) const {
+      for (auto it = columns.begin(); it != columns.end(); it++, i--) {
+	if (!i) return it->first.c_str();
+      }
+      return "";
     }
     
     const ColumnBase & operator[] (int i) const {
+#if 0
       for (auto it = columns.begin(); it != columns.end(); it++, i--) {
 	if (!i) return *(it->second);
       }
+#else
+      if (i >= 0 && i < columns_in_order.size()) return *(columns_in_order[i]);
+#endif
       return null_column;
     }
     
