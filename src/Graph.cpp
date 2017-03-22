@@ -1,15 +1,15 @@
 #include "Graph.h"
 
 #include "DisplayInfo.h"
-#include "ColorProvider.h"
-#include "Controller.h"
 #include "RenderMode.h"
 #include "Label.h"
+#include <GraphFilter.h>
 
 #include <algorithm>
 #include <iostream>
 #include <typeinfo>
 #include <unordered_set>
+#include <list>
 
 #include <sys/time.h>
 
