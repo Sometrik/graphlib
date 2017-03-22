@@ -38,20 +38,31 @@ CSVLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
       if (s.empty()) continue;
       vector<string> row = StringUtils::split(s, delimiter);
       assert(!row.empty());
-      
+
+#if 0
+      auto & table = graph->getFaceData();
+#else
+      auto & table = graph->getNodeArray().getTable();
+#endif
+
       if (header.empty()) {
 	header = row;
 	for (auto it = header.begin(); it != header.end(); it++) {
 	  string n = StringUtils::toLower(*it);
+	  cerr << "adding column " << n << endl;
 	  if (n == "likes" || n == "count") {
-	    graph->getFaceData().addIntColumn(it->c_str());
+	    table.addIntColumn(it->c_str());
 	  } else if (n != "x" && n != "y" && n != "z" && n != "lat" && n != "lon" &&
 		     n != "long" && n != "lng" && n != "latitude" && n != "longitude") {
-	    graph->getFaceData().addTextColumn(it->c_str());
+	    table.addTextColumn(it->c_str());
 	  }
 	}
       } else {
-	int face_id = graph->addFace();
+#if 0
+	int row_id = graph->addFace();
+#else
+	int row_id = graph->getNodeArray().add();
+#endif
 	double x = 0, y = 0;
 	for (unsigned int i = 0; i < row.size(); i++) {
 	  if (row[i].empty()) continue;
@@ -60,10 +71,12 @@ CSVLoader::openGraph(const char * filename, const std::shared_ptr<NodeArray> & i
 	  } else if (header[i] == "Y") {
 	    y = stof(row[i]);
 	  } else {
-	    graph->getFaceData()[header[i]].setValue(face_id, row[i]);	  
+	    table[header[i]].setValue(row_id, row[i]);	  
 	  }
 	}
-	graph->getFaceAttributes(face_id).centroid = glm::vec2(x, y);
+#if 0
+	graph->getFaceAttributes(row_id).centroid = glm::vec2(x, y);
+#endif
       }
     }
   } catch (exception & e) {
