@@ -101,7 +101,7 @@ Deflate::compress(const void * input, size_t input_len, bool do_flush) {
 
     if (len) {
       assert(input);
-      memcpy(in_buffer, (unsigned char*)input + pos, len);
+      memcpy(in_buffer, (const unsigned char*)input + pos, len);
       pos += len;
     }
 
