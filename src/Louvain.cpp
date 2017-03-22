@@ -8,13 +8,10 @@
 
 using namespace std;
 
-Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity,
-		 bool _create_node_clusters, bool _create_edge_clusters)
+Louvain::Louvain(Graph * _g, int _max_num_passes, double _min_modularity)
   : g(_g),
     max_num_passes(_max_num_passes),
-    min_modularity(_min_modularity),
-    create_node_clusters(_create_node_clusters),
-    create_edge_clusters(_create_edge_clusters)
+    min_modularity(_min_modularity)
 {
   auto end = g->end_visible_nodes();
   for (auto it = g->begin_visible_nodes(); it != end; ++it) {
@@ -61,32 +58,17 @@ Louvain::neighboringCommunities(int node) const {
 
 bool
 Louvain::oneLevel() {
-  std::vector<int> nodes, edges;
-
-  if (create_node_clusters) {
-    nodes = current_nodes;
-    for (auto & n : nodes) {
-      int community_id = g->getNodeArray().createCommunity(n);
-      assert(getGraph().getNodeTertiaryData(community_id).parent_node == -1);
-      // g->getNodeArray().setPosition(community_id, g->getNodePosition(n));
-      g->addChild(community_id, n, 0);
-      g->getNodeArray().setPosition2(n, glm::vec3());
-    }
-  } else {
-    assert(0);
-  }
+  std::vector<int> nodes = current_nodes;
+  for (auto & n : nodes) {
 #if 0
-  if (create_edge_clusters) {
-    auto end = g->end_edges();
-    for (auto it = g->begin_edges(); it != end; ++it) {
-      if (getEdgeCommunity(*it) == -1) {
-	edges.push_back(*it);
-	int community_id = g->getNodeArray().createCommunity(*it);
-	g->addEdgeChild(community_id, *it, 0);
-      }
-    }
-  }
+    g->convertParentToEdge(n);
 #endif
+    int community_id = g->getNodeArray().createCommunity(n);
+    assert(getGraph().getNodeTertiaryData(community_id).parent_node == -1);
+    // g->getNodeArray().setPosition(community_id, g->getNodePosition(n));
+    g->addChild(community_id, n, 0);
+    g->getNodeArray().setPosition2(n, glm::vec3());
+  }
   
   bool is_improved = false;
   double initial_modularity = getGraph().modularity();

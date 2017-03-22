@@ -8,7 +8,7 @@ class Graph;
 
 class Louvain {
  public:
-  Louvain(Graph * _g, int _max_num_passes, double _min_modularity, bool _create_node_clusters = true, bool _create_edge_clusters = false);
+  Louvain(Graph * _g, int _max_num_passes, double _min_modularity);
  
   // return the neighboring communities of a node
   // and the number of links from the node to each community
@@ -34,8 +34,6 @@ class Louvain {
 
   // minimum improvement for doing another pass
   double min_modularity;
-
-  bool create_node_clusters, create_edge_clusters;
 
   int current_level = 0;
 
