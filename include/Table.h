@@ -108,6 +108,13 @@ namespace table {
     
     void addRow() { num_rows++; }
 
+    void removeRow(int node_id) {
+      for (auto & c : columns_in_order) {
+	c->remove(node_id);
+      }
+      num_rows--;
+    }
+
     void loadCSV(const char * filename, char delimiter = ';');
     
     size_t size() const { return num_rows; }

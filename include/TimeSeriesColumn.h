@@ -49,7 +49,14 @@ namespace table {
     void pushValue(const std::string & v) override {
       data.push_back(std::map<time_t, double>());
     }
-    
+
+    void remove(int row) override {
+      if (row >= 0 && row < data.size()) {
+	data[row] = data.back();
+	data.pop_back();
+      }
+    }
+
   private:
     std::vector<std::map<time_t, double> > data;
   };

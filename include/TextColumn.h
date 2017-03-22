@@ -70,7 +70,15 @@ namespace table {
       }
       data.clear();
     }
-        
+
+    void remove(int row) override {
+      if (row >= 0 && row < data.size()) {
+	delete[] data[row];
+	data[row] = data.back();
+	data.pop_back();
+      }
+    }
+
   private:
     std::vector<char *> data;
   };

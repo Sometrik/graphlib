@@ -97,6 +97,14 @@ class NodeArray : public ReadWriteObject {
     return node_id;
   }
 
+  void remove(int node_id) {
+    if (node_id >= 0 && node_id < size()) {
+      node_geometry[node_id] = node_geometry.back();
+      node_geometry.pop_back();
+      nodes.removeRow(node_id);
+    }
+  }
+
   int getNodeId(short source_id, long long source_object_id) const {
     auto it = getNodeCache().find(skey(source_id, source_object_id));
     if (it != getNodeCache().end()) {

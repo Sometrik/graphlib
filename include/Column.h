@@ -35,6 +35,8 @@ namespace table {
     virtual void pushValue(int v) = 0;
     virtual void pushValue(long long v) = 0;
     virtual void pushValue(const std::string & v) = 0;
+
+    virtual void remove(int row) = 0;
   };
 
   template<class T>
@@ -82,7 +84,14 @@ namespace table {
       return data[a] < data[b];
     }
     void clear() override { data.clear(); }
-    
+
+    void remove(int row) override {
+      if (row >= 0 && row < data.size()) {
+	data[row] = data.back();
+	data.pop_back();
+      }
+    }
+
   private:
     std::vector<T> data;
   };
@@ -106,6 +115,7 @@ namespace table {
     void pushValue(int v) override { }
     void pushValue(long long v) override { }
     void pushValue(const std::string & v) override { }
+    void remove(int row) override { }
   };
 };
 
