@@ -6,7 +6,6 @@
 #include <Deflate.h>
 #include <Inflate.h>
 
-#include <iostream>
 #include <string>
 #include <cstring>
 
@@ -79,7 +78,14 @@ namespace table {
       active_block.reset();
       uncompressed_size = compressed_size = 0;
     }
-        
+
+    void remove(int row) override {
+      if (row >= 0 && row < data.size()) {
+	data[row] = data.back();
+	data.pop_back();
+      }
+    }
+
   private:
     data_ptr_s compressValue(const char * v, size_t len) {
       unsigned short block_num = compressed_blocks.size();
@@ -92,7 +98,7 @@ namespace table {
       }
       uncompressed_size += len;
       unsigned int tmp = compressed_size + active_block.size();
-      std::cerr << "compressed text " << v << " (blocks = " << (compressed_blocks.size() + 1) << ", total = " << uncompressed_size << ", compressed = " << tmp << ", ratio = " << (100.0 * tmp / uncompressed_size) << std::endl;
+      // std::cerr << "compressed text " << v << " (blocks = " << (compressed_blocks.size() + 1) << ", total = " << uncompressed_size << ", compressed = " << tmp << ", ratio = " << (100.0 * tmp / uncompressed_size) << std::endl;
 
       return { block_num, (unsigned short)len, offset };
     }
