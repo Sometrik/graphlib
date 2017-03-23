@@ -35,7 +35,9 @@ namespace table {
 
     bool compare(int a, int b) const override { return getText(a) < getText(b); }
     void clear() override { }
-        
+
+    void remove(int row) override { }
+
   private:
     std::shared_ptr<DBase3Handle> dbf;
     int column_index;
