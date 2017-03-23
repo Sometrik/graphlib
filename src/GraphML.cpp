@@ -8,6 +8,10 @@
 #include <cassert>
 #include <iostream>
 
+#ifdef __ANDROID__
+#include "android_fopen.h"
+#endif
+
 using namespace std;
 using namespace tinyxml2;
 
@@ -32,7 +36,14 @@ GraphML::openGraph(const char * filename, const std::shared_ptr<NodeArray> & ini
   RenderMode mode = RENDERMODE_3D;
 
   XMLDocument doc;
+
+#ifdef __ANDROID__
+  FILE * in = android_fopen(filename, "r");
+  doc.LoadFile(in);
+  fclose(in);
+#else
   doc.LoadFile(filename);
+#endif
 
   XMLElement * graphml_element = doc.FirstChildElement("graphml");
   assert(graphml_element);
