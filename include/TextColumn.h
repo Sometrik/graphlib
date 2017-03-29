@@ -26,7 +26,7 @@ namespace table {
     
     double getDouble(int i) const override { return 0; }
     int getInt(int i) const override { return 0; }
-    long long getInt64(int i) const override { return data[i] ? atoll(data[i]) : 0; }
+    long long getInt64(int i) const override { return data[i] ? stoll(std::string(data[i])) : 0; }
     std::string getText(int i) const override {
       if (i >= 0 && i < data.size()) {
 	return data[i] ? data[i] : "";
